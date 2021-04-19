@@ -1,0 +1,366 @@
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_sc_crowdsource_plat_d',count(1),concat('call_date:',nvl(sum(call_date),0)),20210201 ,'statis_date'from mk.tm_sc_crowdsource_plat_d where statis_date=20210201
+union all
+select 'mk.tm_ch_contactrecord_d',count(1),concat('region_code:',nvl(sum(region_code),0)),20210201 ,'statis_date'from mk.tm_ch_contactrecord_d where statis_date=20210201
+union all
+select 'mk.tm_ch_sale_sltn_chg_d',count(1),concat('is_upld:',nvl(sum(is_upld),0)),20210201 ,'statis_date'from mk.tm_ch_sale_sltn_chg_d where statis_date=20210201
+union all
+select 'mk.tm_ac_bill_item_daily_d',count(1),concat('taxrate:',nvl(sum(taxrate),0),'|','tax:',nvl(sum(tax),0),'|','acct_cyc:',nvl(sum(acct_cyc),0),'|','bill_item_type:',nvl(sum(bill_item_type),0),'|','fee:',nvl(sum(fee),0),'|','bill_item_flg:',nvl(sum(bill_item_flg),0)),20210201 ,'statis_date'from mk.tm_ac_bill_item_daily_d where statis_date=20210201
+union all
+select 'mk.tm_sc_helife_query_d',count(1),concat('xf_date:',nvl(sum(xf_date),0)),20210201 ,'statis_date'from mk.tm_sc_helife_query_d where statis_date=20210201
+union all
+select 'mk.tm_ls_rwx_gprs_d',count(1),concat('dingxiang_flux:',nvl(sum(dingxiang_flux),0),'|','feidingxiang_flux:',nvl(sum(feidingxiang_flux),0),'|','dingxiang_fee:',nvl(sum(dingxiang_fee),0),'|','feidingxiang_fee:',nvl(sum(feidingxiang_fee),0),'|','fee:',nvl(sum(fee),0)),20210201 ,'statis_date'from mk.tm_ls_rwx_gprs_d where statis_date=20210201
+union all
+select 'mk.tm_rt_cs_bsf_menuclickdtl_d',count(1),concat('clickdate:',nvl(sum(clickdate),0)),20210201 ,'statis_date'from mk.tm_rt_cs_bsf_menuclickdtl_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_click_d',count(1),concat('click_cnt:',nvl(sum(click_cnt),0)),20210201 ,'statis_date'from mk.tm_ch_hsh_click_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_chrg_d',count(1),concat('chrg_time:',nvl(sum(chrg_time),0),'|','chrg_fee:',nvl(sum(chrg_fee),0),'|','real_fee:',nvl(sum(real_fee),0),'|','discount_fee:',nvl(sum(discount_fee),0)),20210201 ,'statis_date'from mk.tm_ch_hsh_chrg_d where statis_date=20210201
+union all
+select 'mk.tm_sc_cheat_msisdn_d',count(1),concat('alert_date:',nvl(sum(alert_date),0)),20210201 ,'statis_date'from mk.tm_sc_cheat_msisdn_d where statis_date=20210201
+union all
+select 'mk.tm_ls_plat_cdr_d',count(1),concat('biz_type:',nvl(sum(biz_type),0),'|','trunk_num:',nvl(sum(trunk_num),0),'|','trunk_grp_num:',nvl(sum(trunk_grp_num),0),'|','modl_num:',nvl(sum(modl_num),0),'|','device_type:',nvl(sum(device_type),0),'|','call_type:',nvl(sum(call_type),0),'|','wait_reason:',nvl(sum(wait_reason),0),'|','leave_reason:',nvl(sum(leave_reason),0),'|','sub_sys_num:',nvl(sum(sub_sys_num),0),'|','ori_biz_type:',nvl(sum(ori_biz_type),0),'|','serv_sub_sys_num:',nvl(sum(serv_sub_sys_num),0),'|','serv_biz_type:',nvl(sum(serv_biz_type),0),'|','cust_lvl:',nvl(sum(cust_lvl),0),'|','cust_type:',nvl(sum(cust_type),0),'|','call_in_reason:',nvl(sum(call_in_reason),0),'|','bill_info:',nvl(sum(bill_info),0)),20210201 ,'statis_date'from mk.tm_ls_plat_cdr_d where statis_date=20210201
+union all
+select 'mk.tm_rs_number_d',count(1),concat('num_make_price:',nvl(sum(num_make_price),0),'|','low_consum_fee:',nvl(sum(low_consum_fee),0),'|','low_consum_pre:',nvl(sum(low_consum_pre),0),'|','low_inservice_time:',nvl(sum(low_inservice_time),0),'|','using_cnt:',nvl(sum(using_cnt),0)),20210201 ,'statis_date'from mk.tm_rs_number_d where statis_date=20210201
+union all
+select 'mk.tm_cs_out_activity_detail_d',count(1),concat('call_duration:',nvl(sum(call_duration),0),'|','wait_duration:',nvl(sum(wait_duration),0)),20210201 ,'statis_date'from mk.tm_cs_out_activity_detail_d where statis_date=20210201
+union all
+select 'mk.tm_te_ci_order_detail_d',count(1),concat('photo_favval:',nvl(sum(photo_favval),0),'|','fav_val:',nvl(sum(fav_val),0),'|','status:',nvl(sum(status),0),'|','status_date:',nvl(sum(status_date),0)),20210201 ,'statis_date'from mk.tm_te_ci_order_detail_d where statis_date=20210201
+union all
+select 'mk.tm_pa_cmp_call_info_d',count(1),concat('call_dur:',nvl(sum(call_dur),0),'|','call_cnt:',nvl(sum(call_cnt),0),'|','sms_cnt:',nvl(sum(sms_cnt),0)),20210201 ,'statis_date'from mk.tm_pa_cmp_call_info_d where statis_date=20210201
+union all
+select 'mk.tm_gc_grp_prd_attr_d',count(1),concat('seq_num:',nvl(sum(seq_num),0)),20210201 ,'statis_date'from mk.tm_gc_grp_prd_attr_d where statis_date=20210201
+union all
+select 'mk.tm_te_mobtel_belong_d',count(1),concat('res_belong:',nvl(sum(res_belong),0)),20210201 ,'statis_date'from mk.tm_te_mobtel_belong_d where statis_date=20210201
+union all
+select 'mk.tm_cs_cmos_info_d',count(1),concat('srv_reqst_id:',nvl(sum(srv_reqst_id),0),'|','cmos_cnt:',nvl(sum(cmos_cnt),0),'|','re_cmos_cnt:',nvl(sum(re_cmos_cnt),0)),20210201 ,'statis_date'from mk.tm_cs_cmos_info_d where statis_date=20210201
+union all
+select 'mk.tm_cs_cmos_serv_req_d',count(1),concat('cmos_date:',nvl(sum(cmos_date),0),'|','srv_reqst_id:',nvl(sum(srv_reqst_id),0)),20210201 ,'statis_date'from mk.tm_cs_cmos_serv_req_d where statis_date=20210201
+union all
+select 'mk.tm_ch_sky_pay_d',count(1),concat('pay_num:',nvl(sum(pay_num),0),'|','pay_outer_num:',nvl(sum(pay_outer_num),0),'|','pay_fee:',nvl(sum(pay_fee),0),'|','pay_outer_fee:',nvl(sum(pay_outer_fee),0),'|','pay_subs:',nvl(sum(pay_subs),0),'|','pay_outer_subs:',nvl(sum(pay_outer_subs),0)),20210201 ,'statis_date'from mk.tm_ch_sky_pay_d where statis_date=20210201
+union all
+select 'mk.tm_rt_broaband_unsatisfy_d',count(1),concat('is_ihgu:',nvl(sum(is_ihgu),0)),20210201 ,'statis_date'from mk.tm_rt_broaband_unsatisfy_d where statis_date=20210201
+union all
+select 'mk.tm_rt_chnl_from_d',count(1),concat('row_num:',nvl(sum(row_num),0)),20210201 ,'statis_date'from mk.tm_rt_chnl_from_d where statis_date=20210201
+union all
+select 'mk.tm_ct_sa_month_sum_d',count(1),concat('cur_m_cnt:',nvl(sum(cur_m_cnt),0),'|','cur_m_flux:',nvl(sum(cur_m_flux),0),'|','cur_m_dur:',nvl(sum(cur_m_dur),0),'|','cur_m_day:',nvl(sum(cur_m_day),0)),20210201 ,'statis_date'from mk.tm_ct_sa_month_sum_d where statis_date=20210201
+union all
+select 'mk.tm_rs_re_base_cell_d',count(1),concat('bian_b:',nvl(sum(bian_b),0)),20210201 ,'statis_date'from mk.tm_rs_re_base_cell_d where statis_date=20210201
+union all
+select 'mk.tm_gc_unionpay_plan_d',count(1),concat('cyclenum:',nvl(sum(cyclenum),0),'|','paylimit:',nvl(sum(paylimit),0),'|','drawvalue:',nvl(sum(drawvalue),0),'|','isowe:',nvl(sum(isowe),0),'|','owerate:',nvl(sum(owerate),0),'|','draworder:',nvl(sum(draworder),0)),20210201 ,'statis_date'from mk.tm_gc_unionpay_plan_d where statis_date=20210201
+union all
+select 'mk.tm_cs_bd_repair_evt_d',count(1),concat('feedback_time:',nvl(sum(feedback_time),0),'|','score:',nvl(sum(score),0)),20210201 ,'statis_date'from mk.tm_cs_bd_repair_evt_d where statis_date=20210201
+union all
+select 'mk.tm_sc_broaband_getway_d',count(1),concat('last_count:',nvl(sum(last_count),0),'|','account_cnt:',nvl(sum(account_cnt),0),'|','web_cnt:',nvl(sum(web_cnt),0),'|','app_cnt:',nvl(sum(app_cnt),0),'|','music_cnt:',nvl(sum(music_cnt),0),'|','vidio_cnt:',nvl(sum(vidio_cnt),0)),20210201 ,'statis_date'from mk.tm_sc_broaband_getway_d where statis_date=20210201
+union all
+select 'mk.tm_gc_prod_order_d',count(1),concat('max_subs_cnt:',nvl(sum(max_subs_cnt),0)),20210201 ,'statis_date'from mk.tm_gc_prod_order_d where statis_date=20210201
+union all
+select 'mk.tm_ch_helife_subs_d',count(1),concat('fst_day:',nvl(sum(fst_day),0),'|','is_today:',nvl(sum(is_today),0),'|','is_newtoday:',nvl(sum(is_newtoday),0),'|','active_days:',nvl(sum(active_days),0),'|','silent_days:',nvl(sum(silent_days),0),'|','is_new_month:',nvl(sum(is_new_month),0),'|','mth_act_days:',nvl(sum(mth_act_days),0),'|','mth_silent_days:',nvl(sum(mth_silent_days),0),'|','is_new_2month:',nvl(sum(is_new_2month),0),'|','is_new_3month:',nvl(sum(is_new_3month),0),'|','is_new_year:',nvl(sum(is_new_year),0),'|','year_act_days:',nvl(sum(year_act_days),0),'|','year_silent_days:',nvl(sum(year_silent_days),0),'|','innet_date:',nvl(sum(innet_date),0),'|','status_date:',nvl(sum(status_date),0)),20210201 ,'statis_date'from mk.tm_ch_helife_subs_d where statis_date=20210201
+union all
+select 'mk.tm_sc_score_balance_d',count(1),concat('cur_cyc_balance:',nvl(sum(cur_cyc_balance),0),'|','lm_score_balance:',nvl(sum(lm_score_balance),0),'|','flux_in_val:',nvl(sum(flux_in_val),0),'|','flux_out_val:',nvl(sum(flux_out_val),0)),20210201 ,'statis_date'from mk.tm_sc_score_balance_d where statis_date=20210201;
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_cs_crowdsource_plat_d',count(1),concat('statis_ifdate:',nvl(sum(statis_ifdate),0)),20210201 ,'statis_date'from mk.tm_cs_crowdsource_plat_d where statis_date=20210201
+union all
+select 'mk.tm_rt_cy_behavior_list_d',count(1),concat('behavior_type:',nvl(sum(behavior_type),0),'|','seq_no:',nvl(sum(seq_no),0)),20210201 ,'statis_date'from mk.tm_rt_cy_behavior_list_d where statis_date=20210201
+union all
+select 'mk.tm_sc_user_xhzw_coutry_d',count(1),concat('net_gain:',nvl(sum(net_gain),0),'|','week_xhzw_in_fr_ctcc:',nvl(sum(week_xhzw_in_fr_ctcc),0),'|','week_xhzw_in_fr_cucc:',nvl(sum(week_xhzw_in_fr_cucc),0),'|','week_xhzw_in_all:',nvl(sum(week_xhzw_in_all),0),'|','week_xhzw_out_2cicc:',nvl(sum(week_xhzw_out_2cicc),0),'|','week_xhzw_out_2cucc:',nvl(sum(week_xhzw_out_2cucc),0),'|','week_xhzw_out_all:',nvl(sum(week_xhzw_out_all),0),'|','week_net_gain:',nvl(sum(week_net_gain),0),'|','month_xhzw_in_fr_ctcc:',nvl(sum(month_xhzw_in_fr_ctcc),0),'|','month_xhzw_in_fr_cucc:',nvl(sum(month_xhzw_in_fr_cucc),0),'|','month_xhzw_in_all:',nvl(sum(month_xhzw_in_all),0),'|','month_xhzw_out_2cicc:',nvl(sum(month_xhzw_out_2cicc),0),'|','month_xhzw_out_2cucc:',nvl(sum(month_xhzw_out_2cucc),0),'|','month_xhzw_out_all:',nvl(sum(month_xhzw_out_all),0),'|','month_net_gain:',nvl(sum(month_net_gain),0),'|','year_xhzw_in_fr_ctcc:',nvl(sum(year_xhzw_in_fr_ctcc),0),'|','year_xhzw_in_fr_cucc:',nvl(sum(year_xhzw_in_fr_cucc),0),'|','year_xhzw_in_all:',nvl(sum(year_xhzw_in_all),0),'|','year_xhzw_out_2cicc:',nvl(sum(year_xhzw_out_2cicc),0),'|','year_xhzw_out_2cucc:',nvl(sum(year_xhzw_out_2cucc),0),'|','year_xhzw_out_all:',nvl(sum(year_xhzw_out_all),0),'|','year_net_gain:',nvl(sum(year_net_gain),0),'|','xhzw_in_fr_ctcc:',nvl(sum(xhzw_in_fr_ctcc),0),'|','xhzw_in_fr_cucc:',nvl(sum(xhzw_in_fr_cucc),0),'|','xhzw_in_all:',nvl(sum(xhzw_in_all),0),'|','xhzw_out_2cicc:',nvl(sum(xhzw_out_2cicc),0),'|','xhzw_out_2cucc:',nvl(sum(xhzw_out_2cucc),0),'|','xhzw_out_all:',nvl(sum(xhzw_out_all),0)),20210201 ,'statis_date'from mk.tm_sc_user_xhzw_coutry_d where statis_date=20210201
+union all
+select 'mk.tm_rt_quality_standard_d',count(1),concat('ltetd_dur_rate:',nvl(sum(ltetd_dur_rate),0),'|','tdd_integrity:',nvl(sum(tdd_integrity),0),'|','fdd_integrity:',nvl(sum(fdd_integrity),0),'|','network_darkspot:',nvl(sum(network_darkspot),0),'|','volte_connection_rate:',nvl(sum(volte_connection_rate),0),'|','volte_dropped_call_rate:',nvl(sum(volte_dropped_call_rate),0),'|','webdisplay_sucrate:',nvl(sum(webdisplay_sucrate),0),'|','mob_bus_vipy_pcduration:',nvl(sum(mob_bus_vipy_pcduration),0),'|','httptotalresp_delay:',nvl(sum(httptotalresp_delay),0),'|','http_down_rate:',nvl(sum(http_down_rate),0),'|','im_resp_succ_rate:',nvl(sum(im_resp_succ_rate),0),'|','complaint_dispose:',nvl(sum(complaint_dispose),0),'|','complaint_hotspot:',nvl(sum(complaint_hotspot),0),'|','network_wtb:',nvl(sum(network_wtb),0),'|','network_visit:',nvl(sum(network_visit),0),'|','network_repetition:',nvl(sum(network_repetition),0)),20210201 ,'statis_date'from mk.tm_rt_quality_standard_d where statis_date=20210201
+union all
+select 'mk.tm_rt_fbi_ds22152_d',count(1),concat('old_fee_before:',nvl(sum(old_fee_before),0),'|','old_fee_after:',nvl(sum(old_fee_after),0),'|','new_fee_before:',nvl(sum(new_fee_before),0),'|','new_fee_after:',nvl(sum(new_fee_after),0),'|','fee_before_rate:',nvl(sum(fee_before_rate),0),'|','fee_after_rate:',nvl(sum(fee_after_rate),0),'|','terminal_value:',nvl(sum(terminal_value),0),'|','buy_fee:',nvl(sum(buy_fee),0),'|','return_fee:',nvl(sum(return_fee),0),'|','income_rate:',nvl(sum(income_rate),0),'|','fq_cnt:',nvl(sum(fq_cnt),0)),20210201 ,'statis_date'from mk.tm_rt_fbi_ds22152_d where statis_date=20210201
+union all
+select 'mk.tm_ls_volte_d',count(1),concat('call_cnt:',nvl(sum(call_cnt),0),'|','call_dur:',nvl(sum(call_dur),0),'|','toll_dur:',nvl(sum(toll_dur),0),'|','chrg_dur:',nvl(sum(chrg_dur),0),'|','fav_dur:',nvl(sum(fav_dur),0),'|','base_fee:',nvl(sum(base_fee),0),'|','toll_fee:',nvl(sum(toll_fee),0),'|','toll_extra_fee:',nvl(sum(toll_extra_fee),0),'|','roam_fee:',nvl(sum(roam_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','fav_base_fee:',nvl(sum(fav_base_fee),0),'|','fav_toll_fee:',nvl(sum(fav_toll_fee),0),'|','fav_toll_extra_fee:',nvl(sum(fav_toll_extra_fee),0),'|','fav_info_fee:',nvl(sum(fav_info_fee),0),'|','chrg_dur_6:',nvl(sum(chrg_dur_6),0),'|','bef_fav_tot_fee:',nvl(sum(bef_fav_tot_fee),0),'|','fav_aft_tot_fee:',nvl(sum(fav_aft_tot_fee),0)),20210201 ,'statis_date'from mk.tm_ls_volte_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_req_log_d',count(1),concat('req_cnt:',nvl(sum(req_cnt),0),'|','success_cnt:',nvl(sum(success_cnt),0),'|','avg_dur:',nvl(sum(avg_dur),0)),20210201 ,'statis_date'from mk.tm_ch_hsh_req_log_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_user_d',count(1),concat('first_login_date:',nvl(sum(first_login_date),0),'|','login_cnt:',nvl(sum(login_cnt),0)),20210201 ,'statis_date'from mk.tm_ch_hsh_user_d where statis_date=20210201
+union all
+select 'mk.tm_gc_grp_rwd_basicinfo_d',count(1),concat('chargeamount:',nvl(sum(chargeamount),0),'|','totalprivmoney:',nvl(sum(totalprivmoney),0),'|','totalprivpercent:',nvl(sum(totalprivpercent),0)),20210201 ,'statis_date'from mk.tm_gc_grp_rwd_basicinfo_d where statis_date=20210201
+union all
+select 'mk.tm_ls_wlan_d',count(1),concat('call_cnt:',nvl(sum(call_cnt),0),'|','comm_dur:',nvl(sum(comm_dur),0),'|','chrg_dur:',nvl(sum(chrg_dur),0),'|','tot_flux:',nvl(sum(tot_flux),0),'|','up_flux:',nvl(sum(up_flux),0),'|','dn_flux:',nvl(sum(dn_flux),0),'|','base_fee:',nvl(sum(base_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','fav_base_fee:',nvl(sum(fav_base_fee),0),'|','fav_info_fee:',nvl(sum(fav_info_fee),0),'|','term_type:',nvl(sum(term_type),0),'|','term_os:',nvl(sum(term_os),0)),20210201 ,'statis_date'from mk.tm_ls_wlan_d where statis_date=20210201
+union all
+select 'mk.tm_gc_responsible_pers_d',count(1),concat('cust_id:',nvl(sum(cust_id),0)),20210201 ,'statis_date'from mk.tm_gc_responsible_pers_d where statis_date=20210201
+union all
+select 'mk.tm_cs_ucp_staff_info_d',count(1),concat('update_time:',nvl(sum(update_time),0),'|','create_time:',nvl(sum(create_time),0),'|','begin_time:',nvl(sum(begin_time),0),'|','end_time:',nvl(sum(end_time),0)),20210201 ,'statis_date'from mk.tm_cs_ucp_staff_info_d where statis_date=20210201
+union all
+select 'mk.tm_gc_cmiot_group_subs_d',count(1),concat('mem_cnt:',nvl(sum(mem_cnt),0),'|','new_mem_cnt:',nvl(sum(new_mem_cnt),0),'|','goods_fee:',nvl(sum(goods_fee),0),'|','lost_mem_cnt:',nvl(sum(lost_mem_cnt),0)),20210201 ,'statis_date'from mk.tm_gc_cmiot_group_subs_d where statis_date=20210201
+union all
+select 'mk.tm_sc_kd_subs_servattr_d',count(1),concat('startdate:',nvl(sum(startdate),0),'|','enddate:',nvl(sum(enddate),0)),20210201 ,'statis_date'from mk.tm_sc_kd_subs_servattr_d where statis_date=20210201
+union all
+select 'mk.tm_sc_yj_comm_subs_d',count(1),concat('comm_day_cnt:',nvl(sum(comm_day_cnt),0)),20210201 ,'statis_date'from mk.tm_sc_yj_comm_subs_d where statis_date=20210201
+union all
+select 'mk.tm_rs_gc_opfisepar_box_d',count(1),concat('int_id:',nvl(sum(int_id),0),'|','city:',nvl(sum(city),0)),20210201 ,'statis_date'from mk.tm_rs_gc_opfisepar_box_d where statis_date=20210201
+union all
+select 'mk.tm_in_user_common_h_d',count(1),concat('total_flow:',nvl(sum(total_flow),0),'|','wap_duration:',nvl(sum(wap_duration),0),'|','up_flow:',nvl(sum(up_flow),0),'|','down_flow:',nvl(sum(down_flow),0),'|','total_num:',nvl(sum(total_num),0),'|','statis_hour:',nvl(sum(statis_hour),0)),20210201 ,'statis_date'from mk.tm_in_user_common_h_d where statis_date=20210201
+union all
+select 'mk.tm_ch_competitor_geogra_d',count(1),concat('region:',nvl(sum(region),0)),20210201 ,'statis_date'from mk.tm_ch_competitor_geogra_d where statis_date=20210201
+union all
+select 'mk.tm_rt_user_recv_email_cdr_d',count(1),concat('recv_email_mode:',nvl(sum(recv_email_mode),0),'|','order_source:',nvl(sum(order_source),0)),20210201 ,'statis_date'from mk.tm_rt_user_recv_email_cdr_d where statis_date=20210201
+union all
+select 'mk.tm_pa_roamin_gprs_d',count(1),concat('call_cnt:',nvl(sum(call_cnt),0),'|','comm_dur:',nvl(sum(comm_dur),0),'|','tot_flux:',nvl(sum(tot_flux),0),'|','up_flux:',nvl(sum(up_flux),0),'|','dn_flux:',nvl(sum(dn_flux),0),'|','chrg_flux:',nvl(sum(chrg_flux),0),'|','up_chrg_flux:',nvl(sum(up_chrg_flux),0),'|','dn_chrg_flux:',nvl(sum(dn_chrg_flux),0),'|','basic_fee:',nvl(sum(basic_fee),0)),20210201 ,'statis_date'from mk.tm_pa_roamin_gprs_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subs_transtelin_d',count(1),concat('taskno:',nvl(sum(taskno),0),'|','region:',nvl(sum(region),0),'|','deal_date:',nvl(sum(deal_date),0)),20210201 ,'statis_date'from mk.tm_sc_subs_transtelin_d where statis_date=20210201
+union all
+select 'mk.tm_ch_add_floor_d',count(1),concat('int_id:',nvl(sum(int_id),0),'|','stateflag:',nvl(sum(stateflag),0),'|','is_wrong:',nvl(sum(is_wrong),0),'|','city_id:',nvl(sum(city_id),0),'|','county_id:',nvl(sum(county_id),0),'|','town_id:',nvl(sum(town_id),0),'|','road_id:',nvl(sum(road_id),0),'|','zone_id:',nvl(sum(zone_id),0),'|','building_id:',nvl(sum(building_id),0),'|','unit_id:',nvl(sum(unit_id),0),'|','house_num:',nvl(sum(house_num),0),'|','floor_no:',nvl(sum(floor_no),0),'|','un_port:',nvl(sum(un_port),0)),20210201 ,'statis_date'from mk.tm_ch_add_floor_d where statis_date=20210201
+union all
+select 'mk.tm_gc_meb_hide_d',count(1),concat('call_num:',nvl(sum(call_num),0),'|','call_dur:',nvl(sum(call_dur),0),'|','call_cnt:',nvl(sum(call_cnt),0)),20210201 ,'statis_date'from mk.tm_gc_meb_hide_d where statis_date=20210201
+union all
+select 'mk.tm_ls_mnet_sms_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','comm_fee:',nvl(sum(comm_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','mon_fee:',nvl(sum(mon_fee),0),'|','fav_comm_fee:',nvl(sum(fav_comm_fee),0)),20210201 ,'statis_date'from mk.tm_ls_mnet_sms_d where statis_date=20210201
+union all
+select 'mk.tm_pa_se_mnet_sms_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','info_fee:',nvl(sum(info_fee),0),'|','rent_fee:',nvl(sum(rent_fee),0)),20210201 ,'statis_date'from mk.tm_pa_se_mnet_sms_d where statis_date=20210201
+union all
+select 'mk.tm_ls_call_fw_d',count(1),concat('call_cnt:',nvl(sum(call_cnt),0),'|','call_dur:',nvl(sum(call_dur),0),'|','toll_dur:',nvl(sum(toll_dur),0),'|','chrg_dur:',nvl(sum(chrg_dur),0),'|','base_fee:',nvl(sum(base_fee),0),'|','toll_fee:',nvl(sum(toll_fee),0),'|','toll_extra_fee:',nvl(sum(toll_extra_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','fav_base_fee:',nvl(sum(fav_base_fee),0),'|','fav_toll_fee:',nvl(sum(fav_toll_fee),0),'|','fav_toll_extra_fee:',nvl(sum(fav_toll_extra_fee),0),'|','fav_info_fee:',nvl(sum(fav_info_fee),0)),20210201 ,'statis_date'from mk.tm_ls_call_fw_d where statis_date=20210201
+union all
+select 'mk.tm_gc_trans_subs_d',count(1),concat('fee:',nvl(sum(fee),0)),20210201 ,'statis_date'from mk.tm_gc_trans_subs_d where statis_date=20210201
+union all
+select 'mk.tm_ls_mnet_wap_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','info_fee:',nvl(sum(info_fee),0),'|','mon_fee:',nvl(sum(mon_fee),0),'|','fav_info_fee:',nvl(sum(fav_info_fee),0),'|','fav_mon_fee:',nvl(sum(fav_mon_fee),0),'|','dnld_flux:',nvl(sum(dnld_flux),0)),20210201 ,'statis_date'from mk.tm_ls_mnet_wap_d where statis_date=20210201
+union all
+select 'mk.tm_pa_se_sms_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0)),20210201 ,'statis_date'from mk.tm_pa_se_sms_d where statis_date=20210201
+union all
+select 'mk.tm_sc_broaband_dzs_d',count(1),concat('accept_time:',nvl(sum(accept_time),0)),20210201 ,'statis_date'from mk.tm_sc_broaband_dzs_d where statis_date=20210201;
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_gc_cust_prod_d',count(1),concat('grp_cnt:',nvl(sum(grp_cnt),0)),20210201 ,'statis_date'from mk.tm_gc_cust_prod_d where statis_date=20210201
+union all
+select 'mk.tm_rs_zwovertimepresenthis_d',count(1),concat('region_code:',nvl(sum(region_code),0)),20210201 ,'statis_date'from mk.tm_rs_zwovertimepresenthis_d where statis_date=20210201
+union all
+select 'mk.tm_gc_prod_cont_real_d',count(1),concat('firstmoney:',nvl(sum(firstmoney),0),'|','returntype:',nvl(sum(returntype),0),'|','returnmoney:',nvl(sum(returnmoney),0)),20210201 ,'statis_date'from mk.tm_gc_prod_cont_real_d where statis_date=20210201
+union all
+select 'mk.tm_gc_esop_sales_bill_d',count(1),concat('cycle:',nvl(sum(cycle),0)),20210201 ,'statis_date'from mk.tm_gc_esop_sales_bill_d where statis_date=20210201
+union all
+select 'mk.tm_lc_qyh_gsm_sum_d',count(1),concat('call_dur:',nvl(sum(call_dur),0),'|','counttime:',nvl(sum(counttime),0)),20210201 ,'statis_date'from mk.tm_lc_qyh_gsm_sum_d where statis_date=20210201
+union all
+select 'mk.tm_sc_cust_info_d',count(1),concat('invalidation_date:',nvl(sum(invalidation_date),0),'|','create_date:',nvl(sum(create_date),0),'|','status_date:',nvl(sum(status_date),0),'|','cert_valid_start_time:',nvl(sum(cert_valid_start_time),0),'|','cert_exp_time:',nvl(sum(cert_exp_time),0),'|','age:',nvl(sum(age),0)),20210201 ,'statis_date'from mk.tm_sc_cust_info_d where statis_date=20210201
+union all
+select 'mk.tm_sc_harass_basic_d',count(1),concat('flag_1:',nvl(sum(flag_1),0),'|','flag_2:',nvl(sum(flag_2),0),'|','flag_3:',nvl(sum(flag_3),0),'|','flag_4:',nvl(sum(flag_4),0),'|','o_call_cnt:',nvl(sum(o_call_cnt),0),'|','o_call_dur:',nvl(sum(o_call_dur),0),'|','o_call_num:',nvl(sum(o_call_num),0),'|','t_call_cnt:',nvl(sum(t_call_cnt),0),'|','jizhan_cnt:',nvl(sum(jizhan_cnt),0),'|','vregion_cnt:',nvl(sum(vregion_cnt),0),'|','last_o_call_cnt:',nvl(sum(last_o_call_cnt),0),'|','last_t_call_cnt:',nvl(sum(last_t_call_cnt),0),'|','mon_o_call_cnt:',nvl(sum(mon_o_call_cnt),0),'|','mon_t_call_cnt:',nvl(sum(mon_t_call_cnt),0),'|','mon_o_call_num:',nvl(sum(mon_o_call_num),0),'|','last_o_call_num:',nvl(sum(last_o_call_num),0)),20210201 ,'statis_date'from mk.tm_sc_harass_basic_d where statis_date=20210201
+union all
+select 'mk.tm_sc_cucertinfo_chnameauth_d',count(1),concat('region_code:',nvl(sum(region_code),0)),20210201 ,'statis_date'from mk.tm_sc_cucertinfo_chnameauth_d where statis_date=20210201
+union all
+select 'mk.tm_ls_sms_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','comm_fee:',nvl(sum(comm_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','mon_fee:',nvl(sum(mon_fee),0),'|','tot_fav_fee:',nvl(sum(tot_fav_fee),0),'|','fav_mon_fee:',nvl(sum(fav_mon_fee),0)),20210207 ,'statis_date'from mk.tm_ls_sms_d where statis_date=20210207
+union all
+select 'mk.tm_ch_val_card_detl_d',count(1),concat('charge_value:',nvl(sum(charge_value),0),'|','charge_status:',nvl(sum(charge_status),0)),20210201 ,'statis_date'from mk.tm_ch_val_card_detl_d where statis_date=20210201
+union all
+select 'mk.tm_sc_gsm_home_d',count(1),concat('talk_dur:',nvl(sum(talk_dur),0)),20210201 ,'statis_date'from mk.tm_sc_gsm_home_d where statis_date=20210201
+union all
+select 'mk.tm_ch_staff_d',count(1),concat('exp_date:',nvl(sum(exp_date),0),'|','eff_date:',nvl(sum(eff_date),0)),20210201 ,'statis_date'from mk.tm_ch_staff_d where statis_date=20210201
+union all
+select 'mk.tm_rt_discapprovaltask_d',count(1),concat('total_fee:',nvl(sum(total_fee),0),'|','total_discount:',nvl(sum(total_discount),0),'|','deal_date:',nvl(sum(deal_date),0)),20210201 ,'statis_date'from mk.tm_rt_discapprovaltask_d where statis_date=20210201
+union all
+select 'mk.tm_te_rs_inv_mobtel_d',count(1),concat('region_code:',nvl(sum(region_code),0),'|','real_price:',nvl(sum(real_price),0),'|','cost_price:',nvl(sum(cost_price),0)),20210201 ,'statis_date'from mk.tm_te_rs_inv_mobtel_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subs_group_product_d',count(1),concat('member_area:',nvl(sum(member_area),0),'|','orderstatus:',nvl(sum(orderstatus),0),'|','isprima:',nvl(sum(isprima),0),'|','familysubsid:',nvl(sum(familysubsid),0)),20210201 ,'statis_date'from mk.tm_sc_subs_group_product_d where statis_date=20210201
+union all
+select 'mk.tm_cs_sm_job_history_d',count(1),concat('dealtimelen:',nvl(sum(dealtimelen),0),'|','nodeid:',nvl(sum(nodeid),0),'|','sendbysm:',nvl(sum(sendbysm),0)),20210201 ,'statis_date'from mk.tm_cs_sm_job_history_d where statis_date=20210201
+union all
+select 'mk.tm_cs_cmos_statis_d',count(1),concat('complain_handle_dur:',nvl(sum(complain_handle_dur),0)),20210201 ,'statis_date'from mk.tm_cs_cmos_statis_d where statis_date=20210201
+union all
+select 'mk.tm_rt_discapprovaltaskdtl_d',count(1),concat('fee:',nvl(sum(fee),0),'|','deal_date:',nvl(sum(deal_date),0),'|','discount:',nvl(sum(discount),0)),20210201 ,'statis_date'from mk.tm_rt_discapprovaltaskdtl_d where statis_date=20210201
+union all
+select 'mk.tm_pa_se_voc_d',count(1),concat('call_times:',nvl(sum(call_times),0),'|','call_dure:',nvl(sum(call_dure),0),'|','chrg_dure:',nvl(sum(chrg_dure),0),'|','chrg_6_dure:',nvl(sum(chrg_6_dure),0)),20210201 ,'statis_date'from mk.tm_pa_se_voc_d where statis_date=20210201
+union all
+select 'mk.tm_ls_mms_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','comm_fee:',nvl(sum(comm_fee),0),'|','comm_fee_s:',nvl(sum(comm_fee_s),0),'|','info_fee_t:',nvl(sum(info_fee_t),0),'|','info_fee_t_s:',nvl(sum(info_fee_t_s),0),'|','info_fee_m:',nvl(sum(info_fee_m),0),'|','info_fee_m_s:',nvl(sum(info_fee_m_s),0),'|','info_fee:',nvl(sum(info_fee),0),'|','fav_comm_fee:',nvl(sum(fav_comm_fee),0),'|','fav_info_fee:',nvl(sum(fav_info_fee),0)),20210201 ,'statis_date'from mk.tm_ls_mms_d where statis_date=20210201
+union all
+select 'mk.tm_ch_handlerecord_d',count(1),concat('region_code:',nvl(sum(region_code),0)),20210201 ,'statis_date'from mk.tm_ch_handlerecord_d where statis_date=20210201
+union all
+select 'mk.tm_gc_om_wl_flowtrackhis_d',count(1),concat('cycle:',nvl(sum(cycle),0)),20210201 ,'statis_date'from mk.tm_gc_om_wl_flowtrackhis_d where statis_date=20210201
+union all
+select 'mk.tm_te_sale_g3_d',count(1),concat('c_realcount:',nvl(sum(c_realcount),0),'|','cost_price:',nvl(sum(cost_price),0),'|','real_price:',nvl(sum(real_price),0),'|','e_column:',nvl(sum(e_column),0),'|','g_column:',nvl(sum(g_column),0),'|','h_column:',nvl(sum(h_column),0),'|','discount:',nvl(sum(discount),0),'|','j_column:',nvl(sum(j_column),0)),20210201 ,'statis_date'from mk.tm_te_sale_g3_d where statis_date=20210201
+union all
+select 'mk.tm_pa_user_telecomm_circle_d',count(1),concat('call_num:',nvl(sum(call_num),0),'|','call_num_o:',nvl(sum(call_num_o),0),'|','call_num_t:',nvl(sum(call_num_t),0),'|','call_dur:',nvl(sum(call_dur),0),'|','call_dur_o:',nvl(sum(call_dur_o),0),'|','call_dur_t:',nvl(sum(call_dur_t),0),'|','call_chrg_dur:',nvl(sum(call_chrg_dur),0),'|','call_chrg_dur_o:',nvl(sum(call_chrg_dur_o),0),'|','call_chrg_dur_t:',nvl(sum(call_chrg_dur_t),0),'|','short_cdr_num:',nvl(sum(short_cdr_num),0),'|','short_cdr_num_o:',nvl(sum(short_cdr_num_o),0),'|','short_cdr_num_t:',nvl(sum(short_cdr_num_t),0),'|','sms_num:',nvl(sum(sms_num),0),'|','sms_num_o:',nvl(sum(sms_num_o),0),'|','sms_num_t:',nvl(sum(sms_num_t),0),'|','mms_num:',nvl(sum(mms_num),0),'|','mms_num_o:',nvl(sum(mms_num_o),0),'|','mms_num_t:',nvl(sum(mms_num_t),0),'|','latest_contract_month:',nvl(sum(latest_contract_month),0),'|','latest_contract_date:',nvl(sum(latest_contract_date),0),'|','first_contract_date:',nvl(sum(first_contract_date),0),'|','first_voc_date:',nvl(sum(first_voc_date),0)),20210201 ,'statis_date'from mk.tm_pa_user_telecomm_circle_d where statis_date=20210201
+union all
+select 'mk.tm_sc_broaband_accept_d',count(1),concat('accept_fee:',nvl(sum(accept_fee),0),'|','fav_fee:',nvl(sum(fav_fee),0),'|','deal_date:',nvl(sum(deal_date),0),'|','parentid:',nvl(sum(parentid),0)),20210201 ,'statis_date'from mk.tm_sc_broaband_accept_d where statis_date=20210201
+union all
+select 'mk.tm_ch_chnl_storefront_d',count(1),concat('operator_cnt:',nvl(sum(operator_cnt),0),'|','staff_cnt:',nvl(sum(staff_cnt),0),'|','tmnl_cnt:',nvl(sum(tmnl_cnt),0)),20210201 ,'statis_date'from mk.tm_ch_chnl_storefront_d where statis_date=20210201
+union all
+select 'mk.tm_cs_ucp_staffrole_d',count(1),concat('ccid:',nvl(sum(ccid),0),'|','vdnid:',nvl(sum(vdnid),0),'|','ispublic:',nvl(sum(ispublic),0),'|','role_status:',nvl(sum(role_status),0)),20210201 ,'statis_date'from mk.tm_cs_ucp_staffrole_d where statis_date=20210201
+union all
+select 'mk.tm_ch_opp_d',count(1),concat('cust_res_cnt:',nvl(sum(cust_res_cnt),0),'|','is_excld:',nvl(sum(is_excld),0),'|','is_on_net:',nvl(sum(is_on_net),0),'|','area:',nvl(sum(area),0),'|','admincnt:',nvl(sum(admincnt),0),'|','clientcnt:',nvl(sum(clientcnt),0)),20210201 ,'statis_date'from mk.tm_ch_opp_d where statis_date=20210201
+union all
+select 'mk.tm_gc_group_account_d',count(1),concat('paycycledate:',nvl(sum(paycycledate),0),'|','status_date:',nvl(sum(status_date),0),'|','paycycle:',nvl(sum(paycycle),0),'|','crdt_val:',nvl(sum(crdt_val),0)),20210201 ,'statis_date'from mk.tm_gc_group_account_d where statis_date=20210201
+union all
+select 'mk.tm_ls_cdr_gc_mn_sms_sp_d',count(1),concat('tot_cnt:',nvl(sum(tot_cnt),0),'|','comm_fee:',nvl(sum(comm_fee),0),'|','info_fee:',nvl(sum(info_fee),0),'|','mon_fee:',nvl(sum(mon_fee),0),'|','fav_comm_fee:',nvl(sum(fav_comm_fee),0)),20210201 ,'statis_date'from mk.tm_ls_cdr_gc_mn_sms_sp_d where statis_date=20210201;
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_sc_kd_subs_attr_d',count(1),concat('sn:',nvl(sum(sn),0),'|','createdate:',nvl(sum(createdate),0),'|','statusdate:',nvl(sum(statusdate),0)),20210201 ,'statis_date'from mk.tm_sc_kd_subs_attr_d where statis_date=20210201
+union all
+select 'mk.tm_cs_log_bizorder_his_d',count(1),concat('region:',nvl(sum(region),0),'|','overflag:',nvl(sum(overflag),0)),20210201 ,'statis_date'from mk.tm_cs_log_bizorder_his_d where statis_date=20210201
+union all
+select 'mk.tm_ls_sms_notify_d',count(1),concat('shouldtimes:',nvl(sum(shouldtimes),0),'|','lefttimes:',nvl(sum(lefttimes),0),'|','trytimes:',nvl(sum(trytimes),0)),20210201 ,'statis_date'from mk.tm_ls_sms_notify_d where statis_date=20210201
+union all
+select 'mk.tm_sc_log_ret_cert_wk_d',count(1),concat('region:',nvl(sum(region),0),'|','isused:',nvl(sum(isused),0),'|','recoid:',nvl(sum(recoid),0)),20210201 ,'statis_date'from mk.tm_sc_log_ret_cert_wk_d where statis_date=20210201
+union all
+select 'mk.tm_sc_order_pdt_property_d',count(1),concat('region_code:',nvl(sum(region_code),0),'|','value_seq_no:',nvl(sum(value_seq_no),0)),20210201 ,'statis_date'from mk.tm_sc_order_pdt_property_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subs_supervisor_d',count(1),concat('region:',nvl(sum(region),0)),20210201 ,'statis_date'from mk.tm_sc_subs_supervisor_d where statis_date=20210201
+union all
+select 'mk.tm_te_ci_sms_touch_d',count(1),concat('smstemp:',nvl(sum(smstemp),0),'|','statusdate:',nvl(sum(statusdate),0)),20210201 ,'statis_date'from mk.tm_te_ci_sms_touch_d where statis_date=20210201
+union all
+select 'mk.tm_te_ci_call_touch_d',count(1),concat('issendsms:',nvl(sum(issendsms),0),'|','calledtime:',nvl(sum(calledtime),0)),20210201 ,'statis_date'from mk.tm_te_ci_call_touch_d where statis_date=20210201
+union all
+select 'mk.tm_pd_iptv_ci_grid_d',count(1),concat('area:',nvl(sum(area),0),'|','grid_area:',nvl(sum(grid_area),0)),20210201 ,'statis_date'from mk.tm_pd_iptv_ci_grid_d where statis_date=20210201
+union all
+select 'mk.tm_ac_goldcoin_balance_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ac_goldcoin_balance_d where statis_date=20210201
+union all
+select 'mk.tm_ac_goldcoin_deduct_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ac_goldcoin_deduct_d where statis_date=20210201
+union all
+select 'mk.tm_ac_goldcoin_invalid_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ac_goldcoin_invalid_d where statis_date=20210201
+union all
+select 'mk.tm_ac_goldcoin_recharge_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ac_goldcoin_recharge_d where statis_date=20210201
+union all
+select 'mk.tm_ac_goldcoin_return_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ac_goldcoin_return_d where statis_date=20210201
+union all
+select 'mk.tm_ch_atsv_conf_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_atsv_conf_d where statis_date=20210201
+union all
+select 'mk.tm_ch_cj_ngsettle_catalog_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_cj_ngsettle_catalog_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_app_user_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_hsh_app_user_d where statis_date=20210201
+union all
+select 'mk.tm_ch_hsh_visit_map_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_hsh_visit_map_d where statis_date=20210201
+union all
+select 'mk.tm_ch_info_photo_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_info_photo_d where statis_date=20210201
+union all
+select 'mk.tm_ch_loc_ngsettle_dict_def_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_loc_ngsettle_dict_def_d where statis_date=20210201
+union all
+select 'mk.tm_ch_loc_ngsettle_dict_val_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_loc_ngsettle_dict_val_d where statis_date=20210201
+union all
+select 'mk.tm_ch_mkt_busiand_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_mkt_busiand_d where statis_date=20210201
+union all
+select 'mk.tm_ch_mkt_cellinfo_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_mkt_cellinfo_d where statis_date=20210201
+union all
+select 'mk.tm_ch_mkt_extconfig_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_mkt_extconfig_d where statis_date=20210201
+union all
+select 'mk.tm_ch_mkt_extcontent_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_mkt_extcontent_d where statis_date=20210201
+union all
+select 'mk.tm_ch_mkt_homecheck_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_mkt_homecheck_d where statis_date=20210201
+union all
+select 'mk.tm_ch_ngsettle_detail_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_ngsettle_detail_d where statis_date=20210201
+union all
+select 'mk.tm_ch_ngsettle_detail_grp_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_ngsettle_detail_grp_d where statis_date=20210201
+union all
+select 'mk.tm_ch_numcard_dt_chnl_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_numcard_dt_chnl_d where statis_date=20210201
+union all
+select 'mk.tm_ch_rec_authinfo_al_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_rec_authinfo_al_d where statis_date=20210201;
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_ch_rec_refundment_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_rec_refundment_d where statis_date=20210201
+union all
+select 'mk.tm_ch_sky_agent_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_sky_agent_d where statis_date=20210201
+union all
+select 'mk.tm_ch_verfitytype_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_verfitytype_d where statis_date=20210201
+union all
+select 'mk.tm_ch_vie_info_photo_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_vie_info_photo_d where statis_date=20210201
+union all
+select 'mk.tm_ch_weidian_click_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_weidian_click_d where statis_date=20210201
+union all
+select 'mk.tm_ch_weidian_login_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_weidian_login_d where statis_date=20210201
+union all
+select 'mk.tm_ch_weidian_order_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_weidian_order_d where statis_date=20210201
+union all
+select 'mk.tm_ch_weidian_share_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_weidian_share_d where statis_date=20210201
+union all
+select 'mk.tm_ch_weidian_user_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ch_weidian_user_d where statis_date=20210201
+union all
+select 'mk.tm_cs_10086_consult_trans_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_10086_consult_trans_d where statis_date=20210201
+union all
+select 'mk.tm_cs_comp_basic_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_comp_basic_d where statis_date=20210201
+union all
+select 'mk.tm_cs_comp_grp_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_comp_grp_d where statis_date=20210201
+union all
+select 'mk.tm_cs_mutual_evt_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_mutual_evt_d where statis_date=20210201
+union all
+select 'mk.tm_cs_rec_bkprod_chk_his_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_rec_bkprod_chk_his_d where statis_date=20210201
+union all
+select 'mk.tm_cs_survey_grp_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_cs_survey_grp_d where statis_date=20210201
+union all
+select 'mk.tm_gc_app_operate_menulog_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_app_operate_menulog_d where statis_date=20210201
+union all
+select 'mk.tm_gc_cmiot_group_cust_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_cmiot_group_cust_d where statis_date=20210201
+union all
+select 'mk.tm_gc_cmiot_subs_prod_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_cmiot_subs_prod_d where statis_date=20210201
+union all
+select 'mk.tm_gc_cmiot_subs_serv_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_cmiot_subs_serv_d where statis_date=20210201
+union all
+select 'mk.tm_gc_esop_sales_billproduct_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_esop_sales_billproduct_d where statis_date=20210201
+union all
+select 'mk.tm_gc_loc_group_induce_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_loc_group_induce_d where statis_date=20210201
+union all
+select 'mk.tm_gc_om_wl_flowtrack_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_om_wl_flowtrack_d where statis_date=20210201
+union all
+select 'mk.tm_gc_sales_billproduct_attr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_sales_billproduct_attr_d where statis_date=20210201
+union all
+select 'mk.tm_gc_vnet_wd_group_v_subs_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_gc_vnet_wd_group_v_subs_d where statis_date=20210201
+union all
+select 'mk.tm_ls_bs_batch_log_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ls_bs_batch_log_d where statis_date=20210201
+union all
+select 'mk.tm_ls_bs_sms_log_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ls_bs_sms_log_d where statis_date=20210201
+union all
+select 'mk.tm_ls_cust_order_attr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ls_cust_order_attr_d where statis_date=20210201
+union all
+select 'mk.tm_ls_dz3dataprod_his_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_ls_dz3dataprod_his_d where statis_date=20210201
+union all
+select 'mk.tm_rs_im_store_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rs_im_store_d where statis_date=20210201
+union all
+select 'mk.tm_rs_wy_cell_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rs_wy_cell_d where statis_date=20210201;
+insert into hw_tmp.tm_sc_checking_data
+select 'mk.tm_rt_esop_installation_hz_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_esop_installation_hz_d where statis_date=20210201
+union all
+select 'mk.tm_rt_hbplat_app_menulog_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_hbplat_app_menulog_d where statis_date=20210201
+union all
+select 'mk.tm_rt_hbplat_app_operate_log_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_hbplat_app_operate_log_d where statis_date=20210201
+union all
+select 'mk.tm_rt_pro_installation_hz_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_pro_installation_hz_d where statis_date=20210201
+union all
+select 'mk.tm_rt_sc_cover_biz_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_sc_cover_biz_d where statis_date=20210201
+union all
+select 'mk.tm_rt_user_cdr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_user_cdr_d where statis_date=20210201
+union all
+select 'mk.tm_rt_user_mo_cdr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_user_mo_cdr_d where statis_date=20210201
+union all
+select 'mk.tm_rt_user_send_email_cdr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_user_send_email_cdr_d where statis_date=20210201
+union all
+select 'mk.tm_rt_wechat_voip_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_rt_wechat_voip_d where statis_date=20210201
+union all
+select 'mk.tm_sc_broaband_repair_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_broaband_repair_d where statis_date=20210201
+union all
+select 'mk.tm_sc_broa_band_expire_mid_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_broa_band_expire_mid_d where statis_date=20210201
+union all
+select 'mk.tm_sc_cheat_ignore_msisdn_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_cheat_ignore_msisdn_d where statis_date=20210201
+union all
+select 'mk.tm_sc_chnl_contact_user_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_chnl_contact_user_d where statis_date=20210201
+union all
+select 'mk.tm_sc_entity_attr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_entity_attr_d where statis_date=20210201
+union all
+select 'mk.tm_sc_feedback_detl_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_feedback_detl_d where statis_date=20210201
+union all
+select 'mk.tm_sc_group_evaluation_time_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_group_evaluation_time_d where statis_date=20210201
+union all
+select 'mk.tm_sc_hcy_act_info_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_hcy_act_info_d where statis_date=20210201
+union all
+select 'mk.tm_sc_hotline_complaint_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_hotline_complaint_d where statis_date=20210201
+union all
+select 'mk.tm_sc_real_check_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_real_check_d where statis_date=20210201
+union all
+select 'mk.tm_sc_rs_mapping_list_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_rs_mapping_list_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subsprodhandle_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_subsprodhandle_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subs_forbid_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_subs_forbid_d where statis_date=20210201
+union all
+select 'mk.tm_sc_subs_privattr_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_subs_privattr_d where statis_date=20210201
+union all
+select 'mk.tm_sc_supervisor_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_supervisor_d where statis_date=20210201
+union all
+select 'mk.tm_sc_tag_di91010_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_tag_di91010_d where statis_date=20210201
+union all
+select 'mk.tm_sc_transout_cause_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_transout_cause_d where statis_date=20210201
+union all
+select 'mk.tm_sc_user_dcard_cmp_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_user_dcard_cmp_d where statis_date=20210201
+union all
+select 'mk.tm_sc_xz_np_rec_gnpdb_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_xz_np_rec_gnpdb_d where statis_date=20210201
+union all
+select 'mk.tm_sc_xz_trans_competitor_leiji_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_sc_xz_trans_competitor_leiji_d where statis_date=20210201
+union all
+select 'mk.tm_te_ci_iop_cust_rel_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_te_ci_iop_cust_rel_d where statis_date=20210201
+union all
+select 'mk.tm_te_hyrl_gateway_device_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_te_hyrl_gateway_device_d where statis_date=20210201
+union all
+select 'mk.tm_te_hyrl_gateway_info_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_te_hyrl_gateway_info_d where statis_date=20210201
+union all
+select 'mk.tm_te_hy_gateway_base_info_d',count(1),concat(),20210201 ,'statis_date'from mk.tm_te_hy_gateway_base_info_d where statis_date=20210201;
