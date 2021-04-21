@@ -1,1562 +1,610 @@
---<metadata>
---<model_name>: 诈骗号码识别结果表
---<keyword>: 诈骗号码, 识别结果表
---<description>: 诈骗号码识别结果表
---<author>: 李啸天@华为
---<run_cycle>: D
---<tmp_table>: hw_tmp.tm_ge_treat_alert_d_30_tmp1,hw_tmp.tm_ge_treat_alert_d_30_tmp2,hw_tmp.tm_ge_treat_alert_d_30_tmp3,hw_tmp.tm_ge_treat_alert_d_30_tmp3_01,
---<tmp_table>: hw_tmp.tm_ge_treat_alert_d_30_tmp3_02,hw_tmp.tm_ge_treat_alert_d_cert_tp1,hw_tmp.tm_ge_treat_alert_d_cert_tp2,hw_tmp.tm_ge_treat_alert_d_30_tmp3_03,
---<tmp_table>: hw_tmp.tm_sc_cheat_alert_d_01,hw_tmp.tm_sc_cheat_alert_dd_02
---<det_table>: pub.tdet_ge_cheat_lac_cell
---<app_table>: MK.tm_sc_cheate_alert_d
---<app_name>: /路径/子路径/应用专题1/应用1
---</metadata>
+insert into hw_tmp.ta_co_subs_interview_m_mid28
+select 
+    subs_id,
+    sum(case when substr(start_date_his,1,6)=${hivevar:vi_month}  then 1 else 0 end)
+from  mk.tm_sc_subs_his_d 
+where deal_date=${hivevar:vi_month_last} and user_stat='US30'
+and (disable_lock like '%1' or  disable_lock like '%2')
+group by subs_id;
 
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid21;
+ create table if not exists hw_tmp.ta_co_subs_interview_m_mid21
+(    statis_month int,
+	 region_code string,
+	 region_id string,
+     subs_id string,
+     phone_no string,
+     gender string,
+     age int,
+     on_net_dur int ,
+     is_group_cust string,
+     product_cd string
+)row format delimited
+fields terminated by '|'
+stored as rcfile;
 
-
-------------------------------------------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp1;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp1
-  (  statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000)     --- 号码同证件下的在网号码
-  );
-
-  insert into hw_tmp.tm_ge_treat_alert_d_30_tmp1
-  select statis_date,subs_id,msisdn,region_code,region_id,user_age,user_sex,innet_date,onnet_dur,channel_id,channel_type1,channel_type2,channel_type3,
-         main_product,is_union_pay,user_star,is_real,is_multi_number,main_multi_number,is_fst_snd,fst_snd_fst,is_he_family,is_treate_imei,is_group_subs,group_type,
-         nvl(user_arpu,0),main_tc,nvl(tc_fee,0),nvl(o_call_num,0),nvl(t_call_num,0),nvl(o_call_dur,0),nvl(t_call_dur,0),nvl(avg_call_dur,0),
-         nvl(n_roam_dur,0),nvl(d_roam_dur,0),nvl(d_roam_dur_in,0),nvl(d_roam_dur_out,0),nvl(n_roam_num,0),nvl(d_roam_num,0),nvl(d_roam_num_in,0),nvl(d_roam_num_out,0),
-         roam_prov,roam_city,roam_msc,roam_lac,roam_ci,nvl(treate_msc_num,0),nvl(treate_msc_dur,0),
-         nvl(cell_num,0),nvl(fst_cell_num ,0),nvl(snd_cell_num ,0),nvl(trd_cell_num ,0),nvl(p2p_num,0),nvl(p2p_num_o,0),nvl(p2p_num_t,0),nvl(flux,0),
-         nvl(im_flux ,0),nvl(friend_num,0),nvl(frined_in_prov,0),nvl(frined_out_prov,0),nvl(stable_friend,0),nvl(only_1_frined,0),
-         nvl(ini_call_hook,0),nvl(ini_ring_dur,0),nvl(trans_call_num,0),
-         nvl(in_30day_callnum,0),oneday_certnum,one_period_certnum,other_phone
-    from mk.tm_sc_cheate_base_d
-   where statis_date between  ${hivevar:vl_month_day} and ${hivevar:vi_day}
-     and (nvl(o_call_num,0)+ nvl(t_call_num,0))>0;
-
-
-
-
-
-------------------------------------------------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp2;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp2
-  ( statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000),     --- 号码同证件下的在网号码
-    row_number                    int
-  );
-
-  insert into hw_tmp.tm_ge_treat_alert_d_30_tmp2
-  select statis_date,subs_id,msisdn,region_code,region_id,user_age,user_sex,innet_date,onnet_dur,channel_id,channel_type1,channel_type2,channel_type3,
-         main_product,is_union_pay,user_star,is_real,is_multi_number,main_multi_number,is_fst_snd,fst_snd_fst,is_he_family,is_treate_imei,
-         is_group_subs,group_type,user_arpu,main_tc,tc_fee,o_call_num,t_call_num,o_call_dur,t_call_dur,avg_call_dur,n_roam_dur,d_roam_dur,
-         d_roam_dur_in,d_roam_dur_out,n_roam_num,d_roam_num,d_roam_num_in,d_roam_num_out,roam_prov,roam_city,roam_msc,roam_lac,roam_ci,treate_msc_num,
-         treate_msc_dur,cell_num,fst_cell_num,snd_cell_num,trd_cell_num,p2p_num,p2p_num_o,p2p_num_t,flux,im_flux,friend_num,frined_in_prov,
-         frined_out_prov,stable_friend,only_1_frined,ini_call_hook,ini_ring_dur,trans_call_num,in_30day_callnum,oneday_certnum,one_period_certnum,other_phone,
-         row_number()over(partition by subs_id order by statis_date desc )  row_number
-    from hw_tmp.tm_ge_treat_alert_d_30_tmp1;
-
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp3;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp3
-  ( statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000),     --- 号码同证件下的在网号码
-     row_number                    int ,
-     rule_id              varchar(100),
-     alert_level          int
-  );
-
-insert into hw_tmp.tm_ge_treat_alert_d_30_tmp3
+ insert into hw_tmp.ta_co_subs_interview_m_mid21
+select 
+    a.statis_month,
+	a.region_code,
+	a.region_id,
+    a.subs_id,
+    a.phone_no,
+    a.gender,
+    a.age,
+    a.on_net_dur,
+    a.is_group_cust,
+    a.product_cd
+from (
   select
-        a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_01'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2 a
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2 b
-     on  a.subs_id=b.subs_id
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2 c
-     on a.subs_id=c.subs_id
-  where a.statis_date = ${hivevar:vi_day}
-    and coalesce(a.in_30day_callnum,0)<=10
-    and b.row_number+1=a.row_number
-    and c.row_number+1=b.row_number
-    and a.treate_msc_num>0
-    and b.treate_msc_num>0
-    and c.treate_msc_num>0
-    and a.o_call_num>=10
-    and b.o_call_num>=10
-    and c.o_call_num>=10
-    and (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-    and (b.o_call_num+b.t_call_num)>0 and b.friend_num*1.0/(b.o_call_num+b.t_call_num)>=0.7
-    and (c.o_call_num+c.t_call_num)>0 and c.friend_num*1.0/(c.o_call_num+c.t_call_num)>=0.7
-    ;
-  insert into hw_tmp.tm_ge_treat_alert_d_30_tmp3
-  select           a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_02'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2 a
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2 b
-     on a.subs_id=b.subs_id
-  where a.statis_date = ${hivevar:vi_day}
-   and coalesce(a.in_30day_callnum,0)<=10
-   and b.row_number+1=a.row_number
-   and a.treate_msc_num>0
-   and a.treate_msc_num>0
-   and a.o_call_num>=20
-   and a.o_call_num>=20
-   and (a.o_call_num+a.t_call_num)>0  and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-   and (b.o_call_num+b.t_call_num)>0 and b.friend_num*1.0/(b.o_call_num+b.t_call_num)>=0.7
+      statis_month,
+	  region_code,
+	  region_id,
+      subs_id,
+      phone_no,
+      gender,
+      age,
+      on_net_dur,
+      is_group_cust,
+      product_cd,
+      start_date,
+  row_number() over(partition by phone_no order by start_date desc) row
+  from mk.tm_sc_user_statis_m
+  where statis_month=${hivevar:vi_month}
+  and  is_on_net_user=1 and substr(phone_no,1,1)=1 and length(phone_no)=11
+  ) a where a.row=1 ;
 
-union all
-
-  select
-          a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_03'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-  where a.statis_date=${hivevar:vi_day}
-    and coalesce(a.in_30day_callnum,0)<=10
-    and a.treate_msc_num>0
-    and a.o_call_num>=40
-    and (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-
-union all
-
-  select
-          a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_04'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-  where a.statis_date=${hivevar:vi_day}
-   and a.user_age>=45
-   and a.treate_msc_num>0
-   and a.o_call_num>=38
-   and (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-   and a.cell_num<=9
-
-union all
-
-  select
-          a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_05'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-  where a.statis_date=${hivevar:vi_day}
-   and a.user_age<=25
-   and a.treate_msc_num>0
-   and a.o_call_num>=30
-   and (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-   and a.cell_num<=9
-
-union all
-
-  select
-          a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_06'            as rule_id
-        ,0                           as alert_level
-    from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-   where a.statis_date=${hivevar:vi_day}
-    and coalesce(a.in_30day_callnum,0)<=0
-    and onnet_dur <=20 and channel_type1 ='103340'
-    and d_roam_num=(o_call_num+t_call_num)
-    and d_roam_num>=50
-    and (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-    and cell_num<=9
-
-union all
-
-  select         a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_07'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2  b
-     on a.subs_id=b.subs_id
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2  c
-     on b.subs_id=c.subs_id
-  where a.statis_date=${hivevar:vi_day}
-   and b.row_number+1=a.row_number
-   and c.row_number+1=b.row_number
-   and  coalesce(a.in_30day_callnum,0)<=10
-   and a.onnet_dur<=90
-   and b.onnet_dur<=90
-   and c.onnet_dur<=90
-   and a.avg_call_dur<=65  and (case when a.o_call_num = 0 then 0 else a.o_call_dur/a.o_call_num END)<=65
-   and b.avg_call_dur<=65  and (case when b.o_call_num = 0 then 0 else b.o_call_dur/b.o_call_num END)<=65
-   and c.avg_call_dur<=65  and (case when c.o_call_num = 0 then 0 else c.o_call_dur/c.o_call_num END)<=65
-   and a.treate_msc_num>0
-   and b.treate_msc_num>0
-   and c.treate_msc_num>0
-   and (c.o_call_num+c.t_call_num)>=40
-   and (b.o_call_num+b.t_call_num)>=20
-   and (a.o_call_num+a.t_call_num)>=10
-
-union all
-
-  select
-          a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_08'            as rule_id
-        ,0                           as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp2  a
-   join hw_tmp.tm_ge_treat_alert_d_30_tmp2  b
-     on a.subs_id=b.subs_id
-  where a.statis_date=${hivevar:vi_day}
-    and b.row_number+1=a.row_number
-    and  coalesce(a.in_30day_callnum,0)<=10
-    and a.onnet_dur<=90
-    and b.onnet_dur<=90
-    and a.avg_call_dur<=65  and (case when a.o_call_num = 0 then 0 else a.o_call_dur/a.o_call_num END)<=65
-    and b.avg_call_dur<=65  and (case when b.o_call_num = 0 then 0 else b.o_call_dur/b.o_call_num END)<=65
-    and a.treate_msc_num>0
-    and b.treate_msc_num>0
-    and (b.o_call_num+b.t_call_num)>=57
-    and (a.o_call_num+a.t_call_num)>=40
-    and (b.o_call_num+b.t_call_num)>0 and b.friend_num*1.0/(b.o_call_num+b.t_call_num)>=0.80
-    and  (a.o_call_num+a.t_call_num)>0 and a.friend_num*1.0/(a.o_call_num+a.t_call_num)>=0.7
-
-union all
-
-  select         a.statis_date                as statis_date
-        ,a.subs_id                   as subs_id
-        ,a.msisdn                    as msisdn
-        ,a.region_code               as region_code
-        ,a.region_id                 as region_id
-        ,a.user_age                  as user_age
-        ,a.user_sex                  as user_sex
-        ,a.innet_date                as innet_date
-        ,a.onnet_dur                 as onnet_dur
-        ,a.channel_id                as channel_id
-        ,a.channel_type1             as channel_type1
-        ,a.channel_type2             as channel_type2
-        ,a.channel_type3             as channel_type3
-        ,a.main_product              as main_product
-        ,a.is_union_pay              as is_union_pay
-        ,a.user_star                 as user_star
-        ,a.is_real                   as is_real
-        ,a.is_multi_number           as is_multi_number
-        ,a.main_multi_number         as main_multi_number
-        ,a.is_fst_snd                as is_fst_snd
-        ,a.fst_snd_fst               as fst_snd_fst
-        ,a.is_he_family              as is_he_family
-        ,a.is_treate_imei            as is_treate_imei
-        ,a.is_group_subs             as is_group_subs
-        ,a.group_type                as group_type
-        ,a.user_arpu                 as user_arpu
-        ,a.main_tc                   as main_tc
-        ,a.tc_fee                    as tc_fee
-        ,a.o_call_num                as o_call_num
-        ,a.t_call_num                as t_call_num
-        ,a.o_call_dur                as o_call_dur
-        ,a.t_call_dur                as t_call_dur
-        ,a.avg_call_dur              as avg_call_dur
-        ,a.n_roam_dur                as n_roam_dur
-        ,a.d_roam_dur                as d_roam_dur
-        ,a.d_roam_dur_in             as d_roam_dur_in
-        ,a.d_roam_dur_out            as d_roam_dur_out
-        ,a.n_roam_num                as n_roam_num
-        ,a.d_roam_num                as d_roam_num
-        ,a.d_roam_num_in             as d_roam_num_in
-        ,a.d_roam_num_out            as d_roam_num_out
-        ,a.roam_prov                 as roam_prov
-        ,a.roam_city                 as roam_city
-        ,a.roam_msc                  as roam_msc
-        ,a.roam_lac                  as roam_lac
-        ,a.roam_ci                   as roam_ci
-        ,a.treate_msc_num            as treate_msc_num
-        ,a.treate_msc_dur            as treate_msc_dur
-        ,a.cell_num                  as cell_num
-        ,a.fst_cell_num              as fst_cell_num
-        ,a.snd_cell_num              as snd_cell_num
-        ,a.trd_cell_num              as trd_cell_num
-        ,a.p2p_num                   as p2p_num
-        ,a.p2p_num_o                 as p2p_num_o
-        ,a.p2p_num_t                 as p2p_num_t
-        ,a.flux                      as flux
-        ,a.im_flux                   as im_flux
-        ,a.friend_num                as friend_num
-        ,a.frined_in_prov            as frined_in_prov
-        ,a.frined_out_prov           as frined_out_prov
-        ,a.stable_friend             as stable_friend
-        ,a.only_1_frined             as only_1_frined
-        ,a.ini_call_hook             as ini_call_hook
-        ,a.ini_ring_dur              as ini_ring_dur
-        ,a.trans_call_num            as trans_call_num
-        ,a.in_30day_callnum          as in_30day_callnum
-        ,a.oneday_certnum            as oneday_certnum
-        ,a.one_period_certnum        as one_period_certnum
-        ,a.other_phone               as other_phone
-        ,a.row_number                as row_number
-        ,'TR_20190808_09'            as rule_id
-        ,0                           as alert_level
-    from hw_tmp.tm_ge_treat_alert_d_30_tmp2 a
-         ,pub.tdet_ge_cheat_lac_cell b
-   where a.statis_date=${hivevar:vi_day}
-    and (
-         (user_age>=45 or user_age<=23  )  or
-         (user_age  between   24 and 44 and  coalesce(a.in_30day_callnum,0)<=0)
-         )
-    and concat(a.roam_lac,',',a.roam_ci) =CONCAT(b.lac_id,',',b.cell_id)
-    and a.statis_date between b.start_cycle and b.end_cycle
-  group by a.statis_date,a.subs_id,a.msisdn,a.region_code,a.region_id,a.user_age,a.user_sex,a.innet_date,a.onnet_dur
-        ,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product,a.is_union_pay,a.user_star,a.is_real,a.is_multi_number
-        ,a.main_multi_number,a.is_fst_snd,a.fst_snd_fst,a.is_he_family,a.is_treate_imei,a.is_group_subs,a.group_type,a.user_arpu,a.main_tc,a.tc_fee,a.o_call_num
-        ,a.t_call_num,a.o_call_dur,a.t_call_dur,a.avg_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out,a.n_roam_num
-        ,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.roam_prov,a.roam_city,a.roam_msc,a.roam_lac,a.roam_ci,a.treate_msc_num
-        ,a.treate_msc_dur,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.p2p_num,a.p2p_num_o,a.p2p_num_t,a.flux
-        ,a.im_flux,a.friend_num,a.frined_in_prov,a.frined_out_prov,a.stable_friend,a.only_1_frined,a.ini_call_hook,a.ini_ring_dur,a.trans_call_num
-        ,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone,a.row_number
-        ;
--------------------------------------预警级别---------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_01;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_01
-  ( statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000),     --- 号码同证件下的在网号码
-     row_number                    int ,
-     rule_id              varchar(100),
-     alert_level          int
-  );
-
-  insert into hw_tmp.tm_ge_treat_alert_d_30_tmp3_01
-  select a.statis_date,a.subs_id,a.msisdn,a.region_code,a.region_id,a.user_age,a.user_sex,a.innet_date,a.onnet_dur
-        ,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product,a.is_union_pay,a.user_star,a.is_real,a.is_multi_number
-        ,a.main_multi_number,a.is_fst_snd,a.fst_snd_fst,a.is_he_family,a.is_treate_imei,a.is_group_subs,a.group_type,a.user_arpu,a.main_tc,a.tc_fee,a.o_call_num
-        ,a.t_call_num,a.o_call_dur,a.t_call_dur,a.avg_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out,a.n_roam_num
-        ,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.roam_prov,a.roam_city,a.roam_msc,a.roam_lac,a.roam_ci,a.treate_msc_num
-        ,a.treate_msc_dur,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.p2p_num,a.p2p_num_o,a.p2p_num_t,a.flux
-        ,a.im_flux,a.friend_num,a.frined_in_prov,a.frined_out_prov,a.stable_friend,a.only_1_frined,a.ini_call_hook,a.ini_ring_dur,a.trans_call_num
-        ,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone,a.row_number,
-        a.rule_id,
-        (case when treate_msc_num>0 then 1 else 0 end) +
-        (case when coalesce(a.in_30day_callnum,0)<=10 and a.ONNET_DUR>=30 then 1 else 0 end) +
-        (case when USER_ARPU<=300 then 1 else 0 end) +
-        (case when a.ONNET_DUR<=180 then 1 else 0 end) +
-        (case when is_treate_imei='1' then 1 else 0 end)  as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp3 a
-  where a.statis_date=${hivevar:vi_day}
-   ;
-
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_02;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_02
-  ( statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000),     --- 号码同证件下的在网号码
-     row_number                    int ,
-     rule_id              varchar(100),
-     alert_level          int
-  );
-  insert into hw_tmp.tm_ge_treat_alert_d_30_tmp3_02
-  select a.statis_date,a.subs_id,a.msisdn,a.region_code,a.region_id,a.user_age,a.user_sex,a.innet_date,a.onnet_dur
-        ,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product,a.is_union_pay,a.user_star,a.is_real,a.is_multi_number
-        ,a.main_multi_number,a.is_fst_snd,a.fst_snd_fst,a.is_he_family,a.is_treate_imei,a.is_group_subs,a.group_type,a.user_arpu,a.main_tc,a.tc_fee,a.o_call_num
-        ,a.t_call_num,a.o_call_dur,a.t_call_dur,a.avg_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out,a.n_roam_num
-        ,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.roam_prov,a.roam_city,a.roam_msc,a.roam_lac,a.roam_ci,a.treate_msc_num
-        ,a.treate_msc_dur,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.p2p_num,a.p2p_num_o,a.p2p_num_t,a.flux
-        ,a.im_flux,a.friend_num,a.frined_in_prov,a.frined_out_prov,a.stable_friend,a.only_1_frined,a.ini_call_hook,a.ini_ring_dur,a.trans_call_num
-        ,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone,a.row_number,
-        a.rule_id,
-        case when (a.roam_lac=b.lac_id and a.roam_ci=b.cell_id)
-                       then a.ALERT_LEVEL+b.treate_lac_cell
-            else a.alert_level
-        end as alert_level
-   from hw_tmp.tm_ge_treat_alert_d_30_tmp3_01 a
-   left join
-             (select lac_id,cell_id,
-                     1 as  treate_lac_cell
-                from pub.tdet_ge_cheat_lac_cell b
-               where ${hivevar:vi_day} between b.start_cycle and b.end_cycle
-               group by  lac_id,cell_id,1
-              )b
-     on a.roam_lac=b.lac_id and a.roam_ci=b.cell_id
-  where a.statis_date=${hivevar:vi_day};
-
---------------------------------------------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_cert_tp1;
-  create TABLE IF NOT EXISTS hw_tmp.tm_ge_treat_alert_d_cert_tp1
-  (
-   cert_num varchar(120)
-   );
-
-  insert into hw_tmp.tm_ge_treat_alert_d_cert_tp1
-  select distinct b.cert_number
-    from mk.tm_sc_cheat_msisdn_d a,
-         mk.tm_sc_cheate_subs_30day_d b
-   where a.statis_date=${hivevar:vi_day}
-     and a.alert_date>=cast (regexp_replace(
-                                             add_months(concat(substr(${hivevar:vi_day},1,4),'-',substr(${hivevar:vi_day},5,2),'-',substr(${hivevar:vi_day},7,2)) ,-6),
-                                             '-|:| ','')
-                                as int )
-     and b.statis_date=${hivevar:vi_day}
-     and a.subs_id=b.subs_id
-     ;
-
----------------------------------------------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_cert_tp2;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_cert_tp2
-  (
-    cert_num            varchar(120)
-    ,phone_no           varchar(12)
-    ,treate_cert_phone  int
-   );
-
-  insert into hw_tmp.tm_ge_treat_alert_d_cert_tp2
-  select a.cert_num,
-         b.msisdn,
-         1
-    from hw_tmp.tm_ge_treat_alert_d_cert_tp1 a,
-         mk.tm_sc_cheate_subs_30day_d b
-   where b.statis_date=${hivevar:vi_day}
-     and a.cert_num=b.cert_number
-     and b.user_status like 'US1%'
-     ;
-
------------------------------------
-  drop table if exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_03;
-  create table if not exists hw_tmp.tm_ge_treat_alert_d_30_tmp3_03
-  ( statis_date               int ,
-     subs_id           varchar(100),        --- 用户id
-     msisdn            varchar(100),        --- 手机号码
-     region_code       varchar(25),         --- 地市
-     region_id         varchar(50),         --- 县区
-     user_age          int,                 --- 年龄
-     user_sex          varchar(20),         --- 性别0男；1女
-     innet_date        varchar(14),         --- 入网时间
-     onnet_dur         int,                 --- 在网时长（天）
-     channel_id        varchar(100),        --- 入网渠道
-     channel_type1     varchar(50),         --- 渠道类型1
-     channel_type2     varchar(50),         --- 渠道类型2
-     channel_type3     varchar(50),         --- 渠道类型3
-     main_product      varchar(65),         --- 主产品
-     is_union_pay      varchar(10),         --- 是否统付1是，0否
-     user_star         int,                 --- 客户星级
-     is_real           varchar(10),         --- 是否实名制
-     is_multi_number   varchar(10),         --- 是否一卡多号
-     main_multi_number varchar(50),         --- 一卡多号的主号，是一卡多号业务时填写，其他为空
-     is_fst_snd        varchar(10),         --- 是否主副卡业务用户
-     fst_snd_fst       varchar(50),         --- 主副卡的主号码，是主副卡业务时填写，其他为空
-     is_he_family      varchar(10),         --- 是否和家庭
-     is_treate_imei    varchar(10),         --- 是否诈骗终端
-     is_group_subs     varchar(10),         --- 是否集团用户
-     group_type        varchar(20),         --- 集团类别
-     user_arpu         bigint,              --- 用户消费,无arpu的填写主套餐费用,单位分
-     main_tc           varchar(200),        --- 主优惠
-     tc_fee            bigint,              --- 套餐费
-     o_call_num        int,                 --- 主叫次数
-     t_call_num        int,                 --- 被叫次数
-     o_call_dur        bigint,              --- 主叫时长
-     t_call_dur        bigint,              --- 被叫时长
-     avg_call_dur      bigint,              --- 平均通话时长
-     n_roam_dur        bigint,              --- 非漫游通话时长
-     d_roam_dur        bigint,              --- 国内漫游通话时长
-     d_roam_dur_in     bigint,              --- 国漫-其中省内漫游时长
-     d_roam_dur_out    bigint,              --- 国漫-其中省际漫游时长
-     n_roam_num        int,                 --- 非漫游通话次数
-     d_roam_num        int,                 --- 国内漫游通话次数
-     d_roam_num_in     int,                 --- 国内漫游通话次数-省内
-     d_roam_num_out    int,                 --- 国内漫游通话次数-省际
-     roam_prov         varchar(40),         --- 漫游省
-     roam_city         varchar(40),         --- 漫游地市
-     roam_msc          varchar(100),        --- 漫游地msc
-     roam_lac          varchar(100),        --- 漫游地lac
-     roam_ci           varchar(100),        --- 漫游地cI
-     treate_msc_num    int,                 --- 重点区域通话次数
-     treate_msc_dur    int,                 --- 重点区域通话时长
-     cell_num          int,                 --- 通话lac、cell数量
-     fst_cell_num      int,                 --- 通话lac、cell--top1通话次数
-     snd_cell_num      int,                 --- 通话lac、cell--top2通话次数
-     trd_cell_num      int,                 --- 通话lac、cell--top3通话次数
-     p2p_num           int,                 --- 点对点短信量
-     p2p_num_o         int,                 --- 点对点短信量-上行
-     p2p_num_t         int,                 --- 点对点短信量-下行
-     flux              int,                 --- 使用流量（M）
-     im_flux           int,                 --- IM流量（M）
-     friend_num        int,                 --- 通信人数其中省内人数—20190809变更
-     frined_in_prov    int,                 --- 通信人数其中省外人数—20190809变更
-     frined_out_prov   int,                 --- 稳定交往圈人数
-     stable_friend     int,                 --- 本处可以指定一周内有通信的人数。--20190809变更
-     only_1_frined     int,                 --- 通话1次人数
-     ini_call_hook     int,                 --- 拨通后主动挂机次数
-     ini_ring_dur      int,                 --- 拨通后主动挂机平均振铃时长,单位秒
-     trans_call_num    int,                 --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫
-     in_30day_callnum  int,                 --- 入网30天内本地通话量
-     oneday_certnum    varchar(4000),       --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-     one_period_certnum   varchar(4000),    --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-     other_phone          varchar(4000),     --- 号码同证件下的在网号码
-     row_number                    int ,
-     rule_id              varchar(100),
-     alert_level          int
-  );
+drop table if exists hw_tmp.ta_co_subs_interview_m_01;
+ create table if not exists hw_tmp.ta_co_subs_interview_m_01
+(statis_month int,
+    region_code string,
+	 region_id string,
+     subs_id string,
+     phone_no string,
+    age int,
+    gender string,
+    is_group_cust string,
+    l1_arpu int,
+    n3_arpu int,
+    l1_dou  int,
+    n3_dou  int,
+    l1_mou  int,
+    n3_mou  int,
+    star_level string,
+    is_qqt string,
+    on_net_dur int ,
+    qqt_type string,
+    l1_rechrg_cnt int,
+    n3_rechrg_cnt int,
+    days int,
+    is_yjsk string,
+    terminal_brand string,--终端厂家
+    is_main string,--主副卡槽标识
+    is_payplan string, --代付
+    dou_mom  double, --dou环比
+    arpu_mom double , --arpu环比
+    mou_mom  double, --mou环比
+    is_fst_snd string
+)row format delimited
+fields terminated by '|'
+stored as rcfile;
 
 
-  insert into  hw_tmp.tm_ge_treat_alert_d_30_tmp3_03
-  select a.statis_date,a.subs_id,a.msisdn,a.region_code,a.region_id,a.user_age,a.user_sex,a.innet_date,a.onnet_dur
-        ,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product,a.is_union_pay,a.user_star,a.is_real,a.is_multi_number
-        ,a.main_multi_number,a.is_fst_snd,a.fst_snd_fst,a.is_he_family,a.is_treate_imei,a.is_group_subs,a.group_type,a.user_arpu,a.main_tc,a.tc_fee,a.o_call_num
-        ,a.t_call_num,a.o_call_dur,a.t_call_dur,a.avg_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out,a.n_roam_num
-        ,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.roam_prov,a.roam_city,a.roam_msc,a.roam_lac,a.roam_ci,a.treate_msc_num
-        ,a.treate_msc_dur,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.p2p_num,a.p2p_num_o,a.p2p_num_t,a.flux
-        ,a.im_flux,a.friend_num,a.frined_in_prov,a.frined_out_prov,a.stable_friend,a.only_1_frined,a.ini_call_hook,a.ini_ring_dur,a.trans_call_num
-        ,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone,a.row_number,
-        a.rule_id,
-        case when(a.msisdn=b.phone_no ) then a.ALERT_LEVEL+b.treate_cert_phone
-             else a.ALERT_LEVEL
-        end
-    from hw_tmp.tm_ge_treat_alert_d_30_tmp3_02 a
-    left join hw_tmp.tm_ge_treat_alert_d_cert_tp2 b
-      on a.msisdn=b.phone_no
-   where a.statis_date=${hivevar:vi_day};
+insert into hw_tmp.ta_co_subs_interview_m_01
+select 
+    distinct 
+    a.statis_month,
+    a.region_code ,
+	a.region_id ,
+    a.subs_id ,
+    a.phone_no,
+    a.age,
+    a.gender,
+    a.is_group_cust,
+    b.l1_arpu ,--ARPU
+    b.n3_arpu, --过去3个月平均ARPU
+    b.l1_dou, --DOU
+    b.n3_dou, --过去3个月平均DOU
+    b.l1_mou, --MOU
+    b.n3_mou, --过去3个月平均MOU
+    coalesce(c.star_level,'0'), --星级	
+    coalesce(d.is_qqt,'0'), --是否全球通
+    a.on_net_dur ,--网龄
+    coalesce(d.qqt_type,'0'),--全球通等级
+    coalesce(e.l1_rechrg_cnt,0),--缴费次数
+    coalesce(e.n3_rechrg_cnt,0),--近3月缴费次数
+    f.days,--终端使用时长
+    case when g.subs_id is not null then 1 else 0 end, --一机双卡槽标识
+    h.terminal_brand,--终端厂家
+    coalesce(g.is_main,'000'),--主副卡槽标识
+    coalesce(c.is_payplan,'000'), --代付
+    coalesce(b.dou_mom,0), --dou环比
+    coalesce(b.arpu_mom,0), --arpu环比
+    coalesce(b.mou_mom,0), --mou环比
+    case when nvl(a.product_cd,'xxx') in ('prod_gl.g.fkkhcp','prod_gl.g.wnfk') then 1 else 0 end  as is_fst_snd
+from hw_tmp.ta_co_subs_interview_m_mid21 a
+left join hw_tmp.ta_co_subs_interview_m_mid03 b
+on a.subs_id=b.subs_id
+left join  mk.tm_sc_mob_phone_statis_d c
+on a.subs_id=c.subs_id and c.statis_date=${hivevar:vi_month_last}
+left join mk.tm_sc_globale_detl_d d
+on a.subs_id=d.subs_id and d.statis_date=${hivevar:vi_month_last}
+left join hw_tmp.ta_co_subs_interview_m_mid05 e
+on a.phone_no=e.phone_no
+left join hw_tmp.ta_co_subs_interview_m_mid06 f
+on a.subs_id=f.subs_id
+left join mk.tm_te_qs_doucard_user_label_m  g
+on a.subs_id=g.subs_id and g.statis_month=${hivevar:vi_month}
+left join hw_tmp.ta_co_subs_interview_m_mid20 h
+on a.subs_id=h.subs_id;
 
---------------------------------------生成正式结果表------------------
-  drop table if exists hw_tmp.tm_sc_cheat_alert_d_01;
-  create table if not exists hw_tmp.tm_sc_cheat_alert_d_01
-  ( statis_date                   int,
-    subs_id                       string ,                     --- 用户id
-    msisdn                        string ,                     --- 号码
-    region_code                   string ,                     --- 地市
-    region_id                     string ,                     --- 县区
-    innet_date                    int,                         --- 入网时间
-    onnet_dur                     int,                         --- 在网时长（天）
-    channel_id                    string ,                     --- 入网渠道
-    channel_type1                 string ,                     --- 渠道类型1
-    channel_type2                 string ,                     --- 渠道类型2
-    channel_type3                 string ,                     --- 渠道类型3
-    main_product                  string ,                     --- 主产品
-    user_arpu                     decimal(10,2),               --- 用户消费
-    main_tc                       string ,                     --- 主优惠
-    tc_fee                        decimal(10,2),               --- 套餐费
-    roam_prov                     string ,                     --- 漫游省
-    roam_city                     string ,                     --- 漫游地市
-    main_multi_number             string ,                     --- 一卡多号的主号
-    fst_snd_fst                   string ,                     --- 主副卡的主号码
-    o_call_num                    int,                         --- 主叫次数
-    t_call_num                    int,                         --- 被叫次数
-    o_call_dur                    bigint,                      --- 主叫时长
-    t_call_dur                    bigint,                      --- 被叫时长
-    n_roam_dur                    bigint,                      --- 非漫游通话时长
-    d_roam_dur                    bigint,                      --- 国内漫游通话时长
-    d_roam_dur_in                 bigint,                      --- 国漫-其中省内漫游时长
-    d_roam_dur_out                bigint,                      --- 国漫-其中省际漫游时长
-    n_roam_num                    int,                         --- 非漫游通话次数
-    d_roam_num                    int,                         --- 国内漫游通话次数
-    d_roam_num_in                 int,                         --- 国内漫游通话次数-省内
-    d_roam_num_out                int,                         --- 国内漫游通话次数-省际
-    p2p_num                       int,                         --- 点对点短信量
-    p2p_num_o                     int,                         --- 点对点短信量-上行
-    p2p_num_t                     int,                         --- 点对点短信量-下行
-    cell_num                      int,                         --- 通话lac、cell数量
-    fst_cell_num                  int,                         --- 通话lac、cell--top1通话次数
-    snd_cell_num                  int,                         --- 通话lac、cell--top2通话次数
-    trd_cell_num                  int,                         --- 通话lac、cell--top3通话次数
-    im_flux                       int,                         --- IM流量占比
-    friend_num                    int,                         --- 交往圈人数
-    only_1_frined                 int,                         --- 通话1次人数
-    rule_id                       string ,                     --- 规则ID
-    alert_level                   string ,                     --- 风险级别
-    trans_call_num                int,                         --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫。
-    in_30day_callnum              int,                         --- 入网30天内本地通话量
-    oneday_certnum                Varchar(4000),               --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-    one_period_certnum            Varchar(4000),               --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-    other_phone                   Varchar(4000)                --- 号码同证件下的在网号码
-   );
+drop table if exists hw_tmp.ta_co_subs_interview_m_02;
+create table if not exists hw_tmp.ta_co_subs_interview_m_02
+(statis_month int,
+    region_code string,
+	 region_id string,
+     subs_id string,
+     phone_no string,
+    age int,
+    gender string,
+    is_group_cust string,
+    l1_arpu int,
+    n3_arpu int,
+    l1_dou  int,
+    n3_dou  int,
+    l1_mou  int,
+    n3_mou  int,
+    star_level string,
+    is_qqt string, --是否全球通
+    on_net_dur int , --网龄
+    qqt_type string, --全球通等级
+    l1_rechrg_cnt int,--缴费次数
+    n3_rechrg_cnt int,--近3月缴费次数
+    days int,--终端使用时长
+    is_yjsk string,--是否一机双卡槽
+    terminal_brand string,--终端厂家
+    is_main string,--主副卡槽标识
+    is_payplan string, --代付
+    dou_mom  double, --dou环比
+    arpu_mom double , --arpu环比
+    mou_mom  double, --mou环比
+    is_fst_snd string,--是否主副卡
+    fav_val double,--主套餐价值
+    markt_solution_name string,--主套餐名称
+    markt_solution_days int,--主套餐使用时长
+    is_flux_ct string, --是否流量超套
+    fav_aft_base_fee int, --当月超套费
+    chrg_flux int , --当月超套流量
+    flux_unit_price decimal(20,2), --套外流量单价
+    flux_ct_cnt int, --近三月流量超套次数
+    avg_flux_ct_fee int, --近三月平均流量超套费
+    avg_flux_ct int, --近三月平均超套流量
+    is_gsm_ct string, --是否语音超套
+    gsm_ct_fee int, --当月语音超套费
+    o_chrg_dur int , --当月主叫超套时长
+    chrg_dur int, --当月超套时长
+    gsm_unit_price decimal(20,2), --套外语音单价
+    gsm_ct_cnt int , --近三月语音超套次数
+    avg_gsm_ct_fee int, --近三月平均语音超套费
+    avg_o_chrg_dur int, --近三月平均主叫语音超套时长
+    avg_chrg_dur int,--近三月平均语音超套时长
+    is_hyq int,  --是否处于合约期
+    hy_happen_time int , --合约已生效时长
+    hy_time int, --合约时长
+    us_mon int, --距离合约结束的剩余时间
+    deposit_amount int, --当前有效合约的预存金额
+    pay_quota int, --当前有效合约的月返还金额
+    is_3month_expire int, --过去3个月是否存在合约到期
+    tn_flux decimal(20,2), --套内流量
+    tn_gsm int, --套内语音
+    tn_surp_flux decimal(20,2), --套内剩余流量
+    tn_surp_gsm int, --套内剩余语音时长
+    flux_satura double, --流量饱和度
+    gsm_satura double , --语音饱和度
+    avg_flux_surp decimal(20,2), --近三个月套内平均剩余流量
+    avg_gsm_surp int, --近三个月套内平均剩余语音
+    near_3month_fluxsurp int, --近三月剩余流量次数
+    near_3month_gsmsurp int, ----近三月剩余语音次数
+    is_rate_limiting int,--是否限速
+    is_tf int, --是否统付
+    is_tsb int  --是否订购提速包
+)row format delimited
+fields terminated by '|'
+stored as rcfile;
 
-  insert into hw_tmp.tm_sc_cheat_alert_d_01
-  select ${hivevar:vi_day}
-         ,a.subs_id,a.msisdn,a.region_code,a.region_id
-         ,cast(substr(a.innet_date,1,8) as int )
-         ,a.onnet_dur,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product
-         ,round(nvl(a.user_arpu,0)/100,2) as user_arpu
-         ,a.main_tc
-         ,round(nvl(a.tc_fee,0)/100,2) as tc_fee
-         ,a.roam_prov,a.roam_city,a.main_multi_number,a.fst_snd_fst,a.o_call_num,a.t_call_num
-         ,a.o_call_dur,a.t_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out
-         ,a.n_roam_num,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.p2p_num,a.p2p_num_o
-         ,a.p2p_num_t,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.im_flux,a.friend_num
-         ,a.only_1_frined
-         ,min(rule_id) as rule_id
-         ,a.alert_level,a.trans_call_num,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone
-    from hw_tmp.tm_ge_treat_alert_d_30_tmp3_03 a
-   where a.statis_date=${hivevar:vi_day}
-   group by a.subs_id,a.msisdn,a.region_code,a.region_id
-         ,cast(substr(a.innet_date,1,8) as int )
-         ,a.onnet_dur,a.channel_id,a.channel_type1,a.channel_type2,a.channel_type3,a.main_product
-         ,round(nvl(a.user_arpu,0)/100,2)
-         ,a.main_tc
-         ,round(nvl(a.tc_fee,0)/100,2)
-         ,a.roam_prov,a.roam_city,a.main_multi_number,a.fst_snd_fst,a.o_call_num,a.t_call_num
-         ,a.o_call_dur,a.t_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,a.d_roam_dur_out
-         ,a.n_roam_num,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.p2p_num,a.p2p_num_o
-         ,a.p2p_num_t,a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.im_flux,a.friend_num
-         ,a.only_1_frined
-         --,min(rule_id) as rule_id
-         ,a.alert_level,a.trans_call_num,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone
-   ;
-
-  --剔除诈骗号码白名单
-  drop table if exists hw_tmp.tm_sc_cheat_alert_dd_02;
-  create table if not exists hw_tmp.tm_sc_cheat_alert_dd_02
-  (
-    statis_date                   int,
-    subs_id                       string ,                     --- 用户id
-    msisdn                        string ,                     --- 号码
-    region_code                   string ,                     --- 地市
-    region_id                     string ,                     --- 县区
-    innet_date                    int,                         --- 入网时间
-    onnet_dur                     int,                         --- 在网时长（天）
-    channel_id                    string ,                     --- 入网渠道
-    channel_type1                 string ,                     --- 渠道类型1
-    channel_type2                 string ,                     --- 渠道类型2
-    channel_type3                 string ,                     --- 渠道类型3
-    main_product                  string ,                     --- 主产品
-    user_arpu                     decimal(10,2),               --- 用户消费
-    main_tc                       string ,                     --- 主优惠
-    tc_fee                        decimal(10,2),               --- 套餐费
-    roam_prov                     string ,                     --- 漫游省
-    roam_city                     string ,                     --- 漫游地市
-    main_multi_number             string ,                     --- 一卡多号的主号
-    fst_snd_fst                   string ,                     --- 主副卡的主号码
-    o_call_num                    int,                         --- 主叫次数
-    t_call_num                    int,                         --- 被叫次数
-    o_call_dur                    bigint,                      --- 主叫时长
-    t_call_dur                    bigint,                      --- 被叫时长
-    n_roam_dur                    bigint,                      --- 非漫游通话时长
-    d_roam_dur                    bigint,                      --- 国内漫游通话时长
-    d_roam_dur_in                 bigint,                      --- 国漫-其中省内漫游时长
-    d_roam_dur_out                bigint,                      --- 国漫-其中省际漫游时长
-    n_roam_num                    int,                         --- 非漫游通话次数
-    d_roam_num                    int,                         --- 国内漫游通话次数
-    d_roam_num_in                 int,                         --- 国内漫游通话次数-省内
-    d_roam_num_out                int,                         --- 国内漫游通话次数-省际
-    p2p_num                       int,                         --- 点对点短信量
-    p2p_num_o                     int,                         --- 点对点短信量-上行
-    p2p_num_t                     int,                         --- 点对点短信量-下行
-    cell_num                      int,                         --- 通话lac、cell数量
-    fst_cell_num                  int,                         --- 通话lac、cell--top1通话次数
-    snd_cell_num                  int,                         --- 通话lac、cell--top2通话次数
-    trd_cell_num                  int,                         --- 通话lac、cell--top3通话次数
-    im_flux                       int,                         --- IM流量占比
-    friend_num                    int,                         --- 交往圈人数
-    only_1_frined                 int,                         --- 通话1次人数
-    rule_id                       string ,                     --- 规则ID
-    alert_level                   string ,                     --- 风险级别
-    trans_call_num                int,                         --- 主叫呼转量。用于判定没有主叫全部呼转的情况，而用户的呼转话单的呼叫类型为主叫。
-    in_30day_callnum              int,                         --- 入网30天内本地通话量
-    oneday_certnum                Varchar(4000),               --- 同证件同一天入网的在网号码。多个号码之间用‘,’分割
-    one_period_certnum            Varchar(4000),               --- 一段时期内同一证件入网的在网号码，暂定前后10天，号码取在网的。
-    other_phone                   Varchar(4000)                --- 号码同证件下的在网号码
-    );
-
-  insert into hw_tmp.tm_sc_cheat_alert_dd_02
-  select ${hivevar:vi_day},
-         subs_id,msisdn,region_code,region_id,innet_date,onnet_dur,channel_id,channel_type1,channel_type2,
-         channel_type3,main_product,user_arpu,main_tc,tc_fee,roam_prov,roam_city,main_multi_number,
-         fst_snd_fst,o_call_num,t_call_num,o_call_dur,t_call_dur,n_roam_dur,d_roam_dur,d_roam_dur_in,
-         d_roam_dur_out,n_roam_num,d_roam_num,d_roam_num_in,d_roam_num_out,p2p_num,p2p_num_o,p2p_num_t,
-         cell_num,fst_cell_num,snd_cell_num,trd_cell_num,im_flux,friend_num,only_1_frined,rule_id,
-         alert_level,trans_call_num,in_30day_callnum,oneday_certnum,one_period_certnum,other_phone
-    from hw_tmp.tm_sc_cheat_alert_d_01 a
-   where a.subs_id not in (select  subs_id as sbid from mk.tm_sc_cheat_ignore_msisdn_d where statis_date= ${hivevar:vi_day}  group by subs_id )
-     and statis_date=${hivevar:vi_day}
-  ;
-  --剔除诈骗号码已识别,并生成最终结果集
-  alter table mk.tm_sc_cheate_alert_d  drop if exists partition(Statis_date=${hivevar:vi_day});
-  insert into mk.tm_sc_cheate_alert_d partition(Statis_date=${hivevar:vi_day})
-  select a.subs_id,a.msisdn,a.region_code,a.region_id,a.innet_date,a.onnet_dur,a.channel_id,a.channel_type1,a.channel_type2,
-         a.channel_type3,a.main_product,a.user_arpu,a.main_tc,a.tc_fee,a.roam_prov,a.roam_city,a.main_multi_number,
-         a.fst_snd_fst,a.o_call_num,a.t_call_num,a.o_call_dur,a.t_call_dur,a.n_roam_dur,a.d_roam_dur,a.d_roam_dur_in,
-         a.d_roam_dur_out,a.n_roam_num,a.d_roam_num,a.d_roam_num_in,a.d_roam_num_out,a.p2p_num,a.p2p_num_o,a.p2p_num_t,
-         a.cell_num,a.fst_cell_num,a.snd_cell_num,a.trd_cell_num,a.im_flux,a.friend_num,a.only_1_frined,a.rule_id,
-         a.alert_level,a.trans_call_num,a.in_30day_callnum,a.oneday_certnum,a.one_period_certnum,a.other_phone
-    from hw_tmp.tm_sc_cheat_alert_dd_02 a
-    join dwh.td_sc_subs_d b
-    mk.tm_te_if_imei_info_d
-      on (a.subs_id=b.subs_id and a.region_code=b.region_code and substr(b.disable_lock,2,1)='0' and b.deal_date=${hivevar:vi_day} )
-   where a.subs_id not in (select subs_id as sbid from mk.tm_sc_cheat_msisdn_d where statis_date=${hivevar:vi_day} group by subs_id )
-     and statis_date=${hivevar:vi_day}
-   ;
+insert into  hw_tmp.ta_co_subs_interview_m_02
+select 
+    a.statis_month,
+    a.region_code,
+	a.region_id,
+    a.subs_id,
+    a.phone_no,
+    a.age,
+    a.gender,
+    a.is_group_cust,
+    a.l1_arpu,
+    a.n3_arpu,
+    a.l1_dou ,
+    a.n3_dou ,
+    a.l1_mou ,
+    a.n3_mou ,
+    a.star_level,
+    a.is_qqt,
+    a.on_net_dur ,
+    a.qqt_type,
+    a.l1_rechrg_cnt,
+    a.n3_rechrg_cnt,
+    a.days,
+    a.is_yjsk,
+    a.terminal_brand,--终端厂家
+    a.is_main,--主副卡槽标识
+    a.is_payplan, --代付
+    a.dou_mom , --dou环比
+    a.arpu_mom , --arpu环比
+    a.mou_mom , --mou环比
+    a.is_fst_snd,
+    b.fav_val,--主套餐价值
+    b.markt_solution_name,--主套餐名称
+    b.markt_solution_days,--主套餐使用时长
+    case when c.subs_id is not null then 1 else 0 end, --是否流量超套
+    coalesce(c.fav_aft_base_fee,0), --当月超套费
+    coalesce(c.chrg_flux,0) ,	--当月超套流量
+    coalesce(c.flux_unit_price,0), --流量单价
+    coalesce(c.flux_ct_cnt,0), --近三月流量超套次数
+    coalesce(c.avg_flux_ct_fee,0), --近三月平均流量超套费
+    coalesce(c.avg_flux_ct,0), --近三月平均超套流量
+    case when d.subs_id is not null then 1 else 0 end, --是否语音超套
+    coalesce(d.gsm_ct_fee,0), --当月语音超套费
+    coalesce(d.o_chrg_dur,0), --当月主叫超套时长
+    coalesce(d.chrg_dur,0), --当月超套时长
+    coalesce(d.gsm_unit_price,0),--套外语音单价
+    coalesce(d.gsm_ct_cnt,0), --近三月语音超套次数
+    coalesce(d.avg_gsm_ct_fee,0), --近三月平均语音超套费
+    coalesce(d.avg_o_chrg_dur,0), --近三月平均主叫语音超套时长
+    coalesce(d.avg_chrg_dur,0), --近三月平均语音超套时长
+    coalesce(e.is_hyq,0), --是否处于合约期
+	coalesce(e.hy_happen_time,0), --合约已生效时长
+    coalesce(e.hy_time,0), --合约时长
+    coalesce(e.us_mon,0), --距离合约结束的剩余时间
+    coalesce(e.deposit_amount,0), --当前有效合约的预存金额
+    coalesce(e.pay_quota,0), --当前有效合约的月返还金额
+    coalesce(e.is_3month_expire,0), --过去3个月是否存在合约到期
+    coalesce(f.tn_flux,0),--套内流量
+    coalesce(f.tn_gsm,0),--套内语音
+    coalesce(f.tn_surp_flux,0),--套内剩余流量
+    coalesce(f.tn_surp_gsm,0), --套内剩余语音时长
+    coalesce(f.flux_satura,0), --流量饱和度
+    coalesce(f.gsm_satura,0), --语音饱和度
+    coalesce(f.avg_flux_surp,0), --近三个月套内平均剩余流量
+    coalesce(f.avg_gsm_surp,0), --近三个月套内平均剩余语音
+    coalesce(f.near_3month_fluxsurp,0),--近三月剩余流量次数
+    coalesce(f.near_3month_gsmsurp,0),  ----近三月剩余语音次数
+    case when h.subs_id is not null then 1 else 0 end, --是否限速
+    case when i.subs_id is not null then 1 else 0 end, --是否统付
+    case when k.subs_id is not null then 1 else 0 end --是否订购提速包
+from hw_tmp.ta_co_subs_interview_m_01 a
+left join hw_tmp.ta_co_subs_interview_m_mid07 b
+on a.subs_id=b.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid09 c
+on a.subs_id=c.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid11 d
+on a.subs_id=d.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid13 e
+on a.subs_id=e.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid15 f
+on a.subs_id=f.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid17 h
+on a.subs_id=h.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid18 i
+on a.subs_id=i.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid19 k
+on a.subs_id=k.subs_id;
 
 
-mk.tm_te_if_imei_info_d
+drop table if exists hw_tmp.ta_co_subs_interview_m_03;
+create table if not exists hw_tmp.ta_co_subs_interview_m_03
+(statis_month int,
+     region_code string,
+	 region_id string,
+     subs_id string,
+     phone_no string,
+    age int,
+    gender string,
+    is_group_cust string,
+    l1_arpu int,
+    n3_arpu int,
+    l1_dou  int,
+    n3_dou  int,
+    l1_mou  int,
+    n3_mou  int,
+    star_level string,
+    is_qqt string, --是否全球通
+    on_net_dur int , --网龄
+    qqt_type string, --全球通等级
+    l1_rechrg_cnt int,--缴费次数
+    n3_rechrg_cnt int,--近3月缴费次数
+    days int,--终端使用时长
+    is_yjsk string,--是否一机双卡槽
+    terminal_brand string,--终端厂家
+    is_main string,--主副卡槽标识
+    is_payplan string, --代付
+    dou_mom  double, --dou环比
+    arpu_mom double , --arpu环比
+    mou_mom  double, --mou环比
+    is_fst_snd string,--是否主副卡
+    fav_val double,--主套餐价值
+    markt_solution_name string,--主套餐名称
+    markt_solution_days int,--主套餐使用时长
+    is_flux_ct string, --是否流量超套
+    fav_aft_base_fee int, --当月超套费
+    chrg_flux int , --当月超套流量
+    flux_unit_price decimal(20,2), --套外流量单价
+    flux_ct_cnt int, --近三月流量超套次数
+    avg_flux_ct_fee int, --近三月平均流量超套费
+    avg_flux_ct int, --近三月平均超套流量
+    is_gsm_ct string, --是否语音超套
+    gsm_ct_fee int, --当月语音超套费
+    o_chrg_dur int , --当月主叫超套时长
+    chrg_dur int, --当月超套时长
+    gsm_unit_price decimal(20,2), --套外语音单价
+    gsm_ct_cnt int , --近三月语音超套次数
+    avg_gsm_ct_fee int, --近三月平均语音超套费
+    avg_o_chrg_dur int, --近三月平均主叫语音超套时长
+    avg_chrg_dur int,--近三月平均语音超套时长
+    is_hyq int,  --是否处于合约期
+    hy_happen_time int , --合约已生效时长
+    hy_time int, --合约时长
+    us_mon int, --距离合约结束的剩余时间
+    deposit_amount int, --当前有效合约的预存金额
+    pay_quota int, --当前有效合约的月返还金额
+    is_3month_expire int, --过去3个月是否存在合约到期
+    tn_flux decimal(20,2), --套内流量
+    tn_gsm int, --套内语音
+    tn_surp_flux decimal(20,2), --套内剩余流量
+    tn_surp_gsm int, --套内剩余语音时长
+    flux_satura double, --流量饱和度
+    gsm_satura double , --语音饱和度
+    avg_flux_surp decimal(20,2), --近三个月套内平均剩余流量
+    avg_gsm_surp int, --近三个月套内平均剩余语音
+    near_3month_fluxsurp int, --近三月剩余流量次数
+    near_3month_gsmsurp int, ----近三月剩余语音次数
+    is_rate_limiting int,--是否限速
+    is_tf int, --是否统付
+    is_tsb int,  --是否订购提速包
+    is_amt_ct int,--是否金额超套
+    tw_fee decimal(20,2),--超套费
+    tw_mix decimal(20,2), --超套金额在ARPU中的占比
+    avg_tw_fee decimal(20,2), --近三月套外月均费
+    near3_amt_cnt int, --近三月套外金额次数
+    near3_tw_gprs_fee decimal(20,2), --近三月套外流量费
+    near3_tw_gsm_fee decimal(20,2), --近三月套外语音费
+    tol_cnt int, --总投诉次数
+    fee_cnt int, --资费投诉次数
+    near3_tol_cnt int, --近三月总投诉次数
+    near3_fee_cnt int, --近三月资费投诉次数
+    yw_call_xix decimal(20,2),--异网通话占比
+    prod_type2_id string, --V网类型
+    stop_cnt int --停机次数
+)row format delimited
+fields terminated by '|'
+stored as rcfile;
+
+
+insert into hw_tmp.ta_co_subs_interview_m_03
+select
+    distinct 
+    a.statis_month,
+    a.region_code,
+	a.region_id,
+    a.subs_id,
+    a.phone_no,
+    a.age,
+    a.gender,
+    a.is_group_cust,
+    a.l1_arpu,
+    a.n3_arpu,
+    a.l1_dou,
+    a.n3_dou,
+    a.l1_mou,
+    a.n3_mou,
+    a.star_level,
+    a.is_qqt,
+    a.on_net_dur,
+    a.qqt_type,
+    a.l1_rechrg_cnt,
+    a.n3_rechrg_cnt,
+    a.days,
+    a.is_yjsk,
+    a.terminal_brand,
+    a.is_main,
+    a.is_payplan,
+    a.dou_mom,
+    a.arpu_mom,
+    a.mou_mom,
+    a.is_fst_snd,
+    a.fav_val,
+    a.markt_solution_name,
+    a.markt_solution_days,
+    a.is_flux_ct,
+    a.fav_aft_base_fee,
+    a.chrg_flux,
+    a.flux_unit_price,
+    a.flux_ct_cnt,
+    a.avg_flux_ct_fee,
+    a.avg_flux_ct,
+    a.is_gsm_ct,
+    a.gsm_ct_fee,
+    a.o_chrg_dur,
+    a.chrg_dur,
+    a.gsm_unit_price,
+    a.gsm_ct_cnt,
+    a.avg_gsm_ct_fee,
+    a.avg_o_chrg_dur,
+    a.avg_chrg_dur,
+    a.is_hyq,
+    a.hy_happen_time,
+    a.hy_time,
+    a.us_mon,
+    a.deposit_amount,
+    a.pay_quota,
+    a.is_3month_expire,
+    a.tn_flux,
+    a.tn_gsm,
+    a.tn_surp_flux,
+    a.tn_surp_gsm,
+    a.flux_satura,
+    a.gsm_satura,
+    a.avg_flux_surp,
+    a.avg_gsm_surp,
+    a.near_3month_fluxsurp,
+    a.near_3month_gsmsurp,
+    a.is_rate_limiting,
+    a.is_tf,
+    a.is_tsb,
+    coalesce(b.is_amt_ct,0),--是否金额超套
+    coalesce(b.tw_fee,0),--超套费
+    coalesce(b.tw_mix,0), --超套金额在ARPU中的占比
+    coalesce(b.avg_tw_fee,0),--近三月套外月均费
+    coalesce(b.near3_amt_cnt,0), --近三月套外金额次数
+    coalesce(b.near3_tw_gprs_fee,0), --近三月套外流量费
+    coalesce(b.near3_tw_gsm_fee,0), --近三月套外语音费
+    --near3_tw_gprs_cnt, --近三月套外流量次数
+    --near3_tw_gsm_cnt --近三月套外语音次数
+    coalesce(c.tol_cnt,0), --总投诉次数
+    coalesce(c.fee_cnt,0), --资费投诉次数
+    coalesce(c.near3_tol_cnt,0), --近三月总投诉次数
+    coalesce(c.near3_fee_cnt,0), --近三月资费投诉次数
+    coalesce(d.yw_call_xix,0),--异网通话占比
+    coalesce(e.prod_type2_id,0),--V网类型
+    coalesce(f.stop_cnt,0) --当月停机次数
+from hw_tmp.ta_co_subs_interview_m_02 a
+left join hw_tmp.ta_co_subs_interview_m_mid23 b
+on a.subs_id=b.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid25 c
+on  a.subs_id=c.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid26 d
+on  a.subs_id=d.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid27 e
+on  a.subs_id=e.subs_id
+left join hw_tmp.ta_co_subs_interview_m_mid28 f
+on a.subs_id=f.subs_id;
+
+alter table am.ta_co_subs_interview_m drop partition(statis_month=${hivevar:vi_month});
+insert into table am.ta_co_subs_interview_m partition (statis_month=${hivevar:vi_month})
+select
+    subs_id
+    ,age
+    ,gender
+    ,is_group_cust
+    ,l1_arpu
+    ,n3_arpu
+    ,l1_dou
+    ,n3_dou
+    ,l1_mou
+    ,n3_mou
+    ,star_level
+    ,is_qqt
+    ,on_net_dur
+    ,qqt_type
+    ,l1_rechrg_cnt
+    ,n3_rechrg_cnt
+    ,days
+    ,is_yjsk
+    ,terminal_brand
+    ,is_main
+    ,is_payplan
+    ,dou_mom
+    ,arpu_mom
+    ,mou_mom
+    ,is_fst_snd
+    ,fav_val
+    ,markt_solution_name
+    ,markt_solution_days
+    ,is_flux_ct
+    ,fav_aft_base_fee
+    ,chrg_flux
+    ,flux_unit_price
+    ,flux_ct_cnt
+    ,avg_flux_ct_fee
+    ,avg_flux_ct
+    ,is_gsm_ct
+    ,gsm_ct_fee
+    ,o_chrg_dur
+    ,chrg_dur
+    ,gsm_unit_price
+    ,gsm_ct_cnt
+    ,avg_gsm_ct_fee
+    ,avg_o_chrg_dur
+    ,avg_chrg_dur
+    ,is_hyq
+    ,hy_happen_time
+    ,hy_time
+    ,us_mon
+    ,deposit_amount
+    ,pay_quota
+    ,is_3month_expire
+    ,tn_flux
+    ,tn_gsm
+    ,tn_surp_flux
+    ,tn_surp_gsm
+    ,flux_satura
+    ,gsm_satura
+    ,avg_flux_surp
+    ,avg_gsm_surp
+    ,near_3month_fluxsurp
+    ,near_3month_gsmsurp
+    ,is_rate_limiting
+    ,is_tf
+    ,is_tsb
+    ,is_amt_ct
+    ,tw_fee
+    ,tw_mix
+    ,avg_tw_fee
+    ,near3_amt_cnt
+    ,near3_tw_gprs_fee
+    ,near3_tw_gsm_fee
+    ,tol_cnt
+    ,fee_cnt
+    ,near3_tol_cnt
+    ,near3_fee_cnt
+    ,yw_call_xix
+    ,prod_type2_id
+    ,stop_cnt
+	,region_code
+	,region_id
+	,phone_no
+from hw_tmp.ta_co_subs_interview_m_03
+where statis_month=${hivevar:vi_month};
+
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid01;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid02;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid03;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid04;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid05;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid06;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid07;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid08;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid09;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid10;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid11;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid12;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid13;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid14;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid15;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid16;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid17;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid18;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid19;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid20;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid21;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid22;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid23;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid24;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid25;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid26;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid27;
+drop table if exists hw_tmp.ta_co_subs_interview_m_mid28;
+
+drop table if exists hw_tmp.ta_co_subs_interview_m_01;
+drop table if exists hw_tmp.ta_co_subs_interview_m_02;
+drop table if exists hw_tmp.ta_co_subs_interview_m_03;

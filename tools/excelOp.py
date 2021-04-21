@@ -1,6 +1,8 @@
 # coding=utf-8
 
 import openpyxl
+import os,sys
+from typing import Union
 
 '''
 import openpyxl
@@ -32,7 +34,7 @@ wb.close()
 '''
 
 
-def write_xlsx(filename, data, edit=False, sheet_name='newSheet'):
+def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_name='newSheet') -> None:
     if edit:
         try:
             workbook = openpyxl.load_workbook(filename)
@@ -45,32 +47,31 @@ def write_xlsx(filename, data, edit=False, sheet_name='newSheet'):
         except KeyError as ke:
             print(f'{ke},\nI\'ll create a new sheet named [{sheet_name}] in workbook [{filename}]')
         except Exception as e:
-            exit(e)
+            sys.exit(e)
     else:
         if os.path.exists(filename):
-            exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
+            sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
         else:
             workbook = openpyxl.Workbook()
-
             print(f'Create a new workbook named[{filename}]')
     new_sheet = workbook.create_sheet(sheet_name)
-    for row_id, row_data in enumerate(data):
-        for col_id, cell_data in enumerate(row_data):
-            new_sheet.cell(row_id + 1, col_id + 1, cell_data)
+    for row_id, row_data in enumerate(data, start=1):
+        for col_id, cell_data in enumerate(row_data, start=1):
+            new_sheet.cell(row_id, col_id, cell_data)
     workbook.save(filename)
     workbook.close()
 
 
-def read_xlsx(filename, sheet_name='newSheet'):
+def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
     try:
         workbook = openpyxl.load_workbook(filename)
         sheet = workbook[sheet_name]
     except FileNotFoundError as fe:
 
-        exit(fe)
+        sys.exit(fe)
 
     except KeyError as ke:
-        exit(ke)
+        sys.exit(ke)
 
     result_list = []
     for row_data in sheet.rows:
@@ -83,8 +84,6 @@ def read_xlsx(filename, sheet_name='newSheet'):
 
 
 if __name__ == '__main__':
-    import os
-
     basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
     fileName = f'{basedir}\\test1d.xlsx'
     write_xlsx(fileName, data=[['abc'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='b')
@@ -92,3 +91,5 @@ if __name__ == '__main__':
 
     for i in result:
         print(i)
+    print(write_xlsx.__annotations__)
+    print(read_xlsx.__annotations__)
