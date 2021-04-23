@@ -1,20 +1,24 @@
-import get_dep
-import re
+from bisect import bisect, insort
+import datetime
+
+def __bisect():
+    a = 'qazwsxedcrfvtgb'
+    time=datetime.time
+    b = sorted(a)
+
+    # c = bisect(b, 'p')
+    # print(c)
+    # b.insert(c, '-')
+    print(b)
 
 
-def assert_test(value):
-    print(value)
-
+def __insort():
+    myList = []
+    a = 'qazwsxedcrfvtgb'
+    for i in a:
+        insort(myList, i)
+    print(myList)
 
 if __name__ == '__main__':
-    assert_test(None)
-    from bisect import bisect, insort
-
-    a = 'asddfgfhdfyujjkljkbnti6'
-    b = list(a)
-    c = sorted(b)
-
-    print(c)
-
-    d = bisect(c, 'g')
-    print(d)
+    __bisect()
+    __insort()

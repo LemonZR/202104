@@ -60,25 +60,37 @@ def get_files_layer(dir_name='D:\\tmp\\') -> dict[str, dict[int, dict[int, str]]
     return file_layer_dict
 
 
-def has_pattern(layer_dict, layer_num=0, pattern=r'union\s*all') -> dict[int, str]:
+def has_pattern(layer_dict, layer_num=None, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> dict[int, str]:
     pattern = pattern
     result_dict = {}
-    for blk_id, sql_layer_info in layer_dict.items():
-        layer_info = sql_layer_info.get(layer_num, '')
-        if re.findall(pattern, layer_info):
-            print(re.findall(pattern, layer_info))
-            result_dict.setdefault(blk_id, layer_info)
+    if layer_num is not None:
+        for blk_id, sql_layer_info in layer_dict.items():
+            layer_info = sql_layer_info.get(layer_num, '')
+            if re.findall(pattern, layer_info, flags=pattern_mod):
+                result_dict.setdefault(blk_id, layer_info)
+    else:
+        for blk_id, sql_layer_info in layer_dict.items():
+            for layer_num, layer_info in sql_layer_info.items():
+                if re.findall(pattern, layer_info, flags=pattern_mod):
+                    print(layer_num)
+                    result_dict.setdefault(blk_id, layer_info)
     return result_dict
 
 
 def get_target_table(layer_dict: dict, layer_num=0) -> dict[str, str]:
+    """
+    特化函数,只查询insert语句中含有的table
+    :param layer_dict:脚本文件分层信息
+    :param layer_num:
+    :return:
+    """
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
     target_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     result_dict = {}
     for blk_id, sql_layer_info in layer_dict.items():
         layer_info = sql_layer_info[layer_num]
-        insert_blk = re.findall(insert_pattern, layer_info)
+        insert_blk = re.findall(insert_pattern, layer_info, re.I)
         if insert_blk:
             target_table_name: list = re.findall(target_pattern, insert_blk[0], re.I)
             if target_table_name:
@@ -86,12 +98,21 @@ def get_target_table(layer_dict: dict, layer_num=0) -> dict[str, str]:
     return result_dict
 
 
-def run(dir_name, pattern=r'union\s*all', layer_num=0) -> list[tuple]:
+def run(dir_name, pattern=r'union\s*all', pattern_mod=re.IGNORECASE, layer_num=None) -> list[tuple]:
+    """
+    通用函数,查询脚本中 layer_num 层包含指定pattern的脚本,layer_num=None时,相当于查询全脚本语句
+    :param dir_name: 需要遍历的脚本根目录
+    :param pattern: 匹配正则表达式,例如 pattern='union\s*all'
+    :param pattern_mod:正则中的flags ,如re.I,re.M等
+    :param layer_num: sql对象的分层序号,最外层为0,详见 get_layer(file)
+    :return: list[tuple]
+
+    """
     file_layers_info = get_files_layer(dir_name)
     pattern = pattern
-    xlsx_data = [('脚本名', 'sql语句块第0层')]
+    xlsx_data = [('脚本名', 'sql语句块')]
     for file_name, layer_info in file_layers_info.items():
-        layer = has_pattern(layer_dict=layer_info, layer_num=layer_num, pattern=pattern)
+        layer = has_pattern(layer_dict=layer_info, layer_num=layer_num, pattern=pattern, pattern_mod=pattern_mod)
         if layer:
             for sql_blk_id, sql in layer.items():
                 sql = re.sub(r'^\s+', '', sql)  # 去掉开头的空白字符
@@ -111,28 +132,15 @@ def run_all_target(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\'
+    dirName = 'D:\\bd_hive\\mk\\'
     # 获取union all
     # result_file = 'D:\\数据核对\\union_target.xlsx'
     # union_all_data = run(dirName)
     # excelOp.write_xlsx(result_file, union_all_data, sheet_name='脚本和目标表')
 
-    # 比对目标表和脚本名是否一致
-    # result_file1 = 'D:\\数据核对\\脚本和目标表.xlsx'
-    # result_list1 = run_all_target(dirName, result_file1)
-    # # excelOp.write_xlsx(result_file1, result_list1, sheet_name='脚本和目标表')
-    # data = excelOp.read_xlsx(result_file1, sheet_name='脚本和目标表')
-    # warn_data = [('脚本名', '表名', '预期的脚本名')]
-    # for row in data[1:]:
-    #     file, table = row[:2]
-    #     new_file = re.sub(r'\.t', '_p', table.split('_$')[0] + '.sql')
-    #     if file.lower() != new_file.lower():
-    #         warn_data.append((file, table, new_file))
-    # excelOp.write_xlsx(result_file1, warn_data, edit=True, sheet_name='脚本和表名不一致')
+    tmp_pattern = r'union\s+all'
+    data = run(dirName, tmp_pattern, layer_num=None, pattern_mod=re.I)
+    result_file = 'D:\\数据核对\\analyze_test.xlsx'
+    excelOp.write_xlsx(result_file, data, edit=True, sheet_name='脚本和语句')
 
-    tmp_pattern = r'\bapp\b'
-    # data = run(dirName, tmp_pattern)
-    # result_file = 'D:\\数据核对\\create_temporary.xlsx'
-    # excelOp.write_xlsx(result_file, data, edit=True, sheet_name='脚本和语句')
-
-    run(dirName, tmp_pattern, layer_num=0)
+    # run(dirName, tmp_pattern, layer_num=0)
