@@ -75,14 +75,31 @@ class SSHConnection(threading.Thread):
         self.__transport = transport
 
     def upload(self, loacl_path, remote_path):
+        """
+        sftp 上传文件
+        :param loacl_path: 本地路径
+        :param remote_path: 远程路径
+        :return:
+        """
         sftp = paramiko.SFTPClient.from_transport(self.__transport)
         sftp.put(loacl_path, remote_path)
 
     def download(self, remote_path, local_path):
+        """
+
+        :param remote_path: 远程路径
+        :param local_path: 本地路径
+        :return: None
+        """
         sftp = paramiko.SFTPClient.from_transport(self.__transport)
         sftp.get(remote_path, local_path)
 
     def cmd(self, command):
+        """
+        ssh登录后执行命令,并获取返回信息
+        :param command:
+        :return:
+        """
         ssh = paramiko.SSHClient()
         ssh.__transport = self.__transport
         stdin, stdout, stderr = ssh.exec_command(command)

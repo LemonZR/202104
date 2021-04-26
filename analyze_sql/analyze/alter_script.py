@@ -1,7 +1,10 @@
 # coding=utf-8
 
-import re
 import os
+import re
+import shutil
+import sys
+import datetime
 from tools import excelOp
 
 
@@ -52,6 +55,18 @@ def alter_files_sql_blks(dir_name='D:\\tmp\\', find_pattern='', old_pattern='', 
     return file_sql_blks_dict, alter_info
 
 
+def backup_file(file_dict: dict[str, list], dirname_origion='D:\\tmp\\dis', dirname_bak='D:\\tmp\\alter_bak'):
+    if not os.path.exists(dirname_origion):
+        sys.exit('原目录不存在')
+    if not os.path.exists(dirname_bak):
+        try:
+            os.makedirs(f'{dirname_bak}')
+        except Exception as e:
+            sys.exit(e)
+    for file_name in file_dict:
+        shutil.copy2(f'{dirname_origion}\\{file_name}', dirname_bak)
+
+
 def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname='D:\\tmp\\alter', ):
     for file_name, sql_blks in file_dict.items():
         with open(f'{dirname}\\{file_name}', 'w', encoding='utf-8') as f:
@@ -63,11 +78,14 @@ def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname=
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\dis\\'
-
-    tmp_pattern = r'create\s*temporary'
+    dirName = 'D:\\bd_hive\\dis\\'
+    dirname_bak = f'D:\\tmp\\alter_bak_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    print(dirname_bak)
+    find_pattern = r'create\s*temporary'
     old_p = r'tablespace\s*=\s*\'[a-zA-Z_]*\''
+    # p = re.compile(old_p, re.I)
     new_string = ''
-    alter_files_dict, alter_infos = alter_files_sql_blks(dir_name=dirName, find_pattern=tmp_pattern, old_pattern=old_p,
+    alter_files_dict, alter_infos = alter_files_sql_blks(dir_name=dirName, find_pattern=find_pattern, old_pattern=old_p,
                                                          new_str=new_string)
+    backup_file(alter_files_dict, dirname_origion=dirName, dirname_bak=dirname_bak)
     write_new_file(alter_files_dict, alter_infos)

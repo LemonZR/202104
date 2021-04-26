@@ -1,610 +1,327 @@
-insert into hw_tmp.ta_co_subs_interview_m_mid28
-select 
-    subs_id,
-    sum(case when substr(start_date_his,1,6)=${hivevar:vi_month}  then 1 else 0 end)
-from  mk.tm_sc_subs_his_d 
-where deal_date=${hivevar:vi_month_last} and user_stat='US30'
-and (disable_lock like '%1' or  disable_lock like '%2')
-group by subs_id;
+--<metadata>
+--<model_name>: 集团基础资料日表
+--<keyword>: 集客, 集团基础资料
+--<description>: 集团基础资料日表
+--<author>: 刘昆杨@华为
+--<run_cycle>: D
+--<tmp_table>: hw_tmp.tmp_tm_gc_grp_d_mid1,hw_tmp.tmp_tm_gc_grp_d_mid2,hw_tmp.tmp_tm_gc_grp_d_mid3,hw_tmp.tmp_tm_gc_grp_d_mid4,hw_tmp.tmp_tm_gc_grp_d_mid5
+--<det_table>: pub.tdet_grp_lfsqt
+--<app_table>: MK.TM_GC_GRP_D
+--<app_name>:
+--</metadata>
 
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid21;
- create table if not exists hw_tmp.ta_co_subs_interview_m_mid21
-(    statis_month int,
-	 region_code string,
-	 region_id string,
-     subs_id string,
-     phone_no string,
-     gender string,
-     age int,
-     on_net_dur int ,
-     is_group_cust string,
-     product_cd string
-)row format delimited
-fields terminated by '|'
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid1;
+create table hw_tmp.tmp_tm_gc_grp_d_mid1
+(region_code varchar(5),
+cust_id varchar(20),
+cust_name varchar(500),
+cust_orgid varchar(20),
+respns_cust_mgr varchar(50),
+cust_crt_date varchar(14),
+cust_status varchar(10),
+cust_status_date varchar(14),
+group_id varchar(20),
+group_type varchar(20),
+cust_vacation_1 varchar(30),
+cust_vacation_2 varchar(30),
+stress_trade_type varchar(20),
+staff_cnt bigint,
+addr varchar(100),
+checkin_date timestamp,
+off_net_date timestamp,
+grp_on_net_dur int,
+grp_trade_type varchar(32),
+grp_pay_type varchar(16),
+supr_grp_id varchar(20),
+cust_type string
+)
+row format delimited
+fields terminated by '\t'
 stored as rcfile;
 
- insert into hw_tmp.ta_co_subs_interview_m_mid21
-select 
-    a.statis_month,
-	a.region_code,
-	a.region_id,
-    a.subs_id,
-    a.phone_no,
-    a.gender,
-    a.age,
-    a.on_net_dur,
-    a.is_group_cust,
-    a.product_cd
-from (
-  select
-      statis_month,
-	  region_code,
-	  region_id,
-      subs_id,
-      phone_no,
-      gender,
-      age,
-      on_net_dur,
-      is_group_cust,
-      product_cd,
-      start_date,
-  row_number() over(partition by phone_no order by start_date desc) row
-  from mk.tm_sc_user_statis_m
-  where statis_month=${hivevar:vi_month}
-  and  is_on_net_user=1 and substr(phone_no,1,1)=1 and length(phone_no)=11
-  ) a where a.row=1 ;
-
-drop table if exists hw_tmp.ta_co_subs_interview_m_01;
- create table if not exists hw_tmp.ta_co_subs_interview_m_01
-(statis_month int,
-    region_code string,
-	 region_id string,
-     subs_id string,
-     phone_no string,
-    age int,
-    gender string,
-    is_group_cust string,
-    l1_arpu int,
-    n3_arpu int,
-    l1_dou  int,
-    n3_dou  int,
-    l1_mou  int,
-    n3_mou  int,
-    star_level string,
-    is_qqt string,
-    on_net_dur int ,
-    qqt_type string,
-    l1_rechrg_cnt int,
-    n3_rechrg_cnt int,
-    days int,
-    is_yjsk string,
-    terminal_brand string,--终端厂家
-    is_main string,--主副卡槽标识
-    is_payplan string, --代付
-    dou_mom  double, --dou环比
-    arpu_mom double , --arpu环比
-    mou_mom  double, --mou环比
-    is_fst_snd string
-)row format delimited
-fields terminated by '|'
-stored as rcfile;
-
-
-insert into hw_tmp.ta_co_subs_interview_m_01
-select 
-    distinct 
-    a.statis_month,
-    a.region_code ,
-	a.region_id ,
-    a.subs_id ,
-    a.phone_no,
-    a.age,
-    a.gender,
-    a.is_group_cust,
-    b.l1_arpu ,--ARPU
-    b.n3_arpu, --过去3个月平均ARPU
-    b.l1_dou, --DOU
-    b.n3_dou, --过去3个月平均DOU
-    b.l1_mou, --MOU
-    b.n3_mou, --过去3个月平均MOU
-    coalesce(c.star_level,'0'), --星级	
-    coalesce(d.is_qqt,'0'), --是否全球通
-    a.on_net_dur ,--网龄
-    coalesce(d.qqt_type,'0'),--全球通等级
-    coalesce(e.l1_rechrg_cnt,0),--缴费次数
-    coalesce(e.n3_rechrg_cnt,0),--近3月缴费次数
-    f.days,--终端使用时长
-    case when g.subs_id is not null then 1 else 0 end, --一机双卡槽标识
-    h.terminal_brand,--终端厂家
-    coalesce(g.is_main,'000'),--主副卡槽标识
-    coalesce(c.is_payplan,'000'), --代付
-    coalesce(b.dou_mom,0), --dou环比
-    coalesce(b.arpu_mom,0), --arpu环比
-    coalesce(b.mou_mom,0), --mou环比
-    case when nvl(a.product_cd,'xxx') in ('prod_gl.g.fkkhcp','prod_gl.g.wnfk') then 1 else 0 end  as is_fst_snd
-from hw_tmp.ta_co_subs_interview_m_mid21 a
-left join hw_tmp.ta_co_subs_interview_m_mid03 b
-on a.subs_id=b.subs_id
-left join  mk.tm_sc_mob_phone_statis_d c
-on a.subs_id=c.subs_id and c.statis_date=${hivevar:vi_month_last}
-left join mk.tm_sc_globale_detl_d d
-on a.subs_id=d.subs_id and d.statis_date=${hivevar:vi_month_last}
-left join hw_tmp.ta_co_subs_interview_m_mid05 e
-on a.phone_no=e.phone_no
-left join hw_tmp.ta_co_subs_interview_m_mid06 f
-on a.subs_id=f.subs_id
-left join mk.tm_te_qs_doucard_user_label_m  g
-on a.subs_id=g.subs_id and g.statis_month=${hivevar:vi_month}
-left join hw_tmp.ta_co_subs_interview_m_mid20 h
-on a.subs_id=h.subs_id;
-
-drop table if exists hw_tmp.ta_co_subs_interview_m_02;
-create table if not exists hw_tmp.ta_co_subs_interview_m_02
-(statis_month int,
-    region_code string,
-	 region_id string,
-     subs_id string,
-     phone_no string,
-    age int,
-    gender string,
-    is_group_cust string,
-    l1_arpu int,
-    n3_arpu int,
-    l1_dou  int,
-    n3_dou  int,
-    l1_mou  int,
-    n3_mou  int,
-    star_level string,
-    is_qqt string, --是否全球通
-    on_net_dur int , --网龄
-    qqt_type string, --全球通等级
-    l1_rechrg_cnt int,--缴费次数
-    n3_rechrg_cnt int,--近3月缴费次数
-    days int,--终端使用时长
-    is_yjsk string,--是否一机双卡槽
-    terminal_brand string,--终端厂家
-    is_main string,--主副卡槽标识
-    is_payplan string, --代付
-    dou_mom  double, --dou环比
-    arpu_mom double , --arpu环比
-    mou_mom  double, --mou环比
-    is_fst_snd string,--是否主副卡
-    fav_val double,--主套餐价值
-    markt_solution_name string,--主套餐名称
-    markt_solution_days int,--主套餐使用时长
-    is_flux_ct string, --是否流量超套
-    fav_aft_base_fee int, --当月超套费
-    chrg_flux int , --当月超套流量
-    flux_unit_price decimal(20,2), --套外流量单价
-    flux_ct_cnt int, --近三月流量超套次数
-    avg_flux_ct_fee int, --近三月平均流量超套费
-    avg_flux_ct int, --近三月平均超套流量
-    is_gsm_ct string, --是否语音超套
-    gsm_ct_fee int, --当月语音超套费
-    o_chrg_dur int , --当月主叫超套时长
-    chrg_dur int, --当月超套时长
-    gsm_unit_price decimal(20,2), --套外语音单价
-    gsm_ct_cnt int , --近三月语音超套次数
-    avg_gsm_ct_fee int, --近三月平均语音超套费
-    avg_o_chrg_dur int, --近三月平均主叫语音超套时长
-    avg_chrg_dur int,--近三月平均语音超套时长
-    is_hyq int,  --是否处于合约期
-    hy_happen_time int , --合约已生效时长
-    hy_time int, --合约时长
-    us_mon int, --距离合约结束的剩余时间
-    deposit_amount int, --当前有效合约的预存金额
-    pay_quota int, --当前有效合约的月返还金额
-    is_3month_expire int, --过去3个月是否存在合约到期
-    tn_flux decimal(20,2), --套内流量
-    tn_gsm int, --套内语音
-    tn_surp_flux decimal(20,2), --套内剩余流量
-    tn_surp_gsm int, --套内剩余语音时长
-    flux_satura double, --流量饱和度
-    gsm_satura double , --语音饱和度
-    avg_flux_surp decimal(20,2), --近三个月套内平均剩余流量
-    avg_gsm_surp int, --近三个月套内平均剩余语音
-    near_3month_fluxsurp int, --近三月剩余流量次数
-    near_3month_gsmsurp int, ----近三月剩余语音次数
-    is_rate_limiting int,--是否限速
-    is_tf int, --是否统付
-    is_tsb int  --是否订购提速包
-)row format delimited
-fields terminated by '|'
-stored as rcfile;
-
-insert into  hw_tmp.ta_co_subs_interview_m_02
-select 
-    a.statis_month,
-    a.region_code,
-	a.region_id,
-    a.subs_id,
-    a.phone_no,
-    a.age,
-    a.gender,
-    a.is_group_cust,
-    a.l1_arpu,
-    a.n3_arpu,
-    a.l1_dou ,
-    a.n3_dou ,
-    a.l1_mou ,
-    a.n3_mou ,
-    a.star_level,
-    a.is_qqt,
-    a.on_net_dur ,
-    a.qqt_type,
-    a.l1_rechrg_cnt,
-    a.n3_rechrg_cnt,
-    a.days,
-    a.is_yjsk,
-    a.terminal_brand,--终端厂家
-    a.is_main,--主副卡槽标识
-    a.is_payplan, --代付
-    a.dou_mom , --dou环比
-    a.arpu_mom , --arpu环比
-    a.mou_mom , --mou环比
-    a.is_fst_snd,
-    b.fav_val,--主套餐价值
-    b.markt_solution_name,--主套餐名称
-    b.markt_solution_days,--主套餐使用时长
-    case when c.subs_id is not null then 1 else 0 end, --是否流量超套
-    coalesce(c.fav_aft_base_fee,0), --当月超套费
-    coalesce(c.chrg_flux,0) ,	--当月超套流量
-    coalesce(c.flux_unit_price,0), --流量单价
-    coalesce(c.flux_ct_cnt,0), --近三月流量超套次数
-    coalesce(c.avg_flux_ct_fee,0), --近三月平均流量超套费
-    coalesce(c.avg_flux_ct,0), --近三月平均超套流量
-    case when d.subs_id is not null then 1 else 0 end, --是否语音超套
-    coalesce(d.gsm_ct_fee,0), --当月语音超套费
-    coalesce(d.o_chrg_dur,0), --当月主叫超套时长
-    coalesce(d.chrg_dur,0), --当月超套时长
-    coalesce(d.gsm_unit_price,0),--套外语音单价
-    coalesce(d.gsm_ct_cnt,0), --近三月语音超套次数
-    coalesce(d.avg_gsm_ct_fee,0), --近三月平均语音超套费
-    coalesce(d.avg_o_chrg_dur,0), --近三月平均主叫语音超套时长
-    coalesce(d.avg_chrg_dur,0), --近三月平均语音超套时长
-    coalesce(e.is_hyq,0), --是否处于合约期
-	coalesce(e.hy_happen_time,0), --合约已生效时长
-    coalesce(e.hy_time,0), --合约时长
-    coalesce(e.us_mon,0), --距离合约结束的剩余时间
-    coalesce(e.deposit_amount,0), --当前有效合约的预存金额
-    coalesce(e.pay_quota,0), --当前有效合约的月返还金额
-    coalesce(e.is_3month_expire,0), --过去3个月是否存在合约到期
-    coalesce(f.tn_flux,0),--套内流量
-    coalesce(f.tn_gsm,0),--套内语音
-    coalesce(f.tn_surp_flux,0),--套内剩余流量
-    coalesce(f.tn_surp_gsm,0), --套内剩余语音时长
-    coalesce(f.flux_satura,0), --流量饱和度
-    coalesce(f.gsm_satura,0), --语音饱和度
-    coalesce(f.avg_flux_surp,0), --近三个月套内平均剩余流量
-    coalesce(f.avg_gsm_surp,0), --近三个月套内平均剩余语音
-    coalesce(f.near_3month_fluxsurp,0),--近三月剩余流量次数
-    coalesce(f.near_3month_gsmsurp,0),  ----近三月剩余语音次数
-    case when h.subs_id is not null then 1 else 0 end, --是否限速
-    case when i.subs_id is not null then 1 else 0 end, --是否统付
-    case when k.subs_id is not null then 1 else 0 end --是否订购提速包
-from hw_tmp.ta_co_subs_interview_m_01 a
-left join hw_tmp.ta_co_subs_interview_m_mid07 b
-on a.subs_id=b.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid09 c
-on a.subs_id=c.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid11 d
-on a.subs_id=d.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid13 e
-on a.subs_id=e.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid15 f
-on a.subs_id=f.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid17 h
-on a.subs_id=h.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid18 i
-on a.subs_id=i.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid19 k
-on a.subs_id=k.subs_id;
-
-
-drop table if exists hw_tmp.ta_co_subs_interview_m_03;
-create table if not exists hw_tmp.ta_co_subs_interview_m_03
-(statis_month int,
-     region_code string,
-	 region_id string,
-     subs_id string,
-     phone_no string,
-    age int,
-    gender string,
-    is_group_cust string,
-    l1_arpu int,
-    n3_arpu int,
-    l1_dou  int,
-    n3_dou  int,
-    l1_mou  int,
-    n3_mou  int,
-    star_level string,
-    is_qqt string, --是否全球通
-    on_net_dur int , --网龄
-    qqt_type string, --全球通等级
-    l1_rechrg_cnt int,--缴费次数
-    n3_rechrg_cnt int,--近3月缴费次数
-    days int,--终端使用时长
-    is_yjsk string,--是否一机双卡槽
-    terminal_brand string,--终端厂家
-    is_main string,--主副卡槽标识
-    is_payplan string, --代付
-    dou_mom  double, --dou环比
-    arpu_mom double , --arpu环比
-    mou_mom  double, --mou环比
-    is_fst_snd string,--是否主副卡
-    fav_val double,--主套餐价值
-    markt_solution_name string,--主套餐名称
-    markt_solution_days int,--主套餐使用时长
-    is_flux_ct string, --是否流量超套
-    fav_aft_base_fee int, --当月超套费
-    chrg_flux int , --当月超套流量
-    flux_unit_price decimal(20,2), --套外流量单价
-    flux_ct_cnt int, --近三月流量超套次数
-    avg_flux_ct_fee int, --近三月平均流量超套费
-    avg_flux_ct int, --近三月平均超套流量
-    is_gsm_ct string, --是否语音超套
-    gsm_ct_fee int, --当月语音超套费
-    o_chrg_dur int , --当月主叫超套时长
-    chrg_dur int, --当月超套时长
-    gsm_unit_price decimal(20,2), --套外语音单价
-    gsm_ct_cnt int , --近三月语音超套次数
-    avg_gsm_ct_fee int, --近三月平均语音超套费
-    avg_o_chrg_dur int, --近三月平均主叫语音超套时长
-    avg_chrg_dur int,--近三月平均语音超套时长
-    is_hyq int,  --是否处于合约期
-    hy_happen_time int , --合约已生效时长
-    hy_time int, --合约时长
-    us_mon int, --距离合约结束的剩余时间
-    deposit_amount int, --当前有效合约的预存金额
-    pay_quota int, --当前有效合约的月返还金额
-    is_3month_expire int, --过去3个月是否存在合约到期
-    tn_flux decimal(20,2), --套内流量
-    tn_gsm int, --套内语音
-    tn_surp_flux decimal(20,2), --套内剩余流量
-    tn_surp_gsm int, --套内剩余语音时长
-    flux_satura double, --流量饱和度
-    gsm_satura double , --语音饱和度
-    avg_flux_surp decimal(20,2), --近三个月套内平均剩余流量
-    avg_gsm_surp int, --近三个月套内平均剩余语音
-    near_3month_fluxsurp int, --近三月剩余流量次数
-    near_3month_gsmsurp int, ----近三月剩余语音次数
-    is_rate_limiting int,--是否限速
-    is_tf int, --是否统付
-    is_tsb int,  --是否订购提速包
-    is_amt_ct int,--是否金额超套
-    tw_fee decimal(20,2),--超套费
-    tw_mix decimal(20,2), --超套金额在ARPU中的占比
-    avg_tw_fee decimal(20,2), --近三月套外月均费
-    near3_amt_cnt int, --近三月套外金额次数
-    near3_tw_gprs_fee decimal(20,2), --近三月套外流量费
-    near3_tw_gsm_fee decimal(20,2), --近三月套外语音费
-    tol_cnt int, --总投诉次数
-    fee_cnt int, --资费投诉次数
-    near3_tol_cnt int, --近三月总投诉次数
-    near3_fee_cnt int, --近三月资费投诉次数
-    yw_call_xix decimal(20,2),--异网通话占比
-    prod_type2_id string, --V网类型
-    stop_cnt int --停机次数
-)row format delimited
-fields terminated by '|'
-stored as rcfile;
-
-
-insert into hw_tmp.ta_co_subs_interview_m_03
+----928180
+insert into hw_tmp.tmp_tm_gc_grp_d_mid1
 select
-    distinct 
-    a.statis_month,
-    a.region_code,
-	a.region_id,
-    a.subs_id,
-    a.phone_no,
-    a.age,
-    a.gender,
-    a.is_group_cust,
-    a.l1_arpu,
-    a.n3_arpu,
-    a.l1_dou,
-    a.n3_dou,
-    a.l1_mou,
-    a.n3_mou,
-    a.star_level,
-    a.is_qqt,
-    a.on_net_dur,
-    a.qqt_type,
-    a.l1_rechrg_cnt,
-    a.n3_rechrg_cnt,
-    a.days,
-    a.is_yjsk,
-    a.terminal_brand,
-    a.is_main,
-    a.is_payplan,
-    a.dou_mom,
-    a.arpu_mom,
-    a.mou_mom,
-    a.is_fst_snd,
-    a.fav_val,
-    a.markt_solution_name,
-    a.markt_solution_days,
-    a.is_flux_ct,
-    a.fav_aft_base_fee,
-    a.chrg_flux,
-    a.flux_unit_price,
-    a.flux_ct_cnt,
-    a.avg_flux_ct_fee,
-    a.avg_flux_ct,
-    a.is_gsm_ct,
-    a.gsm_ct_fee,
-    a.o_chrg_dur,
-    a.chrg_dur,
-    a.gsm_unit_price,
-    a.gsm_ct_cnt,
-    a.avg_gsm_ct_fee,
-    a.avg_o_chrg_dur,
-    a.avg_chrg_dur,
-    a.is_hyq,
-    a.hy_happen_time,
-    a.hy_time,
-    a.us_mon,
-    a.deposit_amount,
-    a.pay_quota,
-    a.is_3month_expire,
-    a.tn_flux,
-    a.tn_gsm,
-    a.tn_surp_flux,
-    a.tn_surp_gsm,
-    a.flux_satura,
-    a.gsm_satura,
-    a.avg_flux_surp,
-    a.avg_gsm_surp,
-    a.near_3month_fluxsurp,
-    a.near_3month_gsmsurp,
-    a.is_rate_limiting,
-    a.is_tf,
-    a.is_tsb,
-    coalesce(b.is_amt_ct,0),--是否金额超套
-    coalesce(b.tw_fee,0),--超套费
-    coalesce(b.tw_mix,0), --超套金额在ARPU中的占比
-    coalesce(b.avg_tw_fee,0),--近三月套外月均费
-    coalesce(b.near3_amt_cnt,0), --近三月套外金额次数
-    coalesce(b.near3_tw_gprs_fee,0), --近三月套外流量费
-    coalesce(b.near3_tw_gsm_fee,0), --近三月套外语音费
-    --near3_tw_gprs_cnt, --近三月套外流量次数
-    --near3_tw_gsm_cnt --近三月套外语音次数
-    coalesce(c.tol_cnt,0), --总投诉次数
-    coalesce(c.fee_cnt,0), --资费投诉次数
-    coalesce(c.near3_tol_cnt,0), --近三月总投诉次数
-    coalesce(c.near3_fee_cnt,0), --近三月资费投诉次数
-    coalesce(d.yw_call_xix,0),--异网通话占比
-    coalesce(e.prod_type2_id,0),--V网类型
-    coalesce(f.stop_cnt,0) --当月停机次数
-from hw_tmp.ta_co_subs_interview_m_02 a
-left join hw_tmp.ta_co_subs_interview_m_mid23 b
-on a.subs_id=b.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid25 c
-on  a.subs_id=c.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid26 d
-on  a.subs_id=d.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid27 e
-on  a.subs_id=e.subs_id
-left join hw_tmp.ta_co_subs_interview_m_mid28 f
-on a.subs_id=f.subs_id;
+a.region_code,
+a.cust_id,
+a.cust_name,
+coalesce(a.country_id,case a.region_code
+when '310' then 'HB.HD'
+when '311' then 'HB.SJ'
+when '312' then 'HB.BD'
+when '313' then 'HB.ZJ'
+when '314' then 'HB.CD'
+when '315' then 'HB.TS'
+when '316' then 'HB.LF'
+when '317' then 'HB.CZ'
+when '318' then 'HB.HS'
+when '319' then 'HB.XT'
+when '335' then 'HB.QH'
+when '336' then 'HB.XA'
+end),
+a.prncp_cust_magr,----大客户经理
+a.create_date cust_crt_date,----客户创建时间
+a.status,----客户状态
+a.status_date,----客户状态变更时间
+b.grp_cust_id,
+b.corp_size,
+b.trade_prop1 ,
+b.trade_prop2,
+b.disastervocation,
+b.staff_cnt,
+b.hqlocat addr,
+from_unixtime( unix_timestamp(b.checkin_date,'yyyyMMddHHmmss'),'yyyy-MM-dd') checkin_date,
+from_unixtime( unix_timestamp(b.to_on_net_time,'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss') off_net_date,
+datediff(from_unixtime(unix_timestamp('${hivevar:vi_day}','yyyyMMdd'),'yyyy-MM-dd'),from_unixtime(unix_timestamp(checkin_date,'yyyyMMddHHmmss'),'yyyy-MM-dd')) grp_on_net_dur,
+b.trade_type3 grp_trade_type ,
+b.grp_pay_mode grp_pay_type,
+b.supr_grp_id supr_grp_id,
+a.cust_type
+from dwh.td_ci_cust_d a
+join dwh.td_gc_group_cust_d b
+on a.region_code=b.region_code
+and a.cust_id = b.cust_id
+and b.deal_date=${hivevar:vi_day}
+and b.region_code<>'999'
+left join pub.tdet_grp_lfsqt c
+on c.cust_id=a.cust_id
+and a.region_code = '316'
+where a.deal_date=${hivevar:vi_day}
+and a.region_code<>'999'
+and c.cust_id is null
+;
 
-alter table am.ta_co_subs_interview_m drop partition(statis_month=${hivevar:vi_month});
-insert into table am.ta_co_subs_interview_m partition (statis_month=${hivevar:vi_month})
+
+----优先用该表的客户经理
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid2;
+
+create table hw_tmp.tmp_tm_gc_grp_d_mid2
+(
+cust_id varchar(20),
+respns_cust_mgr varchar(50))
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+insert into hw_tmp.tmp_tm_gc_grp_d_mid2
+select aa1.cust_id,aa1.custmgr from
+(select trim(cast(custid as varchar(50))) cust_id,custmgr from
+(select custid,custmgr,
+row_number() over(partition by  custid order by case role when 'Master' then 1 when 'Assist' then 2 else 3 end) rownumber
+from  dwh.td_gc_cust_servchannel_d where  deal_date=${hivevar:vi_day}) a
+where  a.rownumber = 1) aa1
+join hw_tmp.tmp_tm_gc_grp_d_mid1 a
+on aa1.cust_id=a.cust_id where  a.cust_id is not null;
+
+
+----3个标记字段
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid3;
+
+create table  hw_tmp.tmp_tm_gc_grp_d_mid3
+(cust_id varchar(20),
+is_grp_cust_arr_cnt varchar(1),
+is_grp_cust_new_cnt varchar(1),
+is_grp_cust_lost_cnt varchar(1))
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+insert into hw_tmp.tmp_TM_GC_GRP_D_mid3
+select distinct
+ a.grp_cust_id,
+ '1',
+case when SUBSTR(B.cust_crt_date,1,8)=${hivevar:vi_day} and B.cust_status = 'stcmNml' then '1' else '0' end,
+case when SUBSTR(B.cust_crt_date,1,8)=${hivevar:vi_day} and B.cust_status <> 'stcmNml' then '1' else '0' end
+--from hw_tmp.tmp_tm_gc_grp_d_mid11 a
+from mk.tm_gc_prod_order_d a
+join hw_tmp.tmp_tm_gc_grp_d_mid1 b
+on a.grp_cust_id = b.cust_id
+where b.cust_type = 'GroupCustomer'
+and a.statis_date =${hivevar:vi_day} ;
+
+
+
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid4;
+create table  hw_tmp.tmp_tm_gc_grp_d_mid4
+(cust_id varchar(20),
+grp_member_call_cnt bigint,
+grp_member_call_dur bigint,
+grp_member_gprs_flux bigint,
+grp_member_cnt bigint,
+new_grp_member_cnt bigint,
+off_net_grp_member_cnt bigint,
+lost_grp_member_cnt bigint,
+owe_grp_member_cnt bigint,
+grp_member_income bigint,
+vip_cur_day_arr bigint,
+cur_day_grp_persn_cust_sms_cnt bigint,
+voc_persn_biz_income bigint,
+vas_income bigint,
+grp_photo_mid_high_cnt bigint,
+grp_cust_owe_tot_fee bigint,
+grp_cust_chrg_dur bigint )
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+insert into hw_tmp.tmp_tm_gc_grp_d_mid4
 select
-    subs_id
-    ,age
-    ,gender
-    ,is_group_cust
-    ,l1_arpu
-    ,n3_arpu
-    ,l1_dou
-    ,n3_dou
-    ,l1_mou
-    ,n3_mou
-    ,star_level
-    ,is_qqt
-    ,on_net_dur
-    ,qqt_type
-    ,l1_rechrg_cnt
-    ,n3_rechrg_cnt
-    ,days
-    ,is_yjsk
-    ,terminal_brand
-    ,is_main
-    ,is_payplan
-    ,dou_mom
-    ,arpu_mom
-    ,mou_mom
-    ,is_fst_snd
-    ,fav_val
-    ,markt_solution_name
-    ,markt_solution_days
-    ,is_flux_ct
-    ,fav_aft_base_fee
-    ,chrg_flux
-    ,flux_unit_price
-    ,flux_ct_cnt
-    ,avg_flux_ct_fee
-    ,avg_flux_ct
-    ,is_gsm_ct
-    ,gsm_ct_fee
-    ,o_chrg_dur
-    ,chrg_dur
-    ,gsm_unit_price
-    ,gsm_ct_cnt
-    ,avg_gsm_ct_fee
-    ,avg_o_chrg_dur
-    ,avg_chrg_dur
-    ,is_hyq
-    ,hy_happen_time
-    ,hy_time
-    ,us_mon
-    ,deposit_amount
-    ,pay_quota
-    ,is_3month_expire
-    ,tn_flux
-    ,tn_gsm
-    ,tn_surp_flux
-    ,tn_surp_gsm
-    ,flux_satura
-    ,gsm_satura
-    ,avg_flux_surp
-    ,avg_gsm_surp
-    ,near_3month_fluxsurp
-    ,near_3month_gsmsurp
-    ,is_rate_limiting
-    ,is_tf
-    ,is_tsb
-    ,is_amt_ct
-    ,tw_fee
-    ,tw_mix
-    ,avg_tw_fee
-    ,near3_amt_cnt
-    ,near3_tw_gprs_fee
-    ,near3_tw_gsm_fee
-    ,tol_cnt
-    ,fee_cnt
-    ,near3_tol_cnt
-    ,near3_fee_cnt
-    ,yw_call_xix
-    ,prod_type2_id
-    ,stop_cnt
-	,region_code
-	,region_id
-	,phone_no
-from hw_tmp.ta_co_subs_interview_m_03
-where statis_month=${hivevar:vi_month};
+a.grp_cust_id cust_id,
+sum(f.call_cnt) grp_member_call_cnt,
+sum(f.call_dur) grp_member_call_dur,
+sum(cast(f.gprs_tot_flux as bigint )) grp_member_gprs_flux,
+sum(1) grp_member_cnt,
+sum(case when b.is_new_user = '0' then 0 else 1 end ) new_grp_member_cnt,
+sum(case when b.is_off_net_user = '0' then 0 else 1 end ) off_net_grp_member_cnt,
+sum(case when b.is_on_net_user = '0' then 0 else 1 end ) lost_grp_member_cnt,
+SUM(case when trim(cast(case when  b.is_on_net_user = '1' or  b.is_off_net_user = '1' then
+----(case when coalesce(c.tot_owe_fee,0) ~ '^[0-9]{1,}\$' and not(coalesce(c.tot_owe_fee,0) ~ '^[0]{1,}\$')  then 1 else 0 end )  else 0 end  as varchar )) = '0' then 0 else 1 end )
+(case when REGEXP(coalesce(c.tot_owe_fee,0) , '^[0-9]{1,}\$') and not REGEXP(coalesce(c.tot_owe_fee,0) , '^[0]{1,}\$')  then 1 else 0 end )  else 0 end  as varchar(1) )) = '0' then 0 else 1 end )  OWE_GRP_MEMBER_CNT,
+sum(g.tot_fee) grp_member_income,
+sum(case when d.vip_no is null then 0 else 1 end ) vip_cur_day_arr,
+sum(f.p2p_sms_cnt) cur_day_grp_persn_cust_sms_cnt,
+sum(g.call_fee) voc_persn_biz_income,
+sum(g.tot_fee - g.call_fee) vas_income,
+sum(case when d.photo_flg = '0' then 0 else 1 end ) grp_photo_mid_high_cnt,
+sum(c.tot_owe_fee) grp_cust_owe_tot_fee,
+sum(f.chrg_dur) grp_cust_chrg_dur
+from
+(
+select h.*,row_number() over(partition by subs_id order by subs_id desc) num
+from mk.tm_gc_prod_order_d h where statis_date=${hivevar:vi_day}
+)  a
+inner join mk.tm_sc_user_base_d b
+on  a.subs_id = b.subs_id    and b.statis_date =${hivevar:vi_day}
+left join  mk.tm_ac_owe_m c
+on a.subs_id =c.subs_id  and c.statis_month =${hivevar:vl_month}
+left join dwh.td_sc_subs_d d
+on a.subs_id =d.subs_id
+and d.deal_date =${hivevar:vi_day}
+left join hw_tmp.tmp_tm_gc_grp_d_mid1 e
+on e.cust_id=a.grp_cust_id
+left join mk.tm_ls_user_comm_d f
+on a.subs_id = f.subs_id
+and f.statis_date = ${hivevar:vi_day}
+left join mk.tm_ac_user_acct_d g
+on a.subs_id = g.subs_id
+and g.statis_date = ${hivevar:vi_day}
+where  a.num=1 ----- a.statis_date =${hivevar:vi_day}
+and e.cust_id is not null
+group by a.grp_cust_id;
 
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid01;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid02;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid03;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid04;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid05;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid06;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid07;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid08;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid09;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid10;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid11;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid12;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid13;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid14;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid15;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid16;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid17;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid18;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid19;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid20;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid21;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid22;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid23;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid24;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid25;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid26;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid27;
-drop table if exists hw_tmp.ta_co_subs_interview_m_mid28;
 
-drop table if exists hw_tmp.ta_co_subs_interview_m_01;
-drop table if exists hw_tmp.ta_co_subs_interview_m_02;
-drop table if exists hw_tmp.ta_co_subs_interview_m_03;
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid5;
+
+create table hw_tmp.tmp_tm_gc_grp_d_mid5(
+cust_id varchar(20)
+,grp_mid_high_member_cnt bigint
+,grp_key_member_arr_cnt bigint
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+insert into hw_tmp.tmp_tm_gc_grp_d_mid5
+select a.grp_cust_id,
+sum(case when a.status = 'stcmNml' then 1 else 0 end),
+sum(1)
+from dwh.td_gc_group_vip_cust_d a
+--join hw_tmp.tmp_tm_gc_grp_d_mid11 b
+join (select grp_cust_id
+        from mk.tm_gc_prod_order_d
+       where statis_date =${hivevar:vi_day}
+       group by grp_cust_id ) b
+on a.cust_id = b.grp_cust_id
+--20200312优化，c表在这个sql中没有意义，注释掉
+--left join hw_tmp.tmp_tm_gc_grp_d_mid1 c
+--on c.cust_id=a.cust_id
+where  a.deal_date =${hivevar:vi_day}
+group by a.grp_cust_id;
+
+
+alter table mk.tm_gc_grp_d drop partition(statis_date=${hivevar:vi_day});
+
+insert into mk.tm_gc_grp_d partition(statis_date=${hivevar:vi_day})
+select
+a1.region_code
+,a1.cust_id
+,a1.cust_name
+,a1.cust_orgid
+,coalesce(a2.respns_cust_mgr ,a1.respns_cust_mgr,'') respns_cust_mgr
+,a1.cust_crt_date
+,a1.cust_status
+,a1.cust_status_date
+,a1.group_id
+,a1.group_type
+,a1.cust_vacation_1
+,a1.cust_vacation_2
+,a1.stress_trade_type
+,0 two_grp_cust_flg
+,'' grp_cust_sign_type
+,a3.is_grp_cust_arr_cnt
+,a3.is_grp_cust_new_cnt
+,a3.is_grp_cust_lost_cnt
+,'' grp_cust_crdt_val_lvl
+,a1.staff_cnt
+,'' grp_cust_area_chrt
+,a4.grp_member_call_cnt
+,a4.grp_member_call_dur
+,a4.grp_member_gprs_flux
+,a1.addr
+,'' zip_code
+,a1.checkin_date
+,a1.off_net_date
+,0 socty_val
+,0 now_have_val
+,0 ltnc_val
+,0 compst_val
+,a1.grp_on_net_dur
+,'' is_year_photo_ab_grp
+,a1.grp_trade_type
+,a1.grp_pay_type
+,a1.supr_grp_id
+,0 grp_biz_sign_cnt
+,0 unipay_biz_sign_cnt
+,a4.grp_member_cnt
+,a4.new_grp_member_cnt
+,a4.off_net_grp_member_cnt
+,a4.lost_grp_member_cnt
+,a4.owe_grp_member_cnt
+,0 grp_key_member_cnt
+,0 grp_high_val_member_cnt
+,a5.grp_mid_high_member_cnt
+,a4.grp_member_income
+,a4.voc_persn_biz_income
+,a4.vas_income
+,a4.grp_photo_mid_high_cnt
+,0 grp_whl_income
+,0 grp_info_income
+,0 mas_adc_income
+,0 ta_income
+,0 std_prd_income
+,0 grp_unipay_info_income
+,0 unipay_mas_adc_income
+,0 unipay_trade_app_income
+,0 unipay_std_prd_income
+,a4.vip_cur_day_arr
+,a4.cur_day_grp_persn_cust_sms_cnt
+,a5.grp_key_member_arr_cnt
+,'' is_owe_grp_cust
+,a4.grp_cust_owe_tot_fee
+,'' grp_cust_org_lvl
+,a4.grp_cust_chrg_dur
+from hw_tmp.tmp_tm_gc_grp_d_mid1 a1
+left join hw_tmp.tmp_tm_gc_grp_d_mid2 a2
+on a1.cust_id=a2.cust_id
+left join hw_tmp.tmp_tm_gc_grp_d_mid3 a3
+on a1.cust_id=a3.cust_id
+left join hw_tmp.tmp_tm_gc_grp_d_mid4 a4
+on a1.cust_id=a4.cust_id
+left join hw_tmp.tmp_tm_gc_grp_d_mid5 a5
+on a1.cust_id=a5.cust_id;
+
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid1;
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid2;
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid3;
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid4;
+drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid5;

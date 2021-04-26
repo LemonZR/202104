@@ -9,6 +9,7 @@ def get_dep(file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
     lis = []
     pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=;|,|\s|_\$|\))' % pattern
     for line in f:
+        line = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', line))
         match = re.findall(pattern, line, re.I)
         if match:
             for mt in match:

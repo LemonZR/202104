@@ -18,6 +18,7 @@ def ergodic_dirs(root_dir='D:\\tmp'):
         # print(dirs)
         # print(files)
         # print('----------------')
+
     return file_list
 
 
