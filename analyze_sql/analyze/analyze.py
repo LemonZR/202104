@@ -132,15 +132,15 @@ def run_all_target(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\mk\\'
+    dirName = 'D:\\tmp\\test\\'
     # 获取union all
     # result_file = 'D:\\数据核对\\union_target.xlsx'
     # union_all_data = run(dirName)
     # excelOp.write_xlsx(result_file, union_all_data, sheet_name='脚本和目标表')
 
-    tmp_pattern = r'union\s+all'
+    tmp_pattern = r'acct_id[\s\S]*td_lg_grp_vip_credit_info_d'
     data = run(dirName, tmp_pattern, layer_num=None, pattern_mod=re.I)
-    result_file = 'D:\\数据核对\\analyze_test.xlsx'
+    result_file = 'D:\\数据核对\\analyze_mk_vl.xlsx'
     excelOp.write_xlsx(result_file, data, edit=True, sheet_name='脚本和语句')
 
     # run(dirName, tmp_pattern, layer_num=0)

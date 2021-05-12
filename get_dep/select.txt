@@ -1,327 +1,960 @@
 --<metadata>
---<model_name>: 集团基础资料日表
---<keyword>: 集客, 集团基础资料
---<description>: 集团基础资料日表
---<author>: 刘昆杨@华为
+--<model_name>: 集团下发非实名清单日报表
+--<keyword>: 实名制
+--<description>: 以集团下放的全量最新非实名数据为基础做的明细报表,不剔除任何用户
+--<author>: 刘昆阳@华为
 --<run_cycle>: D
---<tmp_table>: hw_tmp.tmp_tm_gc_grp_d_mid1,hw_tmp.tmp_tm_gc_grp_d_mid2,hw_tmp.tmp_tm_gc_grp_d_mid3,hw_tmp.tmp_tm_gc_grp_d_mid4,hw_tmp.tmp_tm_gc_grp_d_mid5
---<det_table>: pub.tdet_grp_lfsqt
---<app_table>: MK.TM_GC_GRP_D
---<app_name>:
+--<tmp_table>: hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid1,hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2, hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3,hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4,hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5,hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6,hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0
+--<det_table>:
+--<app_table>: mk.tm_sc_noreal_grp_iss_detl_d
+--<app_name>: 自助分析平台/集团下发非实名清单日报表
 --</metadata>
 
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid1;
-create table hw_tmp.tmp_tm_gc_grp_d_mid1
-(region_code varchar(5),
-cust_id varchar(20),
-cust_name varchar(500),
-cust_orgid varchar(20),
-respns_cust_mgr varchar(50),
-cust_crt_date varchar(14),
-cust_status varchar(10),
-cust_status_date varchar(14),
-group_id varchar(20),
-group_type varchar(20),
-cust_vacation_1 varchar(30),
-cust_vacation_2 varchar(30),
-stress_trade_type varchar(20),
-staff_cnt bigint,
-addr varchar(100),
-checkin_date timestamp,
-off_net_date timestamp,
-grp_on_net_dur int,
-grp_trade_type varchar(32),
-grp_pay_type varchar(16),
-supr_grp_id varchar(20),
-cust_type string
-)
-row format delimited
+----时间变量
+----当年 = ${hivevar:vi_year}
+----当月 = ${hivevar:vi_month}
+----当日 = ${hivevar:vi_day}
+----今年第一个月 = ${hivevar:vi_year_firstmonth}
+----今年第一天 = ${hivevar:vi_year_firstday}
+----当月第一天 = ${hivevar:vi_month_first}
+----当月最后一天 = ${hivevar:vi_month_last}
+----当月第二天 = ${hivevar:month_2day}
+----当月第3天 = ${hivevar:month_3day}
+----当月第4天 = ${hivevar:month_4day}
+----当月（仅保留月份） = ${hivevar:vi_month_mm}
+----当日（仅保留日） = ${hivevar:vi_month_dd}
+----当月最后一天（仅保留日期） = ${hivevar:vi_month_last_dd}
+----当日日期格式 = ${hivevar:vi_day_date}
+----去年 = ${hivevar:vl_year}
+----上月 = ${hivevar:vl_month}
+----昨天 = ${hivevar:vl_day}
+----明年 = ${hivevar:next1year_char}
+----下月 = ${hivevar:next1month_char}
+----明天 = ${hivevar:vi_next_day}
+----上月第一天 = ${hivevar:vl_month_first}
+----上月最后天 = ${hivevar:vl_month_last}
+----上上月 = ${hivevar:last2month_char}
+----上上月第一天 = ${hivevar:last2month_firstday}
+----上上月最后一天 = ${hivevar:last2month_lastday}
+----上3个月 = ${hivevar:last3month_char}
+----上3个月第一天 = ${hivevar:last3month_firstday}
+----上3个月最后一天 = ${hivevar:last3month_lastday}
+----上4个月 = ${hivevar:last4month_char}
+----上5个月 = ${hivevar:last5month_char}
+----上6个月 = ${hivevar:last6month_char}
+----上7个月 = ${hivevar:last7month_char}
+----上8个月 = ${hivevar:last8month_char}
+----上9个月 = ${hivevar:last9month_char}
+----上10个月 = ${hivevar:last10month_char}
+----上11个月 = ${hivevar:last11month_char}
+----下月第一天 = ${hivevar:next1month_firstday}
+----下月最后一天 = ${hivevar:next1month_lastday}
+----下下月 = ${hivevar:next2month_char}
+----下下月第一天 = ${hivevar:next2month_firstday}
+----下下月最后天 = ${hivevar:next2month_lastday}
+----下3个月 = ${hivevar:next3month_char}
+----下下月第一天 = ${hivevar:next3month_firstday}
+----下下月最后天 = ${hivevar:next3month_lastday}
+----去年当月 = ${hivevar:last1year_char}
+----去年当月第一天 = ${hivevar:last1year_today}
+----去年当月最后一天 = ${hivevar:last1year_lastday}
+----去年最后一天 = ${hivevar:vl_year_lastday}
+----去年最后一月 = ${hivevar:vl_year_lastmonth}
+----下月当日 = ${hivevar:next1month_today}
+----下下月当日 = ${hivevar:next2month_today}
+----下3月当日 = ${hivevar:next3month_today}
+----上月当日 = ${hivevar:vl_month_day}
+----上上月当日 = ${hivevar:last2month_today}
+----上3月当日 = ${hivevar:last3month_today}
+----上6月当日 = ${hivevar:last6month_today}
+----明天 = ${hivevar:vi_next_day}
+----昨天对应月份 = ${hivevar:vl_day_month}
+----前天 = ${hivevar:vi_day_last_sec}
+----前3天 = ${hivevar:date_today_l3}
+----前4天 = ${hivevar:date_today_l4}
+----前5天 = ${hivevar:date_today_l5}
+----前6天 = ${hivevar:date_today_l6}
+----前7天 = ${hivevar:date_today_l7}
+----前89天 = ${hivevar:date_today_l89}
+----去年当天 = ${hivevar:last1year_today}
+----明年当天 = ${hivevar:next1year_today}
+----月底前5天 = ${hivevar:vl_month_5days}
+
+-------------------------------------------开发人员修改区(业务汇总) BEGIN-------------------------------------------
+---- 先取出集团下发的全量非实名数据，取最新日期的
+drop table if exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0
+(
+ region varchar(32)
+ ,data_type varchar(100)
+ ,statis_date int
+ ,subs_id varchar(32)
+ ,cust_id varchar(32)
+ ,flag varchar(300)
+ ,deal_date int
+)row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-----928180
-insert into hw_tmp.tmp_tm_gc_grp_d_mid1
+insert into hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0
 select
-a.region_code,
-a.cust_id,
-a.cust_name,
-coalesce(a.country_id,case a.region_code
-when '310' then 'HB.HD'
-when '311' then 'HB.SJ'
-when '312' then 'HB.BD'
-when '313' then 'HB.ZJ'
-when '314' then 'HB.CD'
-when '315' then 'HB.TS'
-when '316' then 'HB.LF'
-when '317' then 'HB.CZ'
-when '318' then 'HB.HS'
-when '319' then 'HB.XT'
-when '335' then 'HB.QH'
-when '336' then 'HB.XA'
-end),
-a.prncp_cust_magr,----大客户经理
-a.create_date cust_crt_date,----客户创建时间
-a.status,----客户状态
-a.status_date,----客户状态变更时间
-b.grp_cust_id,
-b.corp_size,
-b.trade_prop1 ,
-b.trade_prop2,
-b.disastervocation,
-b.staff_cnt,
-b.hqlocat addr,
-from_unixtime( unix_timestamp(b.checkin_date,'yyyyMMddHHmmss'),'yyyy-MM-dd') checkin_date,
-from_unixtime( unix_timestamp(b.to_on_net_time,'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss') off_net_date,
-datediff(from_unixtime(unix_timestamp('${hivevar:vi_day}','yyyyMMdd'),'yyyy-MM-dd'),from_unixtime(unix_timestamp(checkin_date,'yyyyMMddHHmmss'),'yyyy-MM-dd')) grp_on_net_dur,
-b.trade_type3 grp_trade_type ,
-b.grp_pay_mode grp_pay_type,
-b.supr_grp_id supr_grp_id,
-a.cust_type
-from dwh.td_ci_cust_d a
-join dwh.td_gc_group_cust_d b
-on a.region_code=b.region_code
-and a.cust_id = b.cust_id
-and b.deal_date=${hivevar:vi_day}
-and b.region_code<>'999'
-left join pub.tdet_grp_lfsqt c
-on c.cust_id=a.cust_id
-and a.region_code = '316'
-where a.deal_date=${hivevar:vi_day}
-and a.region_code<>'999'
-and c.cust_id is null
+  a.region
+ ,a.data_type
+ ,a.statis_date
+ ,a.subs_id
+ ,a.cust_id
+ ,a.flag
+ ,a.deal_date
+FROM dwh.td_sc_non_real_name_d A --集团下发的最新非实名用户
+WHERE A.STATIS_DATE in (SELECT MAX(STATIS_DATE) FROM dwh.td_sc_non_real_name_d b ) ;
+
+
+---- 确定集团判定的非实名原因，分三类
+drop table if exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+(    SUBS_ID VARCHAR(32)
+    ,DATA_TYPE VARCHAR(100) --下放数据分类
+	,NOREAL_REASON VARCHAR(1024) --下放的非实名原因
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+TRUNCATE TABLE hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2;
+
+--大众市场实名制全量";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+	SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+          ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '使用人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '使用人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '使用人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '使用人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '使用人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '使用人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '使用人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '有语音功能的物联网使用人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '有语音功能的物联网使用人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '有语音功能的物联网使用人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '有语音功能的物联网使用人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '有语音功能的物联网使用人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '有语音功能的物联网使用人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '有语音功能的物联网使用人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '全量用户中使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),39,1)='0' then '全量用户中物联网使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),40,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),41,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),42,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),43,1)='0' then '新增用户中使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),44,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),45,1)='0' then '新增用户中物联网使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),46,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),47,1)='0' then '全量集团证件中一个集团证件号码下相同使用人开卡大于等于10张的经办人与使用人证件相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),48,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),49,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),50,1)='0' then '非云南，广西边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),51,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),52,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),53,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),54,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),55,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),56,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),57,1)='0' then '年龄范围外经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),58,1)='0' then '开户地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),59,1)='0' then '经办人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),60,1)='0' then '使用人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),61,1)='0' then '责任人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),62,1)='0' then '有语音功能的物联网使用人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),63,1)='0' then '年龄范围外经办人地址不包含汉子、' else '、' end
+           ) AS NOREAL_REASON
+    FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    LEFT JOIN
+    (
+	  SELECT SUBS_ID
+	  FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 a
+	  WHERE DATA_TYPE='大众市场实名制新增'
+	) C
+    ON A.SUBS_ID=C.SUBS_ID
+    WHERE A.DATA_TYPE='大众市场实名制全量'
+	AND C.SUBS_ID IS NULL --全量中包含新增，为保证用户不重复，将全量中的新增剔除
+;
+
+---大众市场实名制新增";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+    SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+          ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '使用人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '使用人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '使用人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '使用人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '使用人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '使用人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '使用人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '有语音功能的物联网使用人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '有语音功能的物联网使用人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '有语音功能的物联网使用人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '有语音功能的物联网使用人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '有语音功能的物联网使用人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '有语音功能的物联网使用人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '有语音功能的物联网使用人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '全量用户中使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),39,1)='0' then '全量用户中物联网使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),40,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),41,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),42,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),43,1)='0' then '新增用户中使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),44,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),45,1)='0' then '新增用户中物联网使用人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),46,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),47,1)='0' then '全量集团证件中一个集团证件号码下相同使用人开卡大于等于10张的经办人与使用人证件相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),48,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),49,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),50,1)='0' then '非云南，广西边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),51,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),52,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),53,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),54,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),55,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),56,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),57,1)='0' then '年龄范围外经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),58,1)='0' then '开户地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),59,1)='0' then '经办人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),60,1)='0' then '使用人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),61,1)='0' then '责任人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),62,1)='0' then '有语音功能的物联网使用人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),63,1)='0' then '年龄范围外经办人地址不包含汉子、' else '、' end
+           ) AS NOREAL_REASON
+    FROM  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    WHERE A.DATA_TYPE='大众市场实名制新增'
 ;
 
 
-----优先用该表的客户经理
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid2;
 
-create table hw_tmp.tmp_tm_gc_grp_d_mid2
+--固话实名制全量";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+	SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+		  ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '非云南，广西边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '年龄范围外经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),39,1)='0' then '开户地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),40,1)='0' then '经办人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),41,1)='0' then '责任人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),42,1)='0' then '年龄范围外经办人地址不包含汉子、' else '、' end
+           ) AS NOREAL_REASON
+    FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    LEFT JOIN
+    (
+	  SELECT SUBS_ID
+	  FROM  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0
+	  WHERE DATA_TYPE='固话实名制新增'
+	) C
+    ON A.SUBS_ID=C.SUBS_ID
+    WHERE A.DATA_TYPE='固话实名制全量'
+	AND C.SUBS_ID IS NULL --全量中包含新增，为保证用户不重复，将全量中的新增剔除
+;
+
+
+--固话实名制新增";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+	SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+		  ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '非云南，广西边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '年龄范围外经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),39,1)='0' then '开户地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),40,1)='0' then '经办人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),41,1)='0' then '责任人地址不包含汉子、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),42,1)='0' then '年龄范围外经办人地址不包含汉子、' else '、' end
+           ) AS NOREAL_REASON
+    FROM  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    WHERE A.DATA_TYPE='固话实名制新增'
+;
+
+
+
+---宽带实名制全量";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+	SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+		  ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '非云南公司，广西公司使用边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '年龄范围外经办人年龄无效、' else '、' end
+           ) AS NOREAL_REASON
+    FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    LEFT JOIN
+    (
+	  SELECT SUBS_ID
+	  FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0
+	  WHERE DATA_TYPE='宽带实名制新增'
+	) C
+    ON A.SUBS_ID=C.SUBS_ID
+    WHERE A.DATA_TYPE='宽带实名制全量'
+	AND C.SUBS_ID IS NULL --全量中包含新增，为保证用户不重复，将全量中的新增剔除
+;
+
+
+---宽带实名制新增";
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2
+	SELECT A.SUBS_ID
+          ,A.DATA_TYPE
+		  ,concat(case when substr(TRANSLATE(A.FLAG,'   ',''),1,1)='0' then '开户证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),2,1)='0' then '开户证件地址、' else '、'  end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),3,1)='0' then '开户姓名，集团姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),4,1)='0' then '开户证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),5,1)='0' then '开户年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),6,1)='0' then '开户年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),7,1)='0' then '经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),8,1)='0' then '经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),9,1)='0' then '经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),10,1)='0' then '经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),11,1)='0' then '经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),12,1)='0' then '经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),13,1)='0' then '经办人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),14,1)='0' then '责任人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),15,1)='0' then '责任人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),16,1)='0' then '责任人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),17,1)='0' then '责任人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),18,1)='0' then '责任人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),19,1)='0' then '责任人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),20,1)='0' then '责任人年龄无效、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),21,1)='0' then '全量用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),22,1)='0' then '全量用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),23,1)='0' then '全量用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),24,1)='0' then '全量用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),25,1)='0' then '新增用户中开户证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),26,1)='0' then '新增用户中经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),27,1)='0' then '新增用户中责任人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),28,1)='0' then '新增用户中不在年龄经办人证件一证多名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),29,1)='0' then '新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),30,1)='0' then '20170101新增开户人包含军官证，警官证、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),31,1)='0' then '非云南公司，广西公司使用边境通行证入网、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),32,1)='0' then '年龄范围外经办人证件类型、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),33,1)='0' then '年龄范围外经办人证件地址、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),34,1)='0' then '年龄范围外经办人姓名、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),35,1)='0' then '年龄范围外经办人证件号码、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),36,1)='0' then '年龄范围外经办人，开户人姓名相同、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),37,1)='0' then '年龄范围外经办人年龄、' else '、' end,
+                  case when substr(TRANSLATE(A.FLAG,'   ',''),38,1)='0' then '年龄范围外经办人年龄无效、' else '、' end
+           ) AS NOREAL_REASON
+    FROM  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid0 A --集团下发的最新非实名用户
+    WHERE A.DATA_TYPE='宽带实名制新增'
+;
+
+
+--用户表中找到目标用户基本信息";
+DROP TABLE  if exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3
 (
-cust_id varchar(20),
-respns_cust_mgr varchar(50))
-row format delimited
+REGION_CODE VARCHAR(10)
+,REGION_ID VARCHAR(40)
+,SUBS_ID VARCHAR(32)
+,PHONE_NO VARCHAR(32)
+,START_TIME timestamp
+,CREAT_CHNL VARCHAR(256)
+,SUBS_NAME VARCHAR(256)
+,CUST_ID  VARCHAR(40)
+,CUST_NAME VARCHAR(256)
+,CERT_TYPE VARCHAR(40)
+,CERT_NUMBER VARCHAR(100)
+,CERT_ADDR VARCHAR(256)
+,USER_STAT VARCHAR(10)
+,STATUS_DATE timestamp
+,DISABLE_LOCK VARCHAR(32)
+,USING_CUST VARCHAR(32)
+,USING_NAME VARCHAR(256)
+,USING_CERT_TYPE VARCHAR(40)
+,USING_CERT_NUMBER VARCHAR(100)
+,USING_CERT_ADDR VARCHAR(256)
+)row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-insert into hw_tmp.tmp_tm_gc_grp_d_mid2
-select aa1.cust_id,aa1.custmgr from
-(select trim(cast(custid as varchar(50))) cust_id,custmgr from
-(select custid,custmgr,
-row_number() over(partition by  custid order by case role when 'Master' then 1 when 'Assist' then 2 else 3 end) rownumber
-from  dwh.td_gc_cust_servchannel_d where  deal_date=${hivevar:vi_day}) a
-where  a.rownumber = 1) aa1
-join hw_tmp.tmp_tm_gc_grp_d_mid1 a
-on aa1.cust_id=a.cust_id where  a.cust_id is not null;
+TRUNCATE TABLE hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3;
+
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3
+SELECT B.REGION_CODE
+,D.REGION_ID
+,C.SUBS_ID
+,b.PHONE_NO
+,from_unixtime(unix_timestamp(substr(b.start_time,1,14),'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss')
+,D.CHNL_NAME
+,B.SUBS_NAME
+,A.CUST_ID
+,coalesce(g.itemvalue,a.cust_name)
+,A.CERT_TYPE
+,A.CERT_NUMBER
+,A.CERT_ADDR
+,B.USER_STAT
+,from_unixtime(unix_timestamp(substr(b.status_date,1,14),'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss')
+,B.DISABLE_LOCK
+,B.USING_CUST
+,A.CUST_NAME
+,A.CERT_TYPE
+,A.CERT_NUMBER
+,A.CERT_ADDR
+FROM DWH.TD_CI_CUST_D A
+JOIN DWH.TD_SC_SUBS_D B
+ON A.CUST_ID=B.CUST_ID
+AND B.DEAL_DATE=${hivevar:vi_day}
+JOIN hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2 C --集团下放的全部非实名用户
+ON B.SUBS_ID=C.SUBS_ID
+LEFT JOIN PUB.TDET_CHNL_BELNG_INFO D
+ON B.CREAT_CHNL=D.CHNL_ID
+and  d.deal_date =${hivevar:vi_day}
+left join DWH.TD_GC_CU_GRPEXPANDINFO_D g --新接口，存储全量集团客户的集团证件
+on a.cust_id=g.custid
+and g.status = 'stcmNml'
+and g.itemid = 'GroupCertName' --集团客户证件名称
+and g.deal_date=${hivevar:vi_day}
+WHERE A.DEAL_DATE=${hivevar:vi_day}
+GROUP BY B.REGION_CODE
+,d.REGION_ID
+,C.SUBS_ID
+,b.PHONE_NO
+,from_unixtime(unix_timestamp(substr(b.start_time,1,14),'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss')
+,D.CHNL_NAME
+,B.SUBS_NAME
+,A.CUST_ID
+,coalesce(g.itemvalue,a.cust_name)
+,A.CERT_TYPE
+,A.CERT_NUMBER
+,A.CERT_ADDR
+,B.USER_STAT
+,from_unixtime(unix_timestamp(substr(b.status_date,1,14),'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss')
+,B.DISABLE_LOCK
+,B.USING_CUST
+,A.CUST_NAME
+,A.CERT_TYPE
+,A.CERT_NUMBER
+,A.CERT_ADDR
+;
 
 
-----3个标记字段
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid3;
-
-create table  hw_tmp.tmp_tm_gc_grp_d_mid3
-(cust_id varchar(20),
-is_grp_cust_arr_cnt varchar(1),
-is_grp_cust_new_cnt varchar(1),
-is_grp_cust_lost_cnt varchar(1))
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-insert into hw_tmp.tmp_TM_GC_GRP_D_mid3
-select distinct
- a.grp_cust_id,
- '1',
-case when SUBSTR(B.cust_crt_date,1,8)=${hivevar:vi_day} and B.cust_status = 'stcmNml' then '1' else '0' end,
-case when SUBSTR(B.cust_crt_date,1,8)=${hivevar:vi_day} and B.cust_status <> 'stcmNml' then '1' else '0' end
---from hw_tmp.tmp_tm_gc_grp_d_mid11 a
-from mk.tm_gc_prod_order_d a
-join hw_tmp.tmp_tm_gc_grp_d_mid1 b
-on a.grp_cust_id = b.cust_id
-where b.cust_type = 'GroupCustomer'
-and a.statis_date =${hivevar:vi_day} ;
 
 
-
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid4;
-create table  hw_tmp.tmp_tm_gc_grp_d_mid4
-(cust_id varchar(20),
-grp_member_call_cnt bigint,
-grp_member_call_dur bigint,
-grp_member_gprs_flux bigint,
-grp_member_cnt bigint,
-new_grp_member_cnt bigint,
-off_net_grp_member_cnt bigint,
-lost_grp_member_cnt bigint,
-owe_grp_member_cnt bigint,
-grp_member_income bigint,
-vip_cur_day_arr bigint,
-cur_day_grp_persn_cust_sms_cnt bigint,
-voc_persn_biz_income bigint,
-vas_income bigint,
-grp_photo_mid_high_cnt bigint,
-grp_cust_owe_tot_fee bigint,
-grp_cust_chrg_dur bigint )
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-insert into hw_tmp.tmp_tm_gc_grp_d_mid4
-select
-a.grp_cust_id cust_id,
-sum(f.call_cnt) grp_member_call_cnt,
-sum(f.call_dur) grp_member_call_dur,
-sum(cast(f.gprs_tot_flux as bigint )) grp_member_gprs_flux,
-sum(1) grp_member_cnt,
-sum(case when b.is_new_user = '0' then 0 else 1 end ) new_grp_member_cnt,
-sum(case when b.is_off_net_user = '0' then 0 else 1 end ) off_net_grp_member_cnt,
-sum(case when b.is_on_net_user = '0' then 0 else 1 end ) lost_grp_member_cnt,
-SUM(case when trim(cast(case when  b.is_on_net_user = '1' or  b.is_off_net_user = '1' then
-----(case when coalesce(c.tot_owe_fee,0) ~ '^[0-9]{1,}\$' and not(coalesce(c.tot_owe_fee,0) ~ '^[0]{1,}\$')  then 1 else 0 end )  else 0 end  as varchar )) = '0' then 0 else 1 end )
-(case when REGEXP(coalesce(c.tot_owe_fee,0) , '^[0-9]{1,}\$') and not REGEXP(coalesce(c.tot_owe_fee,0) , '^[0]{1,}\$')  then 1 else 0 end )  else 0 end  as varchar(1) )) = '0' then 0 else 1 end )  OWE_GRP_MEMBER_CNT,
-sum(g.tot_fee) grp_member_income,
-sum(case when d.vip_no is null then 0 else 1 end ) vip_cur_day_arr,
-sum(f.p2p_sms_cnt) cur_day_grp_persn_cust_sms_cnt,
-sum(g.call_fee) voc_persn_biz_income,
-sum(g.tot_fee - g.call_fee) vas_income,
-sum(case when d.photo_flg = '0' then 0 else 1 end ) grp_photo_mid_high_cnt,
-sum(c.tot_owe_fee) grp_cust_owe_tot_fee,
-sum(f.chrg_dur) grp_cust_chrg_dur
-from
+---汇总国政通证件数据";
+drop table if exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4
 (
-select h.*,row_number() over(partition by subs_id order by subs_id desc) num
-from mk.tm_gc_prod_order_d h where statis_date=${hivevar:vi_day}
-)  a
-inner join mk.tm_sc_user_base_d b
-on  a.subs_id = b.subs_id    and b.statis_date =${hivevar:vi_day}
-left join  mk.tm_ac_owe_m c
-on a.subs_id =c.subs_id  and c.statis_month =${hivevar:vl_month}
-left join dwh.td_sc_subs_d d
-on a.subs_id =d.subs_id
-and d.deal_date =${hivevar:vi_day}
-left join hw_tmp.tmp_tm_gc_grp_d_mid1 e
-on e.cust_id=a.grp_cust_id
-left join mk.tm_ls_user_comm_d f
-on a.subs_id = f.subs_id
-and f.statis_date = ${hivevar:vi_day}
-left join mk.tm_ac_user_acct_d g
-on a.subs_id = g.subs_id
-and g.statis_date = ${hivevar:vi_day}
-where  a.num=1 ----- a.statis_date =${hivevar:vi_day}
-and e.cust_id is not null
-group by a.grp_cust_id;
-
-
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid5;
-
-create table hw_tmp.tmp_tm_gc_grp_d_mid5(
-cust_id varchar(20)
-,grp_mid_high_member_cnt bigint
-,grp_key_member_arr_cnt bigint
-)
-row format delimited
+CERTID VARCHAR(100)
+,CUSTNAME  VARCHAR(256)
+,RETURNCODE  VARCHAR(32)
+)row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-insert into hw_tmp.tmp_tm_gc_grp_d_mid5
-select a.grp_cust_id,
-sum(case when a.status = 'stcmNml' then 1 else 0 end),
-sum(1)
-from dwh.td_gc_group_vip_cust_d a
---join hw_tmp.tmp_tm_gc_grp_d_mid11 b
-join (select grp_cust_id
-        from mk.tm_gc_prod_order_d
-       where statis_date =${hivevar:vi_day}
-       group by grp_cust_id ) b
-on a.cust_id = b.grp_cust_id
---20200312优化，c表在这个sql中没有意义，注释掉
---left join hw_tmp.tmp_tm_gc_grp_d_mid1 c
---on c.cust_id=a.cust_id
-where  a.deal_date =${hivevar:vi_day}
-group by a.grp_cust_id;
+TRUNCATE TABLE hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4;
 
 
-alter table mk.tm_gc_grp_d drop partition(statis_date=${hivevar:vi_day});
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4
+SELECT A.cert_id
+,A.cust_name
+,A.return_code
+FROM
+(
+SELECT A.cert_id
+,A.cust_name
+,A.return_code
+,ROW_NUMBER() OVER(PARTITION BY A.cert_id,A.cust_name ORDER BY CAST(A.intime AS int) DESC) NUM
+FROM mk.tm_sc_real_check_d a  --------DIS.TC_LOC_RNAME_CHECK_D A --国政通下放的所有数据
+WHERE CAST(A.intime AS int)>=20170125 --入库时间,用此表必限制此条件
+) A
+WHERE A.NUM=1
+;
 
-insert into mk.tm_gc_grp_d partition(statis_date=${hivevar:vi_day})
+
+--经办人信息、责任人信息、归属集团名称";
+
+drop table if exists  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5
+(
+SUBS_ID VARCHAR(32)
+,DISABLE_LOCK VARCHAR(32)
+,AGENT_NAME VARCHAR(256)
+,AGENT_CERT_TYPE VARCHAR(40)
+,AGENT_CERT_NUM VARCHAR(100)
+,AGENT_ADDR VARCHAR(256)
+,RESPON_NAME VARCHAR(256)
+,RESPON_CERT_TYPE VARCHAR(40)
+,RESPON_CERT_NUMBER VARCHAR(100)
+,RESPON_CERT_ADDR VARCHAR(256)
+,GROUP_ID  VARCHAR(40)
+,GRP_NAME VARCHAR(256)
+,RETURNCODE1 VARCHAR(256)
+,RETURNCODE2 VARCHAR(256)
+,RETURNCODE3 VARCHAR(256)
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate  table  hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5;
+
+
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5
+SELECT a.subs_id
+,A.DISABLE_LOCK
+,B.DELEGATENAME
+,B.DELEGATECERTTYPE
+,B.DELEGATECERTID
+,B.DELEGATECERTADDR
+,C.CUST_NAME
+,C.CERT_TYPE
+,C.CERT_NUMBER
+,C.CERT_ADDR
+,D.GROUP_ID
+,D.GRP_NAME
+,CASE WHEN B1.RETURNCODE='1' THEN '不一致'
+WHEN B1.RETURNCODE='2' THEN '不存在'
+WHEN B1.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B1.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通校验个人客户不通过原因
+,CASE WHEN B2.RETURNCODE='1' THEN '不一致'
+WHEN B2.RETURNCODE='2' THEN '不存在'
+WHEN B2.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B2.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通使用人证件不通过原因
+,CASE WHEN B3.RETURNCODE='1' THEN '不一致'
+WHEN B3.RETURNCODE='2' THEN '不存在'
+WHEN B3.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B3.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通经办人证件不通过原因
+FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3 A
+LEFT JOIN mk.tm_sc_entity_attr_d b
+ON A.SUBS_ID=B.ENTITY_OID
+AND B.is_valid = '1'
+AND B.STATIS_DATE=${hivevar:vi_day}
+LEFT JOIN mk.tm_gc_real_all_m2m_detl_d c   ---DIS.TC_GRP_RESPONS_DETL_SUBS_D C --物理网产品成员责任人清单日报表--到用户级别的责任人证件信息表   --没有数据
+ON A.SUBS_ID=C.SUBS_ID
+AND C.STATIS_DATE=${hivevar:vi_day}
+LEFT JOIN
+(SELECT A.SUBS_ID
+,B.CUST_NAME AS GRP_NAME
+,B.GROUP_ID
+,ROW_NUMBER() OVER(PARTITION BY A.SUBS_ID ORDER BY A.GROUP_SUBS_CHECKIN_DATE DESC) NUM
+FROM mk.tm_gc_meb_d A
+JOIN mk.tm_gc_grp_view_d B
+ON A.CUST_ID=B.CUST_ID
+AND B.STATIS_DATE=${hivevar:vi_day}
+WHERE A.STATIS_DATE=${hivevar:vi_day}
+AND A.GROUP_SUBS_STATUS='stcmNml' --集团管理器正常用户
+AND A.SUBS_STATUS NOT LIKE 'US2%' --成员用户状态正常
+) D
+ON A.SUBS_ID=D.SUBS_ID
+AND D.NUM=1
+LEFT JOIN hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4 B1
+ON A.CERT_NUMBER=B1.CERTID
+AND A.CUST_NAME=B1.CUSTNAME
+LEFT JOIN hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4 B2
+ON A.USING_CERT_NUMBER=B2.CERTID
+AND A.USING_NAME=B2.CUSTNAME
+LEFT JOIN hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid4 B3
+ON B.DELEGATECERTID=B3.CERTID
+AND B.DELEGATENAME=B3.CUSTNAME
+GROUP BY  a.subs_id
+,A.DISABLE_LOCK
+,B.DELEGATENAME
+,B.DELEGATECERTTYPE
+,B.DELEGATECERTID
+,B.DELEGATECERTADDR
+,C.CUST_NAME
+,C.CERT_TYPE
+,C.CERT_NUMBER
+,C.CERT_ADDR
+,D.GROUP_ID
+,D.GRP_NAME
+,CASE WHEN B1.RETURNCODE='1' THEN '不一致'
+WHEN B1.RETURNCODE='2' THEN '不存在'
+WHEN B1.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B1.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通校验个人客户不通过原因
+,CASE WHEN B2.RETURNCODE='1' THEN '不一致'
+WHEN B2.RETURNCODE='2' THEN '不存在'
+WHEN B2.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B2.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通使用人证件不通过原因
+,CASE WHEN B3.RETURNCODE='1' THEN '不一致'
+WHEN B3.RETURNCODE='2' THEN '不存在'
+WHEN B3.RETURNCODE='3' THEN '数据格式不正确'
+WHEN B3.RETURNCODE='0' THEN '一致' ELSE NULL END --国政通经办人证件不通过原因
+;
+
+--
+
+create table if not exists hw_tmp.TEMP_group_non_real_name_MID006_999999
+(
+subs_id string
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.TEMP_group_non_real_name_MID006_999999;
+
+insert into hw_tmp.TEMP_group_non_real_name_MID006_999999
 select
-a1.region_code
-,a1.cust_id
-,a1.cust_name
-,a1.cust_orgid
-,coalesce(a2.respns_cust_mgr ,a1.respns_cust_mgr,'') respns_cust_mgr
-,a1.cust_crt_date
-,a1.cust_status
-,a1.cust_status_date
-,a1.group_id
-,a1.group_type
-,a1.cust_vacation_1
-,a1.cust_vacation_2
-,a1.stress_trade_type
-,0 two_grp_cust_flg
-,'' grp_cust_sign_type
-,a3.is_grp_cust_arr_cnt
-,a3.is_grp_cust_new_cnt
-,a3.is_grp_cust_lost_cnt
-,'' grp_cust_crdt_val_lvl
-,a1.staff_cnt
-,'' grp_cust_area_chrt
-,a4.grp_member_call_cnt
-,a4.grp_member_call_dur
-,a4.grp_member_gprs_flux
-,a1.addr
-,'' zip_code
-,a1.checkin_date
-,a1.off_net_date
-,0 socty_val
-,0 now_have_val
-,0 ltnc_val
-,0 compst_val
-,a1.grp_on_net_dur
-,'' is_year_photo_ab_grp
-,a1.grp_trade_type
-,a1.grp_pay_type
-,a1.supr_grp_id
-,0 grp_biz_sign_cnt
-,0 unipay_biz_sign_cnt
-,a4.grp_member_cnt
-,a4.new_grp_member_cnt
-,a4.off_net_grp_member_cnt
-,a4.lost_grp_member_cnt
-,a4.owe_grp_member_cnt
-,0 grp_key_member_cnt
-,0 grp_high_val_member_cnt
-,a5.grp_mid_high_member_cnt
-,a4.grp_member_income
-,a4.voc_persn_biz_income
-,a4.vas_income
-,a4.grp_photo_mid_high_cnt
-,0 grp_whl_income
-,0 grp_info_income
-,0 mas_adc_income
-,0 ta_income
-,0 std_prd_income
-,0 grp_unipay_info_income
-,0 unipay_mas_adc_income
-,0 unipay_trade_app_income
-,0 unipay_std_prd_income
-,a4.vip_cur_day_arr
-,a4.cur_day_grp_persn_cust_sms_cnt
-,a5.grp_key_member_arr_cnt
-,'' is_owe_grp_cust
-,a4.grp_cust_owe_tot_fee
-,'' grp_cust_org_lvl
-,a4.grp_cust_chrg_dur
-from hw_tmp.tmp_tm_gc_grp_d_mid1 a1
-left join hw_tmp.tmp_tm_gc_grp_d_mid2 a2
-on a1.cust_id=a2.cust_id
-left join hw_tmp.tmp_tm_gc_grp_d_mid3 a3
-on a1.cust_id=a3.cust_id
-left join hw_tmp.tmp_tm_gc_grp_d_mid4 a4
-on a1.cust_id=a4.cust_id
-left join hw_tmp.tmp_tm_gc_grp_d_mid5 a5
-on a1.cust_id=a5.cust_id;
+concat(a.segment_no,b.segment_no)
+from pub.tdet_pub_segment_999 a,
+pub.tdet_pub_segment_999 b
+where 1=1;
 
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid1;
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid2;
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid3;
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid4;
-drop table if EXISTS hw_tmp.tmp_tm_gc_grp_d_mid5;
+
+
+
+
+---输出结果到中间表";
+drop table if exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6;
+create table if not exists hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6
+(
+SUBS_ID VARCHAR(32)
+,LOCAL_ERR_TYPE VARCHAR(256)
+,USETYPE VARCHAR(40)
+,NOREAL_REASON VARCHAR(256)
+,DATA_TYPE VARCHAR(200) --集团下放的数据分类
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6;
+
+
+INSERT INTO hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6
+SELECT
+A.SUBS_ID
+,E.LOCAL_ERR_TYPE --经分非实名原因
+,B.USETYPE --用途 1：客户；2：使用者；3：经办人；4：其他
+,F.NOREAL_REASON  --集团下发的非实名原因
+,F.DATA_TYPE  --集团下放的数据分类
+FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3 A
+LEFT JOIN
+(
+SELECT A.SUBS_ID
+,CASE WHEN A.USE_TYPE='1' THEN '客户'
+WHEN A.USE_TYPE='2' THEN '使用者'
+WHEN A.USE_TYPE='3' THEN '经办人'
+WHEN A.USE_TYPE='4' THEN '其他' ELSE NULL END AS USETYPE
+,ROW_NUMBER() OVER(PARTITION BY A.SUBS_ID ORDER BY CAST(A.INTIME AS int) DESC) NUM
+FROM mk.tm_sc_real_check_d A --国政通下放的所有数据
+left join  hw_tmp.TEMP_group_non_real_name_MID006_999999  b
+on substr(a.subs_id,length(a.subs_id)-5)=b.subs_id
+WHERE CAST(A.INTIME AS int)>=20170125 --入库时间,用此表必限制此条件
+and  a.USE_TYPE in('1','2','3','4')
+) B
+ON A.SUBS_ID=B.SUBS_ID
+AND B.NUM=1
+LEFT JOIN
+(
+SELECT SUBS_ID,
+concat(CASE WHEN IS_KEY_SM='非实名' THEN	'个人证件号码不满足实名、' ELSE  ''  end,
+CASE WHEN IS_NAME_SM='非实名' THEN	'个人证件姓名不满足实名、' ELSE  ''  end,
+CASE WHEN IS_ADDRESS_SM='非实名' THEN '个人证件地址不满足实名、' ELSE  ''  end,
+CASE WHEN IS_YZDM='非实名' THEN	'个人证件一证多名、' ELSE  ''  end,
+CASE WHEN IS_GRP_SM='非实名' THEN	'集团证件不满足实名、' ELSE  ''  end,
+CASE WHEN IS_SYR_SM='非实名' THEN	'使用人证件不满足实名、' ELSE  ''  end,
+CASE WHEN IS_JBR_SM='非实名' THEN	'经办人证件不满足实名、' ELSE  ''  end,
+CASE WHEN IS_ZRR_SM='非实名' THEN	'责任人证件不满足实名、' ELSE  ''  end,
+CASE WHEN IS_MORE_CUST='非实名' THEN	'集团证件一证多名、' ELSE  ''  end,
+CASE WHEN IS_MORE_USING='非实名' THEN	'使用人证件一证多名、' ELSE  ''  end,
+CASE WHEN IS_MORE_AGENT='非实名' THEN	'经办人证件一证多名、' ELSE  ''  end,
+CASE WHEN IS_MORE_RESPON='非实名' THEN	'责任人证件一证多名、' ELSE  ''  end,
+CASE WHEN AGENT_NAME_SM='非实名' THEN	'集团名称和经办人名称相同、' ELSE  ''  end,
+CASE WHEN USING_NAME_SM='非实名' THEN	'集团名称和使用人名称相同、' ELSE  ''  end,
+CASE WHEN IS_USING10='非实名' THEN	'相同使用人开卡大于等于10张且经办人和使用人相同' ELSE  ''  end,
+CASE WHEN IS_CERT_NULL='非实名' THEN	'证件类型无效或为空、' ELSE  ''  end )AS LOCAL_ERR_TYPE
+FROM mk.tm_sc_noreal_reason_d   ---DIS.TC_NOREAL_REASON_DETL_D        --没数据
+WHERE STATIS_DATE=${hivevar:vi_day}
+) E
+ON A.SUBS_ID=E.SUBS_ID
+LEFT JOIN hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid2 F --全部全部集团下放的非实名用户
+ON A.SUBS_ID=F.SUBS_ID
+GROUP BY A.SUBS_ID
+,E.LOCAL_ERR_TYPE --经分非实名原因
+,B.USETYPE --用途 1：客户；2：使用者；3：经办人；4：其他
+,F.NOREAL_REASON  --集团下发的非实名原因
+,F.DATA_TYPE  --集团下放的数据分类
+;
+
+
+--注入目标表
+alter table mk.tm_sc_noreal_grp_iss_detl_d drop partition (statis_date=${hivevar:vi_day});
+
+insert into mk.tm_sc_noreal_grp_iss_detl_d partition (statis_date=${hivevar:vi_day})
+SELECT
+b.REGION_CODE
+,b.REGION_ID
+,A.SUBS_ID
+,b.PHONE_NO
+,b.START_TIME
+,b.CREAT_CHNL
+,b.USER_STAT
+,b.STATUS_DATE
+,b.DISABLE_LOCK
+,b.CUST_ID
+,b.CUST_NAME
+,b.CERT_TYPE
+,b.CERT_NUMBER
+,b.CERT_ADDR
+,b.USING_NAME
+,b.USING_CERT_TYPE
+,b.USING_CERT_NUMBER
+,b.USING_CERT_ADDR
+,d.AGENT_NAME
+,d.AGENT_CERT_TYPE
+,d.AGENT_CERT_NUM
+,d.AGENT_ADDR
+,d.RESPON_NAME
+,d.RESPON_CERT_TYPE
+,d.RESPON_CERT_NUMBER
+,d.RESPON_CERT_ADDR
+,d.GROUP_ID
+,d.GRP_NAME
+,A.LOCAL_ERR_TYPE --经分非实名原因
+,d.RETURNCODE1 --国政通校验个人客户不通过原因
+,d.RETURNCODE2 --国政通使用人证件不通过原因
+,d.RETURNCODE3 --国政通经办人证件不通过原因
+,A.USETYPE --用途 1：客户；2：使用者；3：经办人；4：其他
+,A.NOREAL_REASON --集团下发的非实名原因
+,CASE WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE IN ('1','2') THEN '物联网'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE='3' THEN '集团成员'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE='4' THEN '无线商话'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.SUBS_ID IS NULL
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人证件用户'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.SUBS_ID IS NULL
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团证件其他属性用户'
+
+WHEN A.DATA_TYPE LIKE '%固话%'
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人固话'
+WHEN A.DATA_TYPE LIKE '%固话%'
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团固话'
+
+WHEN A.DATA_TYPE LIKE '%宽带%'
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人宽带'
+WHEN A.DATA_TYPE LIKE '%宽带%'
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团宽带'
+ELSE '证件类型无效或为空' END
+,A.DATA_TYPE  --集团下放的数据分类
+FROM hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid6 A
+join hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid3 b
+on a.subs_id=b.subs_id
+join hw_tmp.tm_sc_noreal_grp_iss_detl_d_mid5 d
+on a.subs_id=d.subs_id
+LEFT JOIN mk.tm_gc_subs_type_d  c   ---DIS.TC_SUBS_GROUP_TYPE_D C
+ON A.SUBS_ID=C.SUBS_ID
+AND C.STATIS_DATE=${hivevar:vi_day}
+GROUP BY b.REGION_CODE
+,b.REGION_ID
+,A.SUBS_ID
+,b.PHONE_NO
+,b.START_TIME
+,b.CREAT_CHNL
+,b.USER_STAT
+,b.STATUS_DATE
+,b.DISABLE_LOCK
+,b.CUST_ID
+,b.CUST_NAME
+,b.CERT_TYPE
+,b.CERT_NUMBER
+,b.CERT_ADDR
+,b.USING_NAME
+,b.USING_CERT_TYPE
+,b.USING_CERT_NUMBER
+,b.USING_CERT_ADDR
+,d.AGENT_NAME
+,d.AGENT_CERT_TYPE
+,d.AGENT_CERT_NUM
+,d.AGENT_ADDR
+,d.RESPON_NAME
+,d.RESPON_CERT_TYPE
+,d.RESPON_CERT_NUMBER
+,d.RESPON_CERT_ADDR
+,d.GROUP_ID
+,d.GRP_NAME
+,A.LOCAL_ERR_TYPE --经分非实名原因
+,d.RETURNCODE1 --国政通校验个人客户不通过原因
+,d.RETURNCODE2 --国政通使用人证件不通过原因
+,d.RETURNCODE3 --国政通经办人证件不通过原因
+,A.USETYPE --用途 1：客户；2：使用者；3：经办人；4：其他
+,A.NOREAL_REASON --集团下发的非实名原因
+,CASE WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE IN ('1','2') THEN '物联网'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE='3' THEN '集团成员'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.TYPE='4' THEN '无线商话'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.SUBS_ID IS NULL
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人证件用户'
+WHEN A.DATA_TYPE LIKE '%大众市场%' AND C.SUBS_ID IS NULL
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团证件其他属性用户'
+
+WHEN A.DATA_TYPE LIKE '%固话%'
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人固话'
+WHEN A.DATA_TYPE LIKE '%固话%'
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团固话'
+
+WHEN A.DATA_TYPE LIKE '%宽带%'
+AND B.CERT_TYPE IN ('IdCard','IdTypeHKB','TaiBaoZheng','HKIdCard','PLA','SoldierID','PolicePaper','Passport','PLAIDCard')
+THEN '个人宽带'
+WHEN A.DATA_TYPE LIKE '%宽带%'
+AND (B.CERT_TYPE IN ('BusinessLicence','BussLicence','IdTypeYYZZ','CorpLicence','IdTypeFRZS','IdTypeJSX','IdTypeOrgId','OrgaCodeLicence','OrgaLicence','UniSocialCreditCodeCert')
+OR (B.CERT_TYPE LIKE '%组织机构代码%' OR B.CERT_TYPE LIKE '%营业执照%'))
+THEN '集团宽带'
+ELSE '证件类型无效或为空' END
+,A.DATA_TYPE  --集团下放的数据分类
+;
+

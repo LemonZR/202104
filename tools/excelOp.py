@@ -1,7 +1,8 @@
 # coding=utf-8
 
 import openpyxl
-import os,sys
+from openpyxl.styles import Font, Border, Side, PatternFill, colors, Alignment
+import os, sys
 from typing import Union
 
 '''
@@ -50,13 +51,19 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
             sys.exit(e)
     else:
         if os.path.exists(filename):
-            sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
+            sys.exit(
+                f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
         else:
             workbook = openpyxl.Workbook()
             print(f'Create a new workbook named[{filename}]')
     new_sheet = workbook.create_sheet(sheet_name)
     for row_id, row_data in enumerate(data, start=1):
+        # enumerate(data, start=1) 将data 的元素进行编号，序号从start开始。enumerate默认start=0.
+        head_fill = PatternFill("solid", fgColor="CCCCFF")
+
         for col_id, cell_data in enumerate(row_data, start=1):
+            if row_id == 1:
+                new_sheet.cell(row_id, col_id).fill = head_fill
             new_sheet.cell(row_id, col_id, cell_data)
     workbook.save(filename)
     workbook.close()
@@ -86,7 +93,7 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
 if __name__ == '__main__':
     basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
     fileName = f'{basedir}\\test1d.xlsx'
-    write_xlsx(fileName, data=[['abc'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='b')
+    write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
     result = read_xlsx(fileName, sheet_name='b')
 
     for i in result:
