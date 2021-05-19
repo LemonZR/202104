@@ -58,12 +58,16 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
             print(f'Create a new workbook named[{filename}]')
     new_sheet = workbook.create_sheet(sheet_name)
     for row_id, row_data in enumerate(data, start=1):
-        # enumerate(data, start=1) 将data 的元素进行编号，序号从start开始。enumerate默认start=0.
-        head_fill = PatternFill("solid", fgColor="CCCCFF")
 
+        head_fill = PatternFill(patternType='solid', fgColor="CCCCFF")
+        side = Side(style='thin', color='000000')
+        font = Font(b=True)
+        head_border = Border(left=side, right=side, top=side, bottom=side)
         for col_id, cell_data in enumerate(row_data, start=1):
             if row_id == 1:
                 new_sheet.cell(row_id, col_id).fill = head_fill
+                new_sheet.cell(row_id, col_id).border = head_border
+                new_sheet.cell(row_id, col_id).font = font
             new_sheet.cell(row_id, col_id, cell_data)
     workbook.save(filename)
     workbook.close()
@@ -94,7 +98,7 @@ if __name__ == '__main__':
     basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
     fileName = f'{basedir}\\test1d.xlsx'
     write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
-    result = read_xlsx(fileName, sheet_name='b')
+    result = read_xlsx(fileName, sheet_name='Sheet')
 
     for i in result:
         print(i)

@@ -25,9 +25,6 @@ def get_dep(file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
 if __name__ == '__main__':
     file_name = 'select.txt'
     file = os.getcwd() + '\\' + file_name
-    get_dep(file, 'pub')
+    get_dep(file, )
 
-    html = """ <a>asdhaksdasljd</a>"""
-    p = re.compile(']+>')
-    r = p.sub('', html)
-    print(r)
+

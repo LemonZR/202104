@@ -3,13 +3,30 @@
 from GbaseSQLEngine import GbaseSQLEngine
 import re
 import logging
-import os, sys
+import os
+import sys
+from collections import Counter
 
 
 class DisAnalyze:
-    def __init__(self, file=''):
+    def __init__(self, file='./result.txt'):
         self.__file = file
         self.__logger, self.__err_logger = self.__get_logger()
+        self.d_partition_columns = {
+            # 如果一个表含有多个分区类型字段，优先取key值较小的
+            'statis_date': 1,
+            'deal_date': 2,
+            'day_id': 3,
+            'statis_hour': 4
+        }
+        self.m_partition_columns = {
+            'statis_month': 5,
+            'photo_month': 6
+
+        }
+        self.all_partitions = dict(Counter(self.d_partition_columns) + Counter(self.m_partition_columns))
+        self.data_types = ('int', 'bigint', 'double', 'decimal')
+
         try:
             self.__gbase_db = GbaseSQLEngine()
             self.__cursor_gbase = self.__gbase_db.cursor
@@ -65,7 +82,9 @@ class DisAnalyze:
         return tmp_result  # dict[str,list[tuple]]
 
     def __init_file_stream(self):
-        result_file = self.__file.split('.')[0] + '_result'
+        result_file_name = os.path.basename(self.__file).split(".")[0]
+        result_file_dir = os.path.dirname(self.__file)
+        result_file = os.path.join(result_file_dir, result_file_name + "_result")
         self.r_f_D = open(result_file + '_d.txt', 'w')
         self.r_f_M = open(result_file + '_m.txt', 'w')
         self.r_f_N = open(result_file + '_n.txt', 'w')
@@ -92,9 +111,10 @@ class DisAnalyze:
 
     def __write_result(self, tmp_result, file):
 
-        partition_pattern = r'statis_date|statis_month'
-        type_pattern = r'int|double|decimal'
         result_dict = {}
+        partition_pattern = r'%s' % ('|'.join(list(self.all_partitions.keys())))
+        type_pattern = r'%s' % ('|'.join(self.data_types))
+
         for t_name, info in tmp_result.items():
             result_dict.setdefault(t_name, {}).setdefault('field', [])
             for field_info in info:
@@ -105,25 +125,28 @@ class DisAnalyze:
                     field, typ = '', ''
 
                 is_partition_field = re.findall(partition_pattern, field, re.I)
-
+                is_need_type = re.findall(type_pattern, typ, re.I)
                 if is_partition_field:
                     partition_field = is_partition_field[0]
-                    result_dict[t_name].setdefault('partition_field', partition_field)
+                    result_dict[t_name].setdefault('partition_fields', []).append(partition_field)
 
-                is_need_type = re.findall(type_pattern, typ, re.I)
-                if is_need_type and not is_partition_field:
+                elif is_need_type:
                     result_dict[t_name]['field'].append(field)
         self.__init_file_stream()
         for table, info in result_dict.items():
-            partition_field = info.get('partition_field', 'N')
+            partition_field = min(info.get('partition_fields', ['S']),
+                                  key=lambda partition: self.all_partitions.get(partition, 9))
             fields = info['field']
-            if partition_field.lower() == 'statis_date':
+            if partition_field.lower() in self.d_partition_columns:
+                if partition_field.lower() == 'statis_hour':
+                    partition_field = 'substr(statis_hour,1,8)'
                 p = 'D'
 
-            elif partition_field.lower() == 'statis_month':
+            elif partition_field.lower() in self.m_partition_columns:
                 p = 'M'
             else:
                 p = 'N'
+
             r_file = getattr(self, 'r_f_' + p)
             if fields:
                 for field in fields:

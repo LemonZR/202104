@@ -32,7 +32,7 @@ class DisAnalyze:
 
         }
         self.all_partitions = dict(Counter(self.d_partition_columns) + Counter(self.m_partition_columns))
-        self.data_types = ('int', 'double', 'decimal')
+        self.data_types = ('int', 'bigint', 'double', 'decimal')
 
         try:
             self.__gbase_db = GbaseSQLEngine()
