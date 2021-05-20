@@ -1,375 +1,90 @@
 --<metadata>
---<model_name>: 集团基础资料月表
---<keyword>: 集客, 集团基础资料
---<description>: 集团基础资料月表
+--<model_name>: 集团客户绑定成员信息月表
+--<keyword>: 集客, 集团客户绑定成员信息
+--<description>: 集团客户绑定成员信息月表
 --<author>: 冀雷刚@华为
 --<run_cycle>: M
---<tmp_table>: hw_tmp.gc_grp_mid1,hw_tmp.gc_grp_mid2
---<det_table>: PUB.TDET_GRP_LFSQT
---<app_table>: MK.TM_GC_GRP_M
+--<tmp_table>:
+--<det_table>: pub.TDIC_SUBJECT
+--<app_table>: MK.TM_GC_CUST_SUBS_BIND_M
 --<app_name>:
 --</metadata>
 
-drop table  if EXISTS hw_tmp.gc_grp_mid1;
-drop table  if EXISTS hw_tmp.gc_grp_mid2;
+alter table mk.tm_gc_cust_subs_bind_m  drop PARTITION(STATIS_month=${hivevar:vi_month});
 
-create table IF NOT EXISTS hw_tmp.gc_grp_mid1
-(
-STATIS_MONTH int,
-REGION_CODE VARCHAR(5),
-CUST_ID VARCHAR(20),
-CUST_NAME VARCHAR(500),
-CUST_ORGID VARCHAR(20),
-RESPNS_CUST_MGR VARCHAR(50),
-CUST_CRT_DATE VARCHAR(14),
-CUST_STATUS VARCHAR(10),
-CUST_STATUS_DATE VARCHAR(14),
-GROUP_ID VARCHAR(20),
-GROUP_TYPE VARCHAR(20),
-CUST_VACATION_1 VARCHAR(30),
-CUST_VACATION_2 VARCHAR(30),
-CUST_VACATION_3 VARCHAR(30)
-)ROW FORMAT DELIMITED
-FIELDS TERMINATED BY '\t'
-STORED AS RCFILE;
-
-
-truncate table hw_tmp.gc_grp_mid1;
-
-insert into hw_tmp.gc_grp_mid1
+insert into mk.tm_gc_cust_subs_bind_m
+PARTITION(STATIS_month=${hivevar:vi_month}
+)
 select
-${hivevar:vi_month},
-a.region_code,
-a.cust_id,
-a.cust_name,
-coalesce(a.COUNTRY_ID,case when a.region_code='310' then 'HB.HD'
-when a.region_code='311' then 'HB.SJ'
-when a.region_code='312' then 'HB.BD'
-when a.region_code='313' then 'HB.ZJ'
-when a.region_code='314' then 'HB.CD'
-when a.region_code='315' then 'HB.TS'
-when a.region_code='316' then 'HB.LF'
-when a.region_code='317' then 'HB.CZ'
-when a.region_code='318' then 'HB.HS'
-when a.region_code='319' then 'HB.XT'
-when a.region_code='335' then 'HB.QH'
-when a.region_code='336' then 'HB.XA' end),
-a.prncp_cust_magr, ---大客户经理
-a.create_date,---客户创建时间
-a.status,---客户状态
-a.status_date, ---客户状态变更时间
-b.grp_cust_id,
-b.corp_size,
-b.TRADE_PROP1,
-b.TRADE_PROP2,
-b.TRADE_TYPE3
-from
-(
-select
-region_code
-,cust_id
-,cust_name
-,country_id
-,prncp_cust_magr
-,status
-,create_date
-,status_date
-from dwh.td_ci_cust_m
-where statis_month = ${hivevar:vi_month}
-and region_code <> '999'
-group by
-region_code
-,cust_id
-,cust_name
-,country_id
-,prncp_cust_magr
-, status
-,create_date
-,status_date
-) a,
-dwh.Td_GC_GROUP_CUST_M  b
-where  b.statis_month=${hivevar:vi_month}
-and b.region_code<>'999'
-and a.region_code=b.region_code
-and a.cust_id = b.cust_id;
-
-
-create table IF NOT EXISTS hw_tmp.gc_grp_mid2
-(
-STATIS_MONTH int,
-REGION_CODE VARCHAR(5),
-CUST_ID VARCHAR(20),
-CUST_NAME VARCHAR(500),
-CUST_ORGID VARCHAR(20),
-RESPNS_CUST_MGR VARCHAR(50),
-CUST_CRT_DATE VARCHAR(14),
-CUST_STATUS VARCHAR(10),
-CUST_STATUS_DATE VARCHAR(14),
-GROUP_ID VARCHAR(20),
-GROUP_TYPE VARCHAR(20),
-CUST_VACATION_1 VARCHAR(30),
-CUST_VACATION_2 VARCHAR(30),
-CUST_VACATION_3 VARCHAR(30)
-)ROW FORMAT DELIMITED
-FIELDS TERMINATED BY '\t'
-STORED AS RCFILE;
-
-truncate table hw_tmp.gc_grp_mid2;
-
-
-
-insert into hw_tmp.gc_grp_mid2
-select
-A.STATIS_MONTH
-,A.REGION_CODE
-,A.CUST_ID
-,A.CUST_NAME
-,A.CUST_ORGID
-,nvl(b.custmgr  ,A.RESPNS_CUST_MGR )
-,A.CUST_CRT_DATE
-,A.CUST_STATUS
-,A.CUST_STATUS_DATE
-,A.GROUP_ID
-,A.GROUP_TYPE
-,A.CUST_VACATION_1
-,A.CUST_VACATION_2
-,A.CUST_VACATION_3
-FROM hw_tmp.gc_grp_mid1 A
-LEFT JOIN (
-select trim(cast(custid as varchar(32))) as cust_id,custmgr from
-		(select custid,
-		custmgr,
-		row_number() over(partition by  custid order by CASE WHEN role='Master' THEN 1 WHEN role='Assist'
-		THEN 2 ELSE 3 END ) rownumber
-		from dwh.TD_GC_CUST_SERVCHANNEL_D    a
-		where  a.deal_date  =  ${hivevar:vi_month_last}
-		) a --当前系统时间前两天
-where a.rownumber =1
-) b
-ON A.CUST_ID=B.CUST_ID
-WHERE A.STATIS_MONTH=${hivevar:vi_month};
-
-
-----删除表加分区
-ALTER TABLE mk.tm_gc_grp_m DROP IF EXISTS partition(STATIS_MONTH=${hivevar:vi_month});
-
-insert into mk.tm_gc_grp_m
-partition(statis_month=${hivevar:vi_month})
-select
- A.REGION_CODE
-,A.CUST_ID
-,A.CUST_NAME
-,A.CUST_ORGID
-,A.RESPNS_CUST_MGR
-,A.CUST_CRT_DATE
-,A.CUST_STATUS
-,A.CUST_STATUS_DATE
-,A.GROUP_ID
-,A.GROUP_TYPE
-,A.CUST_VACATION_1
-,A.CUST_VACATION_2
-,A.CUST_VACATION_3
-,B.stress_trade_type
-,B.TWO_GRP_CUST_FLG
-,B.GRP_CUST_SIGN_TYPE
-,B.is_grp_cust_arr_cnt
-,B.IS_GRP_CUST_NEW_CNT
-,B.IS_GRP_CUST_LOST_CNT
-,B.GRP_CUST_CRDT_VAL_LVL
-,B.STAFF_CNT
-,B.GRP_CUST_AREA_CHRT
-,B.GRP_MEMBER_CALL_CNT
-,B.GRP_MEMBER_CALL_DUR
-,B.GRP_MEMBER_GPRS_FLUX
-,b.ADDR
-,b.ZIP_CODE
-,b.CHECKIN_DATE
-,b.off_net_date
-,b.SOCTY_VAL
-,B.NOW_HAVE_VAL
-,B.LTNC_VAL
-,B.COMPST_VAL
-,B.GRP_ON_NET_DUR
-,b.IS_YEAR_PHOTO_AB_GRP
-,b.GRP_PAY_TYPE
-,b.respns_cust_mgr
-,b.SUPR_GRP_ID
-,b.GRP_BIZ_SIGN_CNT
-,b.UNIPAY_BIZ_SIGN_CNT
-,b.GRP_MEMBER_CNT
-,b.NEW_GRP_MEMBER_CNT
-,b.OFF_NET_GRP_MEMBER_CNT
-,b.LOST_GRP_MEMBER_CNT
-,b.OWE_GRP_MEMBER_CNT
-,b.GRP_KEY_MEMBER_CNT
-,b.GRP_HIGH_VAL_MEMBER_CNT
-,b.GRP_MID_HIGH_MEMBER_CNT
-,b.GRP_MEMBER_INCOME
-,b.VOC_PERSN_BIZ_INCOME
-,b.VAS_INCOME
-,b.GRP_PHOTO_MID_HIGH_CNT
-,b.GRP_WHL_INCOME
-,b.GRP_INFO_INCOME
-,b.MAS_ADC_INCOME
-,b.TA_INCOME
-,b.STD_PRD_INCOME
-,b.GRP_UNIPAY_INFO_INCOME
-,b.UNIPAY_MAS_ADC_INCOME
-,b.UNIPAY_TRADE_APP_INCOME
-,b.UNIPAY_STD_PRD_INCOME
-,b.VIP_CUR_DAY_ARR
-,b.CUR_DAY_GRP_PERSN_CUST_SMS_CNT
-,b.GRP_KEY_MEMBER_ARR_CNT
-,b.IS_OWE_GRP_CUST
-,b.GRP_CUST_OWE_TOT_FEE
-,b.GRP_CUST_ORG_LVL
-,b.GRP_CUST_CHRG_DUR
-from hw_tmp.gc_grp_mid2 A
-LEFT JOIN (
-select
- b.cust_id
-,MAX(B.stress_trade_type)  as stress_trade_type
-,MAX(B.TWO_GRP_CUST_FLG )  as TWO_GRP_CUST_FLG
-,MAX(B.GRP_CUST_SIGN_TYPE) as GRP_CUST_SIGN_TYPE
-,MAX(B.is_grp_cust_arr_cnt )  as is_grp_cust_arr_cnt
-,MAX(B.IS_GRP_CUST_NEW_CNT )  as IS_GRP_CUST_NEW_CNT
-,MAX(B.IS_GRP_CUST_LOST_CNT )  as IS_GRP_CUST_LOST_CNT
-,MAX(B.GRP_CUST_CRDT_VAL_LVL ) as GRP_CUST_CRDT_VAL_LVL
-,SUM(cast(B.STAFF_CNT as bigint ) )  as STAFF_CNT
-,MAX(B.GRP_CUST_AREA_CHRT )  as GRP_CUST_AREA_CHRT
-,SUM(cast(B.GRP_MEMBER_CALL_CNT as bigint  ) )  as GRP_MEMBER_CALL_CNT
-,SUM(cast(B.GRP_MEMBER_CALL_DUR as bigint ) )  as GRP_MEMBER_CALL_DUR
-,SUM(cast(B.GRP_MEMBER_GPRS_FLUX as bigint) )  as GRP_MEMBER_GPRS_FLUX
-,MAX(b.ADDR) as ADDR
-,MAX(b.ZIP_CODE )  as ZIP_CODE
-,MAX(b.CHECKIN_DATE)  as CHECKIN_DATE
-,MAX(b.off_net_date)  as off_net_date
-,SUM(cast(SOCTY_VAL as bigint ) )  as SOCTY_VAL
-,SUM(cast(B.NOW_HAVE_VAL as bigint ) )  as NOW_HAVE_VAL
-,SUM(cast(B.LTNC_VAL as bigint ) )  as LTNC_VAL
-,SUM(cast(B.COMPST_VAL as bigint  ) )  as COMPST_VAL
-,SUM(cast(B.GRP_ON_NET_DUR as bigint ))  as GRP_ON_NET_DUR
-,MAX(b.IS_YEAR_PHOTO_AB_GRP )  as IS_YEAR_PHOTO_AB_GRP
-,MAX(b.GRP_PAY_TYPE )  as GRP_PAY_TYPE
-,MAX(b.respns_cust_mgr)  as respns_cust_mgr
-,MAX(b.SUPR_GRP_ID )  as SUPR_GRP_ID
-,SUM(cast(b.GRP_BIZ_SIGN_CNT as bigint ))  as GRP_BIZ_SIGN_CNT
-,SUM(cast(b.UNIPAY_BIZ_SIGN_CNT  as bigint))  as UNIPAY_BIZ_SIGN_CNT
-,SUM(cast(b.GRP_MEMBER_CNT as bigint ))  as GRP_MEMBER_CNT
-,SUM(cast(b.NEW_GRP_MEMBER_CNT  as bigint))  as NEW_GRP_MEMBER_CNT
-,SUM(cast(b.OFF_NET_GRP_MEMBER_CNT as bigint ) )  as OFF_NET_GRP_MEMBER_CNT
-,SUM(cast(b.LOST_GRP_MEMBER_CNT  as bigint) )  as LOST_GRP_MEMBER_CNT
-,SUM(cast(b.OWE_GRP_MEMBER_CNT  as bigint) )  as OWE_GRP_MEMBER_CNT
-,SUM(cast(b.GRP_KEY_MEMBER_CNT  as bigint) )  as GRP_KEY_MEMBER_CNT
-,SUM(cast(b.GRP_HIGH_VAL_MEMBER_CNT as bigint ) ) as GRP_HIGH_VAL_MEMBER_CNT
-,SUM(cast(b.GRP_MID_HIGH_MEMBER_CNT as bigint ) )  as GRP_MID_HIGH_MEMBER_CNT
-,SUM(cast(b.GRP_MEMBER_INCOME as bigint))  as GRP_MEMBER_INCOME
-,SUM(cast(b.VOC_PERSN_BIZ_INCOME as bigint )) as VOC_PERSN_BIZ_INCOME
-,SUM(cast(b.VAS_INCOME as bigint ))  as VAS_INCOME
-,SUM(cast(b.GRP_PHOTO_MID_HIGH_CNT  as bigint))  as GRP_PHOTO_MID_HIGH_CNT
-,SUM(cast(b.GRP_WHL_INCOME as bigint ))  as GRP_WHL_INCOME
-,SUM(cast(b.GRP_INFO_INCOME as bigint ))  as GRP_INFO_INCOME
-,SUM(cast(b.MAS_ADC_INCOME   as bigint))  as MAS_ADC_INCOME
-,SUM(cast(b.TA_INCOME as bigint ))  as TA_INCOME
-,SUM(cast(b.STD_PRD_INCOME  as bigint))  as STD_PRD_INCOME
-,SUM(cast(b.GRP_UNIPAY_INFO_INCOME as bigint  ))  as GRP_UNIPAY_INFO_INCOME
-,SUM(cast(b.UNIPAY_MAS_ADC_INCOME as bigint ))  as UNIPAY_MAS_ADC_INCOME
-,SUM(cast(b.UNIPAY_TRADE_APP_INCOME as bigint ))  as UNIPAY_TRADE_APP_INCOME
-,SUM(cast(b.UNIPAY_STD_PRD_INCOME  as bigint))  as UNIPAY_STD_PRD_INCOME
-,SUM(cast(b.VIP_CUR_DAY_ARR as bigint ))  as VIP_CUR_DAY_ARR
-,SUM(cast(b.CUR_DAY_GRP_PERSN_CUST_SMS_CNT  as bigint))  as CUR_DAY_GRP_PERSN_CUST_SMS_CNT
-,SUM(cast(b.GRP_KEY_MEMBER_ARR_CNT  as bigint))  as GRP_KEY_MEMBER_ARR_CNT
-,MAX(b.IS_OWE_GRP_CUST)  as IS_OWE_GRP_CUST
-,SUM(cast(b.GRP_CUST_OWE_TOT_FEE as bigint) )  as GRP_CUST_OWE_TOT_FEE
-,MAX(b.GRP_CUST_ORG_LVL )  as GRP_CUST_ORG_LVL
-,SUM(cast(b.GRP_CUST_CHRG_DUR as bigint ) )  as GRP_CUST_CHRG_DUR
- from  mk.tm_gc_grp_d b
-where  cast(substr(B.STATIS_DATE,1,6) as int)=${hivevar:vi_month}
-group by  b.cust_id
-) b
-ON A.CUST_ID=B.CUST_ID
-left join 	(select a.cust_id  from hw_tmp.gc_grp_mid2 a
-	join PUB.TDET_GRP_LFSQT  b
-	on a.cust_id  =b.cust_id
-	where a.region_code = '316'
-	and  a.statis_month = ${hivevar:vi_month}
-	group by a.cust_id) c
-	on a.cust_id =c.cust_id
-WHERE A.STATIS_MONTH=${hivevar:vi_month}
-and  c.cust_id is null
-GROUP BY
-a.STATIS_MONTH
-,A.REGION_CODE
-,A.CUST_ID
-,A.CUST_NAME
-,A.CUST_ORGID
-,A.RESPNS_CUST_MGR
-,A.CUST_CRT_DATE
-,A.CUST_STATUS
-,A.CUST_STATUS_DATE
-,A.GROUP_ID
-,A.GROUP_TYPE
-,A.CUST_VACATION_1
-,A.CUST_VACATION_2
-,A.CUST_VACATION_3
-,B.stress_trade_type
-,B.TWO_GRP_CUST_FLG
-,B.GRP_CUST_SIGN_TYPE
-,B.is_grp_cust_arr_cnt
-,B.IS_GRP_CUST_NEW_CNT
-,B.IS_GRP_CUST_LOST_CNT
-,B.GRP_CUST_CRDT_VAL_LVL
-,B.STAFF_CNT
-,B.GRP_CUST_AREA_CHRT
-,B.GRP_MEMBER_CALL_CNT
-,B.GRP_MEMBER_CALL_DUR
-,B.GRP_MEMBER_GPRS_FLUX
-,b.ADDR
-,b.ZIP_CODE
-,b.CHECKIN_DATE
-,b.off_net_date
-,b.SOCTY_VAL
-,B.NOW_HAVE_VAL
-,B.LTNC_VAL
-,B.COMPST_VAL
-,B.GRP_ON_NET_DUR
-,b.IS_YEAR_PHOTO_AB_GRP
-,b.GRP_PAY_TYPE
-,b.respns_cust_mgr
-,b.SUPR_GRP_ID
-,b.GRP_BIZ_SIGN_CNT
-,b.UNIPAY_BIZ_SIGN_CNT
-,b.GRP_MEMBER_CNT
-,b.NEW_GRP_MEMBER_CNT
-,b.OFF_NET_GRP_MEMBER_CNT
-,b.LOST_GRP_MEMBER_CNT
-,b.OWE_GRP_MEMBER_CNT
-,b.GRP_KEY_MEMBER_CNT
-,b.GRP_HIGH_VAL_MEMBER_CNT
-,b.GRP_MID_HIGH_MEMBER_CNT
-,b.GRP_MEMBER_INCOME
-,b.VOC_PERSN_BIZ_INCOME
-,b.VAS_INCOME
-,b.GRP_PHOTO_MID_HIGH_CNT
-,b.GRP_WHL_INCOME
-,b.GRP_INFO_INCOME
-,b.MAS_ADC_INCOME
-,b.TA_INCOME
-,b.STD_PRD_INCOME
-,b.GRP_UNIPAY_INFO_INCOME
-,b.UNIPAY_MAS_ADC_INCOME
-,b.UNIPAY_TRADE_APP_INCOME
-,b.UNIPAY_STD_PRD_INCOME
-,b.VIP_CUR_DAY_ARR
-,b.CUR_DAY_GRP_PERSN_CUST_SMS_CNT
-,b.GRP_KEY_MEMBER_ARR_CNT
-,b.IS_OWE_GRP_CUST
-,b.GRP_CUST_OWE_TOT_FEE
-,b.GRP_CUST_ORG_LVL
-,b.GRP_CUST_CHRG_DUR;
-
-drop table  if EXISTS hw_tmp.gc_grp_mid1;
-drop table  if EXISTS hw_tmp.gc_grp_mid2;
-
-
-
+C.REGION_CODE
+,C.CUST_ID
+,C.CUST_ORGID
+,C.RESPNS_CUST_MGR
+,C.CUST_CRT_DATE
+,C.CUST_STATUS
+,C.CUST_STATUS_DATE
+,C.GROUP_ID
+,C.GROUP_TYPE
+,C.SUBS_ID
+,C.SUBS_ORGID
+,C.SUBS_SERVNUM
+,C.SUBS_CREATE_DATE
+,C.SUBS_STATUS
+,C.SUBS_STATUS_DATE
+,C.SUBS_PROD_CD
+,C.SUBS_BRAND
+,C.GROUP_SUBS_CHECKIN_DATE
+,C.GROUP_SUBS_STATUS
+,C.GROUP_SUBS_STATUS_DATE
+,C.IS_PHOTO_CUST
+,C.IS_PHOTO_GRPSUBS
+,C.DATA_SOURCE
+,C.CHRG_DUR
+,C.FEE_1
+,C.FEE_5
+,C.ON_NET_DUR
+,C.GRP_SUBS_IMPORTANT
+,C.GRP_SUBS_ROLETYPE
+,C.SUBS_ACCT_ID
+,case when D.BINDING_PERIOD>=0 then '1' else '0' end
+,D.BINDING_PERIOD
+,D.THIS_NEW
+,case when D.LAST_END='1' and D.BINDING_PERIOD <0 then '1' else '0' end
+,case when D.NEXT_END='1' and D.BINDING_PERIOD=1 then '1' else '0' end
+,case when D.THIS_END='1' and D.BINDING_PERIOD>0 then '1' else '0' end
+,case when D.THIS_END='1' and D.BINDING_PERIOD<=0 then '1' else '0' end
+,END_CYC
+from  mk.tm_gc_meb_detail_m   c  ---mk.tm_gc_meb_m C
+inner join
+(select
+ACCT_ID
+,MAX(case when END_CYC like '20%'
+then (cast(SUBSTR(END_CYC,1,4) as int)-${hivevar:vi_year})*12 + cast(SUBSTR(END_CYC,5,2) as int)-PMOD(${hivevar:vi_month},100)
+when END_CYC not like '20%' and START_CYC>${hivevar:vi_month}
+ then (cast(SUBSTR(END_CYC,1,4) as int)-${hivevar:vi_year})*12 + cast(SUBSTR(END_CYC,5,2) as int)-PMOD(${hivevar:vi_month},100)
+end
+) as BINDING_PERIOD
+,MIN(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
+ then '1' else '0' end ) as THIS_NEW
+,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
+ then '1' else '0' end ) as THIS_END
+,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
+ then '1' else '0' end ) as LAST_END
+,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:next1month_char}
+ then '1' else '0' end) as NEXT_END
+,MAX(case when SUBSTR(END_CYC,1,6)<>'888888' then SUBSTR(END_CYC,1,6) else null end ) END_CYC
+from dwh.TD_AC_ACCT_M ACCT_SUBJ
+where ACCT_SUBJ.STATIS_MONTH = ${hivevar:vi_month}
+and ACCT_SUBJ.END_CYC >= ${hivevar:vl_month}
+and (ACCT_SUBJ.BALANCE >0 or ACCT_SUBJ.BALANCE =0 and ACCT_SUBJ.END_CYC = ${hivevar:vl_month} )
+and ACCT_SUBJ.SUBJ_ID in
+(select distinct SUBJ_ID from pub.TDIC_SUBJECT
+where DEAL_DATE=${hivevar:vi_month_last}
+and SUBSTR(SUBJ_FLG,6,1)='1'
+and SUBJ_ID<>'DSLATE'
+)
+group by ACCT_ID
+) D
+on C.SUBS_ACCT_ID = D.ACCT_ID
+where C.STATIS_MONTH=${hivevar:vi_month}
+and C.DATA_SOURCE='group_subs';

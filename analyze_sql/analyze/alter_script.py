@@ -68,7 +68,6 @@ def backup_file(file_dict: dict[str, list], dirname_origion='D:\\tmp\\dis', dirn
 
 
 def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname='D:\\tmp\\alter', ):
-
     if not os.path.exists(dirname):
         try:
             os.makedirs(f'{dirname}')
@@ -84,8 +83,10 @@ def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname=
 
 
 if __name__ == '__main__':
+    time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     dirName = 'D:\\bd_hive\\dis\\'
-    dirname_bak = f'D:\\tmp\\alter_bak_{datetime.datetime.now().strftime("%Y%m%d_%H%M%S")}'
+    dirname_bak = f'D:\\tmp\\alter_bak_{time_str}'
+    dirname_alter_files =f'D:\\tmp\\altered_{time_str}'
     print(dirname_bak)
     find_pattern = r'create\s*temporary'
     old_p = r'tablespace\s*=\s*\'[a-zA-Z_]*\''
@@ -94,4 +95,4 @@ if __name__ == '__main__':
     alter_files_dict, alter_infos = alter_files_sql_blks(dir_name=dirName, find_pattern=find_pattern, old_pattern=old_p,
                                                          new_str=new_string)
     backup_file(alter_files_dict, dirname_origion=dirName, dirname_bak=dirname_bak)
-    write_new_file(alter_files_dict, alter_infos)
+    write_new_file(alter_files_dict, alter_infos, dirname=dirname_alter_files)

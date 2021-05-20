@@ -49,14 +49,14 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
             print(f'{ke},\nI\'ll create a new sheet named [{sheet_name}] in workbook [{filename}]')
         except Exception as e:
             sys.exit(e)
+    elif os.path.exists(filename):
+        sys.exit(
+            f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
     else:
-        if os.path.exists(filename):
-            sys.exit(
-                f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
-        else:
-            workbook = openpyxl.Workbook()
-            print(f'Create a new workbook named[{filename}]')
-    new_sheet = workbook.create_sheet(sheet_name)
+        workbook = openpyxl.Workbook()
+        print(f'Create a new workbook named[{filename}]')
+    new_sheet = workbook.create_sheet(sheet_name, index=0)
+
     for row_id, row_data in enumerate(data, start=1):
 
         head_fill = PatternFill(patternType='solid', fgColor="CCCCFF")
@@ -96,7 +96,7 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
 
 if __name__ == '__main__':
     basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
-    fileName = f'{basedir}\\test1d.xlsx'
+    fileName = f'{basedir}\\test.xlsx'
     write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
     result = read_xlsx(fileName, sheet_name='Sheet')
 
