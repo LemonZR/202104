@@ -76,7 +76,8 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
 def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
     try:
         workbook = openpyxl.load_workbook(filename)
-        sheet = workbook[sheet_name]
+        sheet = workbook[workbook.sheetnames[2]]
+
     except FileNotFoundError as fe:
 
         sys.exit(fe)
@@ -95,10 +96,10 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
 
 
 if __name__ == '__main__':
-    basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
-    fileName = f'{basedir}\\test.xlsx'
-    write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
-    result = read_xlsx(fileName, sheet_name='Sheet')
+    # basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
+    # fileName = f'{basedir}\\test.xlsx'
+    # write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
+    result = read_xlsx('D:\\04集中化\\b_未通过核对的月模型.xlsx', sheet_name='Sheet')
 
     for i in result:
         print(i)

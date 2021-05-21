@@ -1,90 +1,203 @@
 --<metadata>
---<model_name>: 集团客户绑定成员信息月表
---<keyword>: 集客, 集团客户绑定成员信息
---<description>: 集团客户绑定成员信息月表
---<author>: 冀雷刚@华为
+--<model_name>: 集团客户流失预警月表
+--<keyword>: 集客, 集团客户流失预警
+--<description>: 集团客户流失预警月表
+--<author>: 李明志@华为
 --<run_cycle>: M
---<tmp_table>:
---<det_table>: pub.TDIC_SUBJECT
---<app_table>: MK.TM_GC_CUST_SUBS_BIND_M
+--<tmp_table>: hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1,hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2,hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3,hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4
+--<tmp_table>: hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5
+--<det_table>: PUB.TDET_LSYJ_CUST_FALSE_LIST
+--<app_table>: MK.TM_GC_GRP_RUNOFF_M
 --<app_name>:
 --</metadata>
 
-alter table mk.tm_gc_cust_subs_bind_m  drop PARTITION(STATIS_month=${hivevar:vi_month});
+drop table  if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1;
+CREATE  TABLE IF NOT EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1
+(
+region_code varchar(5)---- 地市
+,cust_id varchar(20)---- 集团ID
+,info_income decimal(20,2)---- 信息化收入
+,prod_subs int---- 集团成员数
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
 
-insert into mk.tm_gc_cust_subs_bind_m
-PARTITION(STATIS_month=${hivevar:vi_month}
+truncate table hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1;
+----插表
+
+INSERT INTO hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1
+select
+a.region_code ---- 地市
+,a.cust_id ---- 集团ID
+,sum(a.info_income)---- 信息化收入
+,0---- 集团成员数
+ from mk.tm_gc_grp_income_m a
+where a.statis_month = ${hivevar:vi_month}
+and a.group_type in ('grouptypeA1','grouptypeA2','grouptypeB1','grouptypeB2','grouptypeC','grouptypeTemp')
+and (a.cust_status in ('stcmNml','stcmLtnt','stcmLost')
+or (a.cust_status not in ('stcmNml','stcmLtnt','stcmLost')
+and substr(a.cust_status_date,1,6) = cast(${hivevar:vi_month}
+ as string)))
+group by a.region_code,
+a.cust_id having sum(info_income)>0;
+
+
+----集团产品成员数
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2;
+CREATE  TABLE IF NOT EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2
+(
+ region_code varchar(5)---- 地市
+,cust_id varchar(20)---- 集团ID
+,prod_subs int---- 集团成员数
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2;
+
+
+
+INSERT INTO hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2
+select
+region_code,
+cust_id,
+count(distinct subs_id ) prod_subs
+ from mk.tm_gc_prod_info_m
+where statis_month = ${hivevar:vi_month}
+and data_source = '1'
+and group_type in ('grouptypeA1','grouptypeA2','grouptypeB1','grouptypeB2','grouptypeC','grouptypeTemp')
+and (cust_status in ('stcmNml','stcmLtnt','stcmLost')
+or(cust_status not in ('stcmNml','stcmLtnt','stcmLost') and substr(cust_status_date,1,6) = cast(${hivevar:vi_month}
+ as string))
+)
+group by region_code, cust_id;
+
+-----更新集团产品成员数
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3;
+CREATE  TABLE IF NOT EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3
+(
+region_code varchar(5)---- 地市
+,cust_id varchar(20)---- 集团ID
+,info_income decimal(20,2)---- 信息化收入
+,prod_subs int---- 集团成员数
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3;
+
+insert into hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3
+	select
+	a.region_code ---- 地市
+	,a.cust_id ---- 集团ID
+	,a.info_income---- 信息化收入
+	,case when b.region_code is not null  and b.cust_id is not null then b.prod_subs else a.prod_subs end ---- 集团成员数
+	from hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1 a
+	left join hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2 b
+	 on a.region_code = b.region_code and a.cust_id = b.cust_id;
+
+
+
+--- 插入集团产品成员数;
+INSERT INTO hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3
+select
+b.region_code,
+b.cust_id,
+0,
+b.prod_subs
+from (
+select
+region_code,
+cust_id,
+count(distinct subs_id) prod_subs from mk.tm_gc_prod_info_m
+where statis_month = ${hivevar:vi_month}
+and data_source = '1'
+and group_type in ('grouptypeA1','grouptypeA2','grouptypeB1','grouptypeB2','grouptypeC','grouptypeTemp')
+and (cust_status in ('stcmNml','stcmLtnt','stcmLost')
+or (cust_status not in ('stcmNml','stcmLtnt','stcmLost') and substr(cust_status_date,1,6) = cast(${hivevar:vi_month}
+ as string))
+)
+group by region_code, cust_id
+) b
+left join hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3 as a on a.region_code = b.region_code and a.cust_id = b.cust_id
+where a.region_code is null;
+----信息化收入为0并且成员数大于等于10的集团
+
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4;
+
+CREATE  TABLE IF NOT EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4
+(
+region_code varchar(5)---- 地市
+,cust_id varchar(20)---- 集团ID
+,info_income decimal(20,2)---- 信息化收入
+,prod_subs int---- 集团成员数
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4;
+
+INSERT INTO hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4
+select
+a.region_code ---- 地市
+,a.cust_id ---- 集团ID
+,a.info_income---- 信息化收入
+,a.prod_subs ---- 集团成员数
+from hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3 a
+where info_income = 0
+and ((region_code <> '312' and prod_subs <=10)
+or (region_code = '312' and prod_subs <=3)--保定单独口径
+);
+
+
+
+----更新成员数,删除信息化收入为0并且成员数大于等于10的集团
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5;
+
+CREATE  TABLE IF NOT EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5
+(
+region_code varchar(5)---- 地市
+,cust_id varchar(20)---- 集团ID
+,info_income decimal(20,2)---- 信息化收入
+,prod_subs int---- 集团成员数
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5;
+
+INSERT INTO hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5
+select
+a.region_code---- 地市
+,a.cust_id---- 集团ID
+,a.info_income---- 信息化收入
+,a.prod_subs---- 集团成员数
+from hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3 a
+left join hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4 b
+on a.region_code=b.region_code and a.cust_id =b.cust_id
+where b.cust_id is null;
+----插入目标表
+
+
+----删除表加分区
+ALTER TABLE mk.tm_gc_grp_runoff_m DROP IF EXISTS partition(statis_month=${hivevar:vi_month});
+
+
+insert into mk.tm_gc_grp_runoff_m
+partition(statis_month=${hivevar:vi_month}
 )
 select
-C.REGION_CODE
-,C.CUST_ID
-,C.CUST_ORGID
-,C.RESPNS_CUST_MGR
-,C.CUST_CRT_DATE
-,C.CUST_STATUS
-,C.CUST_STATUS_DATE
-,C.GROUP_ID
-,C.GROUP_TYPE
-,C.SUBS_ID
-,C.SUBS_ORGID
-,C.SUBS_SERVNUM
-,C.SUBS_CREATE_DATE
-,C.SUBS_STATUS
-,C.SUBS_STATUS_DATE
-,C.SUBS_PROD_CD
-,C.SUBS_BRAND
-,C.GROUP_SUBS_CHECKIN_DATE
-,C.GROUP_SUBS_STATUS
-,C.GROUP_SUBS_STATUS_DATE
-,C.IS_PHOTO_CUST
-,C.IS_PHOTO_GRPSUBS
-,C.DATA_SOURCE
-,C.CHRG_DUR
-,C.FEE_1
-,C.FEE_5
-,C.ON_NET_DUR
-,C.GRP_SUBS_IMPORTANT
-,C.GRP_SUBS_ROLETYPE
-,C.SUBS_ACCT_ID
-,case when D.BINDING_PERIOD>=0 then '1' else '0' end
-,D.BINDING_PERIOD
-,D.THIS_NEW
-,case when D.LAST_END='1' and D.BINDING_PERIOD <0 then '1' else '0' end
-,case when D.NEXT_END='1' and D.BINDING_PERIOD=1 then '1' else '0' end
-,case when D.THIS_END='1' and D.BINDING_PERIOD>0 then '1' else '0' end
-,case when D.THIS_END='1' and D.BINDING_PERIOD<=0 then '1' else '0' end
-,END_CYC
-from  mk.tm_gc_meb_detail_m   c  ---mk.tm_gc_meb_m C
-inner join
-(select
-ACCT_ID
-,MAX(case when END_CYC like '20%'
-then (cast(SUBSTR(END_CYC,1,4) as int)-${hivevar:vi_year})*12 + cast(SUBSTR(END_CYC,5,2) as int)-PMOD(${hivevar:vi_month},100)
-when END_CYC not like '20%' and START_CYC>${hivevar:vi_month}
- then (cast(SUBSTR(END_CYC,1,4) as int)-${hivevar:vi_year})*12 + cast(SUBSTR(END_CYC,5,2) as int)-PMOD(${hivevar:vi_month},100)
-end
-) as BINDING_PERIOD
-,MIN(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
- then '1' else '0' end ) as THIS_NEW
-,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
- then '1' else '0' end ) as THIS_END
-,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:vi_month}
- then '1' else '0' end ) as LAST_END
-,MAX(case when cast(SUBSTR(END_CYC,1,6) as int)= ${hivevar:next1month_char}
- then '1' else '0' end) as NEXT_END
-,MAX(case when SUBSTR(END_CYC,1,6)<>'888888' then SUBSTR(END_CYC,1,6) else null end ) END_CYC
-from dwh.TD_AC_ACCT_M ACCT_SUBJ
-where ACCT_SUBJ.STATIS_MONTH = ${hivevar:vi_month}
-and ACCT_SUBJ.END_CYC >= ${hivevar:vl_month}
-and (ACCT_SUBJ.BALANCE >0 or ACCT_SUBJ.BALANCE =0 and ACCT_SUBJ.END_CYC = ${hivevar:vl_month} )
-and ACCT_SUBJ.SUBJ_ID in
-(select distinct SUBJ_ID from pub.TDIC_SUBJECT
-where DEAL_DATE=${hivevar:vi_month_last}
-and SUBSTR(SUBJ_FLG,6,1)='1'
-and SUBJ_ID<>'DSLATE'
-)
-group by ACCT_ID
-) D
-on C.SUBS_ACCT_ID = D.ACCT_ID
-where C.STATIS_MONTH=${hivevar:vi_month}
-and C.DATA_SOURCE='group_subs';
+a.region_code,
+a.cust_id,
+a.info_income,
+a.prod_subs
+ from hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5  a
+left join PUB.TDET_LSYJ_CUST_FALSE_LIST b  ----过滤掉虚假集团客户
+on a.cust_id = b.cust_id
+where b.cust_id is null;
+
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID1;
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID2;
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID3;
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID4;
+drop table if EXISTS hw_tmp.TM_GRP_LSYJ_BASE_CUST_M_MID5;

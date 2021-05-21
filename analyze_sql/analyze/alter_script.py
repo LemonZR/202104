@@ -86,7 +86,7 @@ if __name__ == '__main__':
     time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     dirName = 'D:\\bd_hive\\dis\\'
     dirname_bak = f'D:\\tmp\\alter_bak_{time_str}'
-    dirname_alter_files =f'D:\\tmp\\altered_{time_str}'
+    dirname_alter_files = f'D:\\tmp\\altered_{time_str}'
     print(dirname_bak)
     find_pattern = r'create\s*temporary'
     old_p = r'tablespace\s*=\s*\'[a-zA-Z_]*\''

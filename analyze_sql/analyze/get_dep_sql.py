@@ -2,6 +2,7 @@
 
 import os
 import re
+from tools import excelOp
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive'):
@@ -24,6 +25,7 @@ def cal(files):
     heads = r'mk\.|pub|dis\.|dw\.|dwh\.|am\.|det\.'
     pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=;|,|\s|_\$|\))' % heads
     match_files = {}
+    result_list = ['脚本名', '目标表', '依赖表']
     for fi in files:
         lis = []
         target_table_name = ''
@@ -36,7 +38,7 @@ def cal(files):
                     try:
                         target_table_name = re.findall(pattern, line[1], re.I)[0] if re.findall(pattern, line[1],
                                                                                                 re.I) else target_table_name
-                        print(target_table_name)
+                        # print(target_table_name)
                     except Exception as e:
                         print(fi + str(e))
                         exit()
@@ -52,16 +54,20 @@ def cal(files):
             key = f'{file_name},{target_table_name}'
             match_files[key] = match_files.get(key, [])
             match_files[key].append(i)
-
-    return match_files
+    for file_target_tablename, deps in match_files.items():
+        for dep_table in deps:
+            print(file_target_tablename.split(',') + [dep_table])
+            result_list.append(file_target_tablename.split(',') + [dep_table])
+    return result_list
 
 
 if __name__ == '__main__':
     root_dir = 'D:\\bd_hive\\mk'
     files = ergodic_dirs(root_dir)
-    match_files = cal(files)
-    with open('D:\\数据核对\\dependies_mk.csv', 'w') as f:
-        f.write('脚本名,目标表,依赖表\n')
-        for file, deps in match_files.items():
-            for dep in deps:
-                f.write(file + ',' + dep + '\n')
+    result = cal(files)
+    # with open('D:\\数据核对\\dependies_mk.csv', 'w') as f:
+    #     f.write('脚本名,目标表,依赖表\n')
+    #     for file, deps in match_files.items():
+    #         for dep in deps:
+    #             f.write(file + ',' + dep + '\n')
+    excelOp.write_xlsx('D:\\数据核对\\all_dependent_table.xlsx', result, edit=True, sheet_name='all')
