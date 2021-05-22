@@ -60,8 +60,6 @@ def cal_deps(dict_data: dict[str, list]):
             else:
                 continue
 
-    return dict_data
-
 
 def find_pattern(sql_list, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> list:
     pattern = pattern
@@ -100,61 +98,80 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
             for from_sql in from_sql_list:
                 dep_tables = re.findall(table_pattern, from_sql, re.I)
                 if dep_tables:
+                    dep_tables = list(set(dep_tables))
                     for dep_table in dep_tables:
                         result[file_name].setdefault('deps', []).append(dep_table.lower())
 
     return result
 
 
-def iterates(deps_list, result=[], myself_id_list=[], depth=0):
+def iterates(deps_list, __myself_id_list=[], __depth=0):
+    __result = []
+
+    # 更新myself_id_list的id，让外部调用时不需要填入参数;同时对list 进行去重，减小变量大小
+    __myself_id_list = list(set(__myself_id_list))
     myself_id = id(deps_list)
-    myself_id_list.append(myself_id)
+    __myself_id_list.append(myself_id)
     for value in deps_list:
         child_id = id(value)
 
         if isinstance(value, list):
+            __depth += 1
+            if child_id in __myself_id_list:
 
-            if child_id in myself_id_list:
-
-                result.append(('self%s'%depth, depth))
+                __result.append(('self%s' % __depth, __depth, str(child_id), str(myself_id)))
             else:
-                iterates(value, result, myself_id_list, depth)
-            depth += 1
+                __result += iterates(value, __myself_id_list, __depth)
         else:
 
-            result.append((value, depth))
-    result = list(set(result))
+            __result.append((value, __depth, str(child_id), str(myself_id)))
 
+    # 如果没有__depth 表示层级，依赖表的名字会因不同层级的汇合在一起导致重复
+    result = list(set(__result))
     return result
 
 
 def run(dir_name):
-    t_data = analyze(dir_name)
+    data = analyze(dir_name)
+    t_data = copy.deepcopy(data)
     t_dict = {}
     result = {}
-    for file, info in t_data.items():
+
+    # 如果脚本没有目标表，则用脚本名替代（作为后续的键值对的键）
+    for file, info in t_data.items():  # 由于不是深复制，t_data的列表的'指针'复制给了t_dict 在循环中会发生了变化
         target_table = info.get('target_table', file)
         t_dict[target_table] = info.get('deps', [])
-    # 将依赖表查找至最底层
-    t_result = cal_deps(t_dict)
 
+    # 将依赖关系查找至最底层
+    # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
+    cal_deps(t_dict)
+    # 将各层依赖逐一查找并替换为最底层依赖
     for file, info in t_data.items():
         target_table = info.get('target_table', file)
 
         result.setdefault(file, {'target_table': target_table,
-                                 'deps': iterates(t_result.get(target_table, []), result=[],myself_id_list=[])})
+                                 'deps': iterates(t_dict.get(target_table, []))})
 
-    excel_data = [('脚本名', '目标表名', '依赖表名')]
+    excel_data_all_deps = [('脚本名', '目标表名', '依赖表名')]
+    excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
     for file, info in result.items():
         deps_list = info.get('deps', [('no_dep', 'no_')])
         target_table = info.get('target_table', 'erro')
         for dep_tuple in deps_list:
-            excel_data.append([file, target_table] + list(dep_tuple))
-    return excel_data
+            excel_data_all_deps.append([file, target_table] + list(dep_tuple))
+
+    for file, info in data.items():
+        deps = info.get('deps', ['no_dep'])
+        target_table = info.get('target_table', 'erro')
+        for dep in deps:
+            excel_data_direct_deps.append([file, target_table, dep])
+
+    return excel_data_all_deps, excel_data_direct_deps
 
 
 if __name__ == '__main__':
     dirName = 'D:\\bd_hive\\mk'
-    data = run(dirName)
-    result_xlsx = 'D:\\数据核对\\all_dependent_table.xlsx'
-    excelOp.write_xlsx(result_xlsx, data, edit=True)
+    data1, data2 = run(dirName)
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk.xlsx'
+    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all')
+    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct')

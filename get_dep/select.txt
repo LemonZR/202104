@@ -1,169 +1,106 @@
 --<metadata>
---<model_name>: 个人明细账单日汇总表
---<keyword>: 账务, 个人明细账单汇总
---<description>: 个人明细账单日汇总表
---<author>: 高超越@华为
+--<model_name>:携转累计明细汇总（支撑携转通报）
+--<keyword>: 携转累计明细汇总（支撑携转通报）
+--<description>: 携转累计明细汇总（支撑携转通报）
+--<author>: 牛贞琪@华为
 --<run_cycle>: D
---<tmp_table>: hw_tmp.tm_ac_detl_bill_d_mid01, hw_tmp.tm_ac_detl_bill_d_mid02
---<det_table>: pub.tdic_acct_item_rel, pub.tdic_to_rpt_refer
---<app_table>: mk.tm_ac_detl_bill_d
---<app_name>:
+--<tmp_table>: hw_tmp.tc_gc_xz_arpmodo_collect_m
+--<det_table>: dis.tc_gc_xz_arpmodo_detail_m
+--<app_table>: dis_pc_gc_xz_arpmodo_collect_m
+--<app_name>: /路径/子路径/应用专题1/应用1
 --</metadata>
 
-drop table if exists hw_tmp.tm_ac_detl_bill_d_mid01;
-
-create table if not exists hw_tmp.tm_ac_detl_bill_d_mid01
+create table if not exists hw_tmp.tc_gc_xz_arpmodo_collect_m
 (
- acct_item_fee_id  varchar(32)
-,acct_item_fee_id_join  varchar(40)
-,fir_acct_item_id varchar(32)
-,old_item_id    varchar(32)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-
-insert into hw_tmp.tm_ac_detl_bill_d_mid01
-select acct_item_fee_id,
-       concat(t1.acct_item_fee_id,t2.segment_no) as acct_item_fee_id_join,
-       max(fir_acct_item_id),
-       max(old_item_id)
-  from (select third_acct_item_id as acct_item_fee_id,
-               fir_acct_item_id,
-               null old_item_id
-          from pub.tdet_ac_acct_item_rel tx
-         where statis_date = ${hivevar:vi_day}
-         union all
-        select new_item_id as acct_item_fee_id,
-               null fir_acct_item_id,
-               old_item_id
-          from pub.tdic_to_rpt_refer ty
-       ) t1
-  -- 放大数据量规避数据倾斜
-  join pub.tdet_pub_segment_99 t2
-   on 1=1
- group by acct_item_fee_id,
-       concat(t1.acct_item_fee_id,t2.segment_no)
-;
-
-
-drop table if exists hw_tmp.tm_ac_detl_bill_d_mid02;
-
-create table if not exists hw_tmp.tm_ac_detl_bill_d_mid02
-(
- subs_id                     varchar(16)
-,region_code                 varchar(5)
-,account_id                  varchar(32)
-,detl_acct_item_id           varchar(32)
-,compst_acct_item_id         varchar(32)
-,shld_chrg_fee               bigint
-,fav_fee                     bigint
-,acct_item_fee_id            varchar(32)
-,acct_item_fee_extra_desc_id varchar(32)
-,bill_split_seq_num          int
-,acct_item_fee_id_old        varchar(32)
-,fee                         bigint
-,bill_item_type              int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-
----- 当日数据预处理，关联账目关系表 （三级账目编码对应明细账目编码，一级账目编码对应综合账目编码）
-insert into hw_tmp.tm_ac_detl_bill_d_mid02
+statis_month 	integer,
+region_code 	varchar(20),
+transin_arpu 	decimal(20,2),
+transin_mou 	decimal(20,2),
+transin_dou 	decimal(20,2),
+transout_arpu 	decimal(20,2),
+transout_mou 	decimal(20,2),
+transout_dou 	decimal(20,2),
+trans_month     integer
+)engine=express distributed by('region_code') default charset=utf8 tablespace='sys_tablespace';
+insert into dis.tc_gc_xz_arpmodo_collect_m
 select
- a1.subs_id           -- 用户标识
-,a1.region_code       -- 地区区号
-,a1.acct_id           -- 帐户标识
-,a1.acct_item_fee_id  -- 明细账目编码
-,a2.fir_acct_item_id  -- 综合账目编码
-,case when a1.bill_item_type < 4 then a1.fee else 0 end  -- 应收费用(优惠后应收费用)
-,case when a1.bill_item_type = 4 then a1.fee else 0 end  -- 优惠费用
-,case when a2.old_item_id is null and a1.acct_item_fee_id <> 'GMFUN' then a1.acct_item_fee_id else a2.old_item_id end
-,a1.acct_item_fee_extra_desc_id
-,a1.bill_split_seq_num
-,a1.acct_item_fee_id
-,a1.fee
-,a1.bill_item_type
- from dwh.td_ac_bill_item_new_d  a1  ---- dwh.td_ac_bill_item_d a1 ---- 明细账单
- left join hw_tmp.tm_ac_detl_bill_d_mid01  a2
-   on concat(a1.acct_item_fee_id, substr(a1.subs_id,length(a1.subs_id)-2,2)) = a2.acct_item_fee_id_join
-where a1.bill_item_type <> 5
-  and a1.deal_date = ${hivevar:vi_day}
-;
-
-
-alter table mk.tm_ac_detl_bill_d  drop partition(statis_date=${hivevar:vi_day});
-
-insert into mk.tm_ac_detl_bill_d  partition(statis_date=${hivevar:vi_day})
-select
- subs_id                                                      ---用户标识
-,region_code                                                  ---地区区号
-,account_id                                                   ---帐户标识
-,detl_acct_item_id                                            ---明细账目编码
-,compst_acct_item_id                                          ---综合账目编码
-,sum(shld_chrg_fee)                                           ---应收费用
-,sum(fav_fee)                                                 ---优惠费用
-,sum(cd_net_shld_chrg)                                        ---当日净应收
-,sum(cd_net_fav)                                              ---当日净优惠
-,acct_item_fee_id
-,acct_item_fee_extra_desc_id
-,bill_split_seq_num
-,acct_item_fee_id_old
-,sum(fee)
-,bill_item_type
-from (
- select subs_id                                               ---用户标识
-,region_code                                                  ---地区区号
-,account_id                                                   ---帐户标识
-,detl_acct_item_id                                            ---明细账目编码
-,compst_acct_item_id                                          ---综合账目编码
-,coalesce(shld_chrg_fee,0) as  shld_chrg_fee                  ---应收费用
-,coalesce(fav_fee,0)       as  fav_fee                        ---优惠费用
-,coalesce(shld_chrg_fee,0) as  cd_net_shld_chrg               ---当日净应收
-,coalesce(fav_fee,0)       as  cd_net_fav                     ---当日净优惠
-,acct_item_fee_id
-,acct_item_fee_extra_desc_id
-,bill_split_seq_num
-,acct_item_fee_id_old
-,fee
-,bill_item_type
-from  hw_tmp.tm_ac_detl_bill_d_mid02
-union all
-select
- subs_id                                                      ---用户标识
-,region_code                                                  ---地区区号
-,account_id                                                   ---帐户标识
-,detl_acct_item_id                                            ---明细账目编码
-,compst_acct_item_id                                          ---综合账目编码
-,0 as shld_chrg_fee                                           ---应收费用
-,0 as fav_fee                                                 ---优惠费用
-,coalesce(shld_chrg_fee,0)*-1  as  cd_net_shld_chrg           ---当日净应收
-,coalesce(fav_fee,0)*-1   as    cd_net_fav                    ---当日净优惠
-,acct_item_fee_id
-,acct_item_fee_extra_desc_id
-,bill_split_seq_num
-,acct_item_fee_id_old
-,0  as fee
-,bill_item_type
-from mk.tm_ac_detl_bill_d
-where statis_date = ${hivevar:vl_day}
-  and ${hivevar:vi_day} > ${hivevar:vi_month_first}
-)  aa
-group by
- subs_id
+${gbvar:vi_month}
 ,region_code
-,account_id
-,detl_acct_item_id
-,compst_acct_item_id
-,acct_item_fee_id
-,acct_item_fee_extra_desc_id
-,bill_split_seq_num
-,acct_item_fee_id_old
-,bill_item_type
+,max(arpu1/subs_id1)
+,max(mou1/subs_id1)
+,max(dou1/subs_id1)
+,max(arpu2/subs_id2)
+,max(mou2/subs_id2)
+,max(dou2/subs_id2)
+from
+    (select region_code
+    ,count(distinct case when trans_type = '携入客户' then subs_id end) subs_id1
+    ,sum(case when trans_type = '携入客户' then arpu end) arpu1
+	,sum(case when trans_type = '携入客户' then mou end) mou1
+	,sum(case when trans_type = '携入客户' then dou end) dou1
+    ,count(distinct case when trans_type = '携出客户' then subs_id end) subs_id2
+    ,sum(case when trans_type = '携出客户' then arpu end) arpu2
+	,sum(case when trans_type = '携出客户' then mou end) mou2
+	,sum(case when trans_type = '携出客户' then dou end) dou2
+    from dis.tc_gc_xz_arpmodo_detail_m
+	where statis_month = ${gbvar:vi_month}
+	group by region_code
+    ) a
+group  by
+region_code
+,arpu1/subs_id1
+,mou1/subs_id1
+,dou1/subs_id1
+,arpu2/subs_id2
+,mou2/subs_id2
+,dou2/subs_id2
+;
+insert into hw_tmp.tc_gc_xz_arpmodo_collect_m
+select
+${gbvar:vi_month}
+,'全省'
+,arpu1/subs_id1
+,mou1/subs_id1
+,dou1/subs_id1
+,arpu2/subs_id2
+,mou2/subs_id2
+,dou2/subs_id2
+from
+    (select
+    count(distinct case when trans_type = '携入客户' then subs_id end) subs_id1
+    ,sum(case when trans_type = '携入客户' then arpu end) arpu1
+	,sum(case when trans_type = '携入客户' then mou end) mou1
+	,sum(case when trans_type = '携入客户' then dou end) dou1
+    ,count(distinct case when trans_type = '携出客户' then subs_id end) subs_id2
+    ,sum(case when trans_type = '携出客户' then arpu end) arpu2
+	,sum(case when trans_type = '携出客户' then mou end) mou2
+	,sum(case when trans_type = '携出客户' then dou end) dou2
+    from dis.tc_gc_xz_arpmodo_detail_m
+	where statis_month = ${gbvar:vi_month}
+    ) a
 ;
 
-drop table if exists hw_tmp.tm_ac_detl_bill_d_mid01;
-drop table if exists hw_tmp.tm_ac_detl_bill_d_mid02;
+create table if not exists dis.tc_gc_xz_arpmodo_collect_m
+(
+statis_month 	integer,
+region_code 	varchar(20),
+transin_arpu 	decimal(20,2),
+transin_mou 	decimal(20,2),
+transin_dou 	decimal(20,2),
+transout_arpu 	decimal(20,2),
+transout_mou 	decimal(20,2),
+transout_dou 	decimal(20,2)
+)engine=express distributed by('region_code') default charset=utf8 tablespace='sys_tablespace';
+insert into dis.tc_gc_xz_arpmodo_collect_m
+select
+statis_month
+,region_code
+,transin_arpu
+,transin_mou
+,transin_dou
+,transout_arpu
+,transout_mou
+,transout_dou
+from hw_tmp.tc_gc_xz_arpmodo_collect_m
+where statis_month = ${gbvar:vi_month}
+order by region_code;

@@ -1,37 +1,45 @@
-# for i in range(10):
-#     print(f'i--------------:{i}')
-#     for j in range(3, 10):
-#         if j % 5 == 0:
-#             continue
-#         print(f'j:{j}')
-#
+def iterates(deps_list, __myself_id_list=[], __depth=0):
+    # 更新myself_id_list的id，让外部调用时不需要填入参数
+    __result = []
 
-class A:
-    def __init__(self):
-        self.__a = '1'
-        self.b = 2
+    __myself_id_list = list(set(__myself_id_list))
+    print('e',id(__myself_id_list))
+    myself_id = id(deps_list)
+    __myself_id_list.append(myself_id)
+    for value in deps_list:
+        child_id = id(value)
 
-    def a(self, name):
-        a = getattr(self, name)
-        print(a)
+        if isinstance(value, list):
+            __depth += 1
+            if child_id in __myself_id_list:
+
+                __result.append(('self%s' % __depth, __depth, child_id, myself_id))
+            else:
+
+                __result += iterates(value, __myself_id_list, __depth)
 
 
-a = {
-    # 如果一个表含有多个分区类型字段，优先取key值较小的
-    'statis_date': 1,
-    'deal_date': 2,
-    'day_id': 3,
-    'statis_hour': 4
-}
-b = 'asdasdasd'
-c = 'aaaaaaaaa'
+        else:
+            __result.append((value, __depth, child_id, myself_id))
+    # result = list(set(__result))
+    result = __result
+    return result
+
+
 if __name__ == '__main__':
-    import xlrd.sheet
+    a = ['1', 'x', ['2', 'x', '3']]
+    b = ['b1', 's', 'x', 'b2', a]
+    a[2][2] = b
+    b[2] = a
+    print(a)
+    print(b)
 
-    q = xlrd.open_workbook('../dustbin/role.xls')
-    sheet_n = q.sheet_names()[1]
-    sheet = q.sheet_by_name(sheet_n)
+    for i in iterates(a):
+        print(i)
+    print('*' * 100)
 
-    for i in sheet:
-        for j in i:
-            print(type(j))
+    for i in iterates(a):
+        print(i)
+    print('*' * 100)
+    for i in iterates(a):
+        print(i)
