@@ -3,6 +3,7 @@
 import re
 import os
 import sys
+import copy
 
 from tools import excelOp
 
@@ -50,6 +51,7 @@ def cal_deps(dict_data: dict[str, list]):
     for key, values in dict_data.items():
 
         for value in values:
+
             index = dict_data[key].index(value)
 
             new_value = dict_data.get(value, [])
@@ -57,6 +59,7 @@ def cal_deps(dict_data: dict[str, list]):
                 dict_data[key][index] = new_value
             else:
                 continue
+
     return dict_data
 
 
@@ -83,7 +86,10 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
         from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
         # 将pre脚本与主脚本合并,转小写
-        file_name = re.sub(r'_pre\d+\.sql', '.sql', file_name, flags=re.I).lower()
+        # pre 或 per 。。。
+        # file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
+        # 部分脚本不合常识比如mk_pm_sc_user_lte_d，前置脚本有其他词语
+
         result.setdefault(file_name, {})
         if insert_sql_list:
             for insert_sql in insert_sql_list:
@@ -100,41 +106,46 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     return result
 
 
-def iterates(deps_list, result=[], id_list=[], depth=0):
-    #id_list.append(id(deps_list))
+def iterates(deps_list, result=[], myself_id_list=[], depth=0):
+    myself_id = id(deps_list)
+    myself_id_list.append(myself_id)
     for value in deps_list:
-        dep_id = id(value)
-        id_list.append(dep_id)
+        child_id = id(value)
 
         if isinstance(value, list):
-            if dep_id in id_list:
-                result.append(('self', depth))
+
+            if child_id in myself_id_list:
+
+                result.append(('self%s'%depth, depth))
             else:
-                iterates(value, result, id_list, depth + 1)
+                iterates(value, result, myself_id_list, depth)
+            depth += 1
         else:
+
             result.append((value, depth))
     result = list(set(result))
+
     return result
 
 
 def run(dir_name):
-    reult_data = analyze(dir_name)
+    t_data = analyze(dir_name)
     t_dict = {}
-    for file, info in reult_data.items():
-        target_table = info.get('target_table', '')
-        if not target_table:
-            print(file)
-            sys.exit('没有目标表')
+    result = {}
+    for file, info in t_data.items():
+        target_table = info.get('target_table', file)
         t_dict[target_table] = info.get('deps', [])
     # 将依赖表查找至最底层
     t_result = cal_deps(t_dict)
 
-    for file, info in reult_data.items():
-        target_table = info.get('target_table', '')
-        reult_data[file]['deps'] = iterates(t_result.get(target_table, []))
+    for file, info in t_data.items():
+        target_table = info.get('target_table', file)
+
+        result.setdefault(file, {'target_table': target_table,
+                                 'deps': iterates(t_result.get(target_table, []), result=[],myself_id_list=[])})
 
     excel_data = [('脚本名', '目标表名', '依赖表名')]
-    for file, info in reult_data.items():
+    for file, info in result.items():
         deps_list = info.get('deps', [('no_dep', 'no_')])
         target_table = info.get('target_table', 'erro')
         for dep_tuple in deps_list:
@@ -143,7 +154,7 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp_mk\\'
+    dirName = 'D:\\bd_hive\\mk'
     data = run(dirName)
     result_xlsx = 'D:\\数据核对\\all_dependent_table.xlsx'
     excelOp.write_xlsx(result_xlsx, data, edit=True)
