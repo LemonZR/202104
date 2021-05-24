@@ -113,21 +113,25 @@ def iterates(my_name, deps_list, __id_dict={}):
     __id_dict = copy.deepcopy(__id_dict)
     parents = __id_dict.setdefault('parents', {})
     parents.setdefault('p_tables', []).append(my_name)
-    __p_id_list = parents.setdefault('p_id', {})
-    depth = __p_id_list.setdefault(myself_id, 0)
+    __p_id_list = parents.setdefault('p_id', [])
+    __p_id_list.append(myself_id)
+    depth_dict = __id_dict.setdefault('depth', {})
+    depth = depth_dict.setdefault(myself_id, 0)
     for value in deps_list:
 
         if isinstance(value, dict):
             dep_name = list(value.keys())[0]
             dep_value = list(value.values())[0]
             child_id = id(dep_value)
-            if child_id in __p_id_list.keys():
+            result.append([depth] + parents['p_tables'] + [dep_name])
+            if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
                 result.append([depth] + parents['p_tables'] + [dep_name])
             else:
-                __id_dict.setdefault(child_id, depth + 1)
+                __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
-        else:
+        elif depth == 0:
+
             result.append([depth] + parents['p_tables'] + [value])
 
     return result
@@ -190,10 +194,11 @@ if __name__ == '__main__':
     data1, data2 = run(dirName)
     print(len(data1))
     sys.exit()
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_new_1.xlsx'
+    # 先写小的，避免重复打开大数据表
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524_依赖.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
     print('写入excel：直接依赖 end' + '*' * 100)
     print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
+    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
     print('写入excel：所有依赖 end' + '*' * 100)

@@ -1,262 +1,873 @@
 --<metadata>
---<model_name>: GPRS清单日汇总
---<keyword>: 关键字1, 关键字2
---<description>: GPRS清单日汇总
---<author>: 高彦豪@华为
---<run_cycle>: D
---<tmp_table>: hw_tmp.tm_ls_gprs_d_mid01
+--<model_name>: 用户基础信息月表
+--<keyword>: 用户基础
+--<description>: 用户基础信息月表
+--<author>: 闫素婷@华为
+--<run_cycle>: M
+--<tmp_table>: hw_tmp.TM_SC_USER_BASE_M_mid1,hw_tmp.TM_SC_USER_BASE_M_MID2,hw_tmp.tm_sc_user_base_m_mid10,hw_tmp.tm_sc_user_base_m_mid9,,hw_tmp.tm_sc_user_base_m_mid8,
+--<tmp_table>: hw_tmp.TM_SC_USER_BASE_M_mid3, hw_tmp.TM_SC_USER_BASE_M_mid4,hw_tmp.TM_SC_USER_BASE_M_mid5,hw_tmp.TM_SC_USER_BASE_M_mid6,hw_tmp.TM_SC_USER_BASE_M_mid7
 --<det_table>: 码表(逗号分隔)
---<app_table>: mk.tm_ls_gprs_d
+--<app_table>: MK.TM_SC_USER_BASE_M
 --<app_name>: /路径/子路径/应用专题1/应用1
 --</metadata>
 
 
-
-drop table if exists hw_tmp.tm_ls_gprs_d_mid01;
-create table if not exists hw_tmp.tm_ls_gprs_d_mid01
+drop table IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_mid1;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_mid1
 (
- subs_id varchar(16)
-,phone_no varchar(20)
-,call_period_id varchar(2)
-,region_code varchar(5)
-,roam_type varchar(10)
-,net_type varchar(10)
-,apn_net_id varchar(63)
-,call_cnt bigint
-,comm_dur bigint
-,tot_flux bigint
-,up_flux bigint
-,dn_flux bigint
-,chrg_flux bigint
-,up_chrg_flux bigint
-,dn_chrg_flux bigint
-,base_fee bigint
-,info_fee bigint
-,fav_aft_base_fee bigint
-,fav_aft_info_fee bigint
-,net_notebook_flg varchar(16)
-,cdr_serv_type varchar(16)
-,tariff1_lvl_up_data_vol bigint
-,tariff1_lvl_down_data_vol bigint
-,tariff2_lvl_down_data_vol bigint
-,tariff6_lvl_up_data_vol bigint
-,tariff6_lvl_down_data_vol bigint
-,tariff2_lvl_up_data_vol bigint
-,imei varchar(20)
-,net_notebook_flg_yj varchar(2)
-,package_info varchar(128)
-,tariff_track varchar(128)
-,lac_id varchar(10)
-,cell_id varchar(10)
-,vregion varchar(9)
-,apn_carrier_id varchar(37)
-,imei_8 varchar(10)
-,package_flg varchar(1)
-,serv_type varchar(100)
-,is_bill_user int
-)row format delimited
+subs_id varchar(16),
+is_grp_cust varchar(1),
+grp_cust_id varchar(20)
+)
+COMMENT '用户基础信息日表临时表1'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+INSERT INTO hw_tmp.TM_SC_USER_BASE_M_MID1
+SELECT
+SUBS_ID
+,'1'
+,GRP_CUST_ID
+FROM
+(SELECT
+A.SUBS_ID
+,E.GRP_CUST_ID
+,ROW_NUMBER() OVER(PARTITION BY A.SUBS_ID ORDER BY E.STATUS_DATE DESC) ROWNUM
+FROM dwh.TD_SC_SUBS_m A
+join dwh.TD_GC_GROUP_INDI_CUST_M E
+on A.SUBS_ID = E.SUBS_ID and E.STATIS_MONTH =${hivevar:vi_month}
+AND E.STATUS = 'stcmNml'
+WHERE A.STATIS_MONTH =${hivevar:vi_month}) t
+WHERE t.ROWNUM = 1 ;
+drop table IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_MID2;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_MID2 (
+SUBS_ID   VARCHAR(16)
+,LD_PRD_ID VARCHAR(32)
+,LD_USER_STATUS VARCHAR(20)
+)
+COMMENT '用户基础信息日表临时表2'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+INSERT INTO hw_tmp.TM_SC_USER_BASE_M_MID2
+SELECT
+A.SUBS_ID
+,CASE WHEN A.PRODUCT_CD<>B.PRODUCT_CD THEN B.PRODUCT_CD ELSE A.PRODUCT_CD END
+,CASE WHEN A.USER_STAT<>B.USER_STAT THEN B.USER_STAT ELSE A.USER_STAT END
+FROM dwh.TD_SC_SUBS_m A
+join dwh.TD_SC_SUBS_m B
+on A.SUBS_ID = B.SUBS_ID
+AND B.STATIS_MONTH = ${hivevar:vl_month}
+WHERE
+A.STATIS_MONTH =${hivevar:vi_month}
+AND (A.PRODUCT_CD<>B.PRODUCT_CD OR A.USER_STAT <> B.USER_STAT)
+;
+drop table  IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_MID3;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_MID3 (
+SUBS_ID VARCHAR(16)
+)COMMENT '用户基础信息日表临时表3'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+INSERT INTO hw_tmp.TM_SC_USER_BASE_M_MID3
+SELECT
+A.SUBS_ID
+FROM dwh.TD_SC_SUBS_m A,dwh.TD_PD_SUBS_SERVICE_m B
+WHERE A.SUBS_ID = B.SUBS_ID
+AND A.STATIS_MONTH =${hivevar:vi_month}
+AND B.STATIS_MONTH =${hivevar:vi_month}
+AND B.SERV_ID = '162'
+AND (B.EXP_DATE IS NULL OR CAST(B.EXP_DATE AS DATE) >${hivevar:vi_month})
+GROUP BY A.SUBS_ID;
+
+
+drop table IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_MID4 ;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_MID4 (
+SUBS_ID VARCHAR(16)
+)COMMENT '用户基础信息日表临时表4测试卡'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+INSERT INTO hw_tmp.TM_SC_USER_BASE_M_MID4
+SELECT SUBS_ID
+FROM dwh.TD_PD_SUBS_PRIVILEGE_m A
+JOIN dwh.TD_PD_PRIVILEGE_m B
+ON A.MARKT_SOLUTION_ID=B.MARKT_SOLUTION_ID
+AND  B.STATIS_MONTH = ${hivevar:vi_month}
+AND B.MARKT_SOLUTION_NAME LIKE '%全免%'
+WHERE
+A.STATIS_MONTH =${hivevar:vi_month}
+AND  cast(SUBSTR(A.EFF_DATE,1,6) as int) <=${hivevar:vi_month}
+AND (cast(SUBSTR(A.EXP_DATE,1,6) as int) >${hivevar:vi_month} OR A.EXP_DATE IS NULL)
+GROUP BY SUBS_ID ;
+
+
+
+drop table  IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_MID5;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_MID5 (
+SUBS_ID VARCHAR(20),
+EFF_DATE VARCHAR(20),
+EXP_DATE VARCHAR(20),
+EFF_SEQ_NUM VARCHAR(20),
+MARKT_SOLUTION_ID VARCHAR(100),
+MARKT_SOLUTION_NAME VARCHAR(200),
+MARKT_SOLUTION_FEE INT
+)COMMENT '用户基础信息日表临时表5主优惠'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+INSERT INTO hw_tmp.TM_SC_USER_BASE_M_MID5
+SELECT C.SUBS_ID,
+C.EFF_DATE,
+C.EXP_DATE,
+C.EFF_SEQ_NUM,
+C.MARKT_SOLUTION_ID,
+C.MARKT_SOLUTION_NAME,
+C.MARKT_SOLUTION_FEE
+FROM (SELECT A.SUBS_ID,
+A.EFF_DATE,
+A.EXP_DATE,
+A.EFF_SEQ_NUM,
+A.MARKT_SOLUTION_ID,
+B.MARKT_SOLUTION_NAME,
+FAV_VAL * 0.01 AS MARKT_SOLUTION_FEE,
+row_number () OVER (
+PARTITION BY subs_id
+ORDER BY eff_date DESC)
+rn
+FROM dwh.td_pd_subs_privilege_m A
+JOIN dwh.TD_PD_PRIVILEGE_m B
+ON A.markt_solution_id = B.markt_solution_id
+AND B.STATIS_MONTH = ${hivevar:vi_month}
+AND B.ismainpriv = '1'
+AND B.MARKT_SOLUTION_TYPE NOT IN ('RewardActivity')
+AND B.markt_solution_name NOT LIKE '%宽带%'
+WHERE A.STATIS_MONTH = ${hivevar:vi_month}
+AND cast(substr(A.eff_date, 1, 6) as int) <= ${hivevar:vi_month}
+AND (cast(substr(A.exp_date, 1, 6) as int) > ${hivevar:last1year_char} OR A.exp_date IS NULL)
+----离网用户的主优惠也统计，所以注释此步
+) C
+WHERE C.rn = 1;
+drop table IF   EXISTS  hw_tmp.TM_SC_USER_BASE_M_MID6;
+CREATE TABLE IF NOT EXISTS hw_tmp.TM_SC_USER_BASE_M_MID6 (
+cust_ID VARCHAR(16)--客户标识
+ ,CUST_TYPE   VARCHAR(32)--客户类型
+ ,CUST_NAME   VARCHAR(100)--客户名称
+ ,GENDER VARCHAR(2)--性别
+ ,AGE   INT--年龄
+ ,BIRTH_YEAR_MON    VARCHAR(8)--出生年月
+ ,CERT_TYPE   VARCHAR(32)--证件类型
+ ,CERT_NUMBER VARCHAR(32)--证件号码
+ ,CUST_EDU_LVL VARCHAR(16)--客户学历
+ ,VOCATION    VARCHAR(128)--职业
+ ,CNTCT_PHONE VARCHAR(20)--联系电话
+ ,ZIP_CODE    VARCHAR(20)--邮编
+ ,FAX_NUM     VARCHAR(20)--传真号
+ ,EMAIL VARCHAR(64)--EMAIL地址
+ ,CNTCT_PERSN VARCHAR(64)--联系人
+ ,IS_CUST_DATA_ALL_USER   VARCHAR(1)--是否客户资料完整用户
+ ,CUST_ADDR   VARCHAR(200)--客户地址
+)COMMENT '用户基础信息日表临时表6'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\T'
+STORED AS RCFILE;
+
+insert into hw_tmp.TM_SC_USER_BASE_M_MID6
+select
+a.cust_id --客户标识
+,a.cust_type --客户类型
+,substr(a.cust_name,1,100) --客户名称
+,case when length(CERT_NUMBER)=18 and substr(CERT_NUMBER,17,1) in ('1','3','5','7','9') then '1'
+when length(CERT_NUMBER)=18 and substr(CERT_NUMBER,17,1) in ('0','2','4','6','8') then '0'
+when length(CERT_NUMBER)=15 and substr(CERT_NUMBER,15,1) in ('1','3','5','7','9') then '1'
+when length(CERT_NUMBER)=15 and substr(CERT_NUMBER,15,1) in ('0','2','4','6','8') then '0'
+else b.gender end  gender --性别
+, case when length(CERT_NUMBER)=18 and substr(CERT_NUMBER,7,2) IN ('19','20')  and
+substr(CERT_NUMBER,9,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,10,1) in ('1','2','3','4','5','6','7','8','9','0')
+then cast(${hivevar:vi_year}-substr(cert_number,7,4) as int)
+--cast(datediff(from_unixtime(unix_timestamp(${hivevar:vi_month},'yyyy'),'yyyy') ,from_unixtime(unix_timestamp(substr(cert_number,7,4),'yyyy'),'yyyy')) as int)
+when length(CERT_NUMBER)=15 and substr(CERT_NUMBER,7,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,8,1) in ('1','2','3','4','5','6','7','8','9','0')
+then cast(${hivevar:vi_year}-concat('19',substr(cert_number,7,2)) as int)
+--cast(datediff(from_unixtime(unix_timestamp(${hivevar:vi_month},'yyyy'),'yyyy') ,from_unixtime(unix_timestamp(CONCAT('19',substr(cert_number,7,2)),'yyyymm'),'yyyy')) as int)
+else 999
+end --年龄
+, case when length(CERT_NUMBER)=18 and substr(CERT_NUMBER,7,2) IN ('19','20')  and
+substr(CERT_NUMBER,9,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,10,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,11,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,12,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,13,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,14,1) in ('1','2','3','4','5','6','7','8','9','0')
+then substr(cert_number,7,8)
+when length(CERT_NUMBER)=15 and  substr(CERT_NUMBER,7,1) in ('1','2','3','4','5','6','7','8','9','0')  AND
+substr(CERT_NUMBER,8,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,9,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,10,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,11,1) in ('1','2','3','4','5','6','7','8','9','0') AND
+substr(CERT_NUMBER,12,1) in ('1','2','3','4','5','6','7','8','9','0')
+then CONCAT('19',substr(cert_number,7,6))
+else '999'
+end --出生年月
+,a.cert_type --证件类型
+,a.cert_number --证件号码
+,b.edu_lvl_id --客户学历
+,b.job --职业
+,substr(a.cntct_phone,1,20) --联系电话
+,''----a.zip_code --邮编
+,''----substr(b.fax,1,20) --传真号
+,'' ----a.email --Email地址
+,a.cntct_persn --联系人
+,substr(b.data_all_id,1,1) --是否客户资料完整用户
+,a.cust_addr
+from dwh.td_ci_cust_m a
+left join dwh.td_ci_indi_cust_m b on a.cust_id = b.cust_id and b.statis_month =${hivevar:vi_month}
+where a.statis_month =${hivevar:vi_month} ;
+
+
+drop table  if   exists  hw_tmp.tm_sc_user_base_m_mid7;
+create table if not exists hw_tmp.tm_sc_user_base_m_mid7 (
+subs_id string
+,region_code string
+,cust_id string
+,using_cust string
+,net_type string
+,subs_brand string
+,subs_name string
+,pay_acct_id string
+,phone_no string
+,auth_mode string
+,subs_pwd string
+,product_cd string
+,checkin_mode string
+,mobile_type string
+,lang_type string
+,sim_num string
+,imsi string
+,reg_time string
+,vip_type string
+,vip_card_type string
+,vip_no string
+,cur_cust_magr string
+,prncp_cust_magr string
+,score int
+,ctrl_mode string
+,subs_crdt_val string
+,disable_type string
+,creat_chnl string
+,belng_chnl string
+,area_id string
+,is_self_subs string
+,start_time string
+,exp_date string
+,disable_delay string
+,subs_type string
+,is_act string
+,pay_mode string
+,disable_lock string
+,credit_status string
+,remark string
+,user_stat string
+,status_date string
+,photo_flg string
+,high_val_monitor_type string
+,vip_type_modf_time string
+,settleday string
+,empty_card_card_num string
+,prostatus string
+,prostopkey string
+,acitve_flg string
+)
+row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-truncate table hw_tmp.tm_ls_gprs_d_mid01;
-
-insert into hw_tmp.tm_ls_gprs_d_mid01
+insert into hw_tmp.tm_sc_user_base_m_mid7
 select
- subs_id--用户标识
-,self_phone_no--服务号码
-,substr(call_start_time,9,2) --时段
-,substr(self_home_area,1,5)--地区区号
-,coalesce(roam_type,'')--漫游类型
-,net_type --网络类型
-,coalesce(apn_net_id,'')--APN网络标识
-,sum(cast(case when rollback_cdr_flag in('R','B') then(-1) else 1 end as bigint))--通话次数
-,sum(cast(case when rollback_cdr_flag in('R','B') then call_dur*(-1) else call_dur end as bigint))--通信时长
-
-
-
-
-,ceil(sum(case when rollback_cdr_flag in('R','B')
-then(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol+tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)*(-1)
-else(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol+tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)
-end
-*1.0/1024 ))             --总流量
-
-,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
-then(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol)*(-1)
-else(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol)
-end as bigint)*1.0/1024))      --上行流量
-
-,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
-then(tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)*(-1)
-else(tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)
-end as bigint)*1.0/1024 ))         --下行流量
-
-,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
-then(total_billing_vol)*(-1)
-else(total_billing_vol)
-end as bigint)*1.0/1024))          --计费流量
-
-,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
-then(total_billing_vol_up)*(-1)
-else(total_billing_vol_up)
-end as bigint)*1.0/1024))          --上行计费流量
-
-,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
-then(total_billing_vol_down)*(-1)
-else(total_billing_vol_down)
-end as bigint)*1.0/1024))       --下行计费流量
-
-
-
-
-
-,sum(case when rollback_cdr_flag in('R','B')
-then(basic_fee_s)*(-100)
-else(basic_fee_s)*100
-end)
-,0--信息[Kint))--基本
---More--(37%)
-,sum(cast(case when rollback_cdr_flag in('R','B')
-then(basic_fee)*(-100)
-else(basic_fee)*(100)
-end as bigint))--优惠后基本费
-,0--优惠后信息费
-,case when src_file_name like 'G3NB%' and upper(apn_net_id)<>'CMLAP'
-      then '1'
-      else '0'
- end
-,coalesce(biz_id,'')  --话单服务类型
-,sum( bigint ( tariff1_lvl_up_data_vol))                                        --上行非优惠流量
-,sum( bigint ( tariff1_lvl_down_data_vol))                                      --下行非优惠流量
-,sum( bigint ( tariff2_lvl_up_data_vol))                                       --上行优惠流量
-,sum( bigint ( tariff2_lvl_down_data_vol))                                      --下行优惠流量
-,sum( bigint ( tariff6_lvl_up_data_vol))                                        --上行核减流量
-,sum( bigint ( tariff6_lvl_down_data_vol))                                      --下行核减流量
-,TRIM(IMEI)
-,case when src_file_name like 'G3NB%'
-      then '1' else '0' end
-,coalesce(package_info,'')
-,case when split(TARIFFTRACK,',')[1] is not null then split(TARIFFTRACK,',')[0] else '' end
-,coalesce(LAC_ID,'')
-,coalesce(CELL_ID,'')
-,coalesce(vregion,'')
-,coalesce(apn_carrier_id,'')
-,CASE WHEN LENGTH(TRIM(IMEI))>=8 THEN SUBSTR(TRIM(IMEI),1,8) ELSE TRIM(IMEI) END
-,case when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and TOTAL_DISCT like '%,663,0|%' then '0' --套餐外流量封顶
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '4'    --超套餐临界话单且超套餐部分不足1分钱应属于套餐内
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' then '2'    --超套餐小流量费用不足1分话单
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT not like '%,1060,%' then '4' --套餐内流量
-when total_billing_vol>0 and  basic_fee>0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '2' --超套餐临界话单且超套餐部分大于1分钱
-when total_billing_vol>0 and   basic_fee>0 and TOTAL_DISCT like '%,1060,%' then '2'     --超套餐流量
-else '6' --资费轨迹为空或国际漫游流量话单
-end
-,coalesce(serv_type,'')
-,case when basic_fee>0 then 1 else 0 end
-from dwh.td_su_cdr_gprs_d --GPRS清单
-where deal_date = ${hivevar:vi_day}
-group by
- subs_id--用户标识
-,self_phone_no--服务号码
-,substr(call_start_time,9,2) --时段
-,substr(self_home_area,1,5)--地区区号
-,coalesce(roam_type,'')--漫游类型
-,net_type --网络类型
-,coalesce(apn_net_id,'')--APN网络标识
-,case when src_file_name like 'G3NB%' and upper(apn_net_id)<>'CMLAP'
-      then '1'
-      else '0'
- end
-,coalesce(biz_id,'')  --话单服务类型
-,TRIM(IMEI)
-,case when src_file_name like 'G3NB%'
-      then '1' else '0' end
-,coalesce(package_info,'')
-,case when split(TARIFFTRACK,',')[1] is not null then split(TARIFFTRACK,',')[0] else '' end
-,coalesce(LAC_ID,'')
-,coalesce(CELL_ID,'')
-,coalesce(vregion,'')
-,coalesce(apn_carrier_id,'')
-,CASE WHEN LENGTH(TRIM(IMEI))>=8 THEN SUBSTR(TRIM(IMEI),1,8) ELSE TRIM(IMEI) END
-,case when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and TOTAL_DISCT like '%,663,0|%' then '0' --套餐外流量封顶
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '4'    --超套餐临界话单且超套餐部分不足1分钱应属于套餐内
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' then '2'    --超套餐小流量费用不足1分话单
-when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT not like '%,1060,%' then '4' --套餐内流量
-when total_billing_vol>0 and  basic_fee>0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '2' --超套餐临界话单且超套餐部分大于1分钱
-when total_billing_vol>0 and   basic_fee>0 and TOTAL_DISCT like '%,1060,%' then '2'     --超套餐流量
-else '6' --资费轨迹为空或国际漫游流量话单
-end
-,coalesce(serv_type,'')
-,case when basic_fee>0 then 1 else 0 end
+b.subs_id
+,b.region_code
+,b.cust_id
+,b.using_cust
+,b.net_type
+,b.subs_brand
+,b.subs_name
+,b.pay_acct_id
+,b.phone_no
+,b.auth_mode
+,b.subs_pwd
+,b.product_cd
+,b.checkin_mode
+,b.mobile_type
+,b.lang_type
+,b.sim_num
+,b.imsi
+,b.reg_time
+,b.vip_type
+,b.vip_card_type
+,b.vip_no
+,b.cur_cust_magr
+,b.prncp_cust_magr
+,b.score
+,b.ctrl_mode
+,b.subs_crdt_val
+,b.disable_type
+,b.creat_chnl
+,b.belng_chnl
+,b.area_id
+,b.is_self_subs
+,b.start_time
+,b.exp_date
+,b.disable_delay
+,b.subs_type
+,b.is_act
+,b.pay_mode
+,b.disable_lock
+,b.credit_status
+,b.remark
+,b.user_stat
+,b.status_date
+,b.photo_flg
+,b.high_val_monitor_type
+,b.vip_type_modf_time
+,b.settleday
+,b.empty_card_card_num
+,b.prostatus
+,b.prostopkey
+,b.acitve_flg
+from
+(
+select
+a.subs_id
+,a.region_code
+,a.cust_id
+,a.using_cust
+,a.net_type
+,a.subs_brand
+,a.subs_name
+,a.pay_acct_id
+,a.phone_no
+,a.auth_mode
+,a.subs_pwd
+,a.product_cd
+,a.checkin_mode
+,a.mobile_type
+,a.lang_type
+,a.sim_num
+,a.imsi
+,a.reg_time
+,a.vip_type
+,a.vip_card_type
+,a.vip_no
+,a.cur_cust_magr
+,a.prncp_cust_magr
+,a.score
+,a.ctrl_mode
+,a.subs_crdt_val
+,a.disable_type
+,a.creat_chnl
+,a.belng_chnl
+,a.area_id
+,a.is_self_subs
+,a.start_time
+,a.exp_date
+,a.disable_delay
+,a.subs_type
+,a.is_act
+,a.pay_mode
+,a.disable_lock
+,a.credit_status
+,a.remark
+,a.user_stat
+,a.status_date
+,a.photo_flg
+,a.high_val_monitor_type
+,a.vip_type_modf_time
+,a.settleday
+,a.empty_card_card_num
+,a.prostatus
+,a.prostopkey
+,a.acitve_flg
+,row_number() over(partition by a.subs_id order by a.is_act desc) rn
+from dwh.td_sc_subs_m a
+where a.statis_month =${hivevar:vi_month}
+and (a.user_stat not like 'US2%'
+or (a.user_stat like 'US2%' and cast(substr(regexp_replace(a.status_date,'-',''),1,8) as int)>=concat(${hivevar:vl_year},'0101')))
+) b
+where b.rn = 1
 ;
 
 
+drop table IF   EXISTS   hw_tmp.tm_sc_user_base_m_mid8;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_base_m_mid8 (
+subs_id string
+,region_code string
+,cust_id string
+,using_cust string
+,net_type string
+,subs_brand string
+,subs_name string
+,pay_acct_id string
+,phone_no string
+,auth_mode string
+,subs_pwd string
+,product_cd string
+,checkin_mode string
+,mobile_type string
+,lang_type string
+,sim_num string
+,imsi string
+,reg_time string
+,vip_type string
+,vip_card_type string
+,vip_no string
+,cur_cust_magr string
+,prncp_cust_magr string
+,score int
+,ctrl_mode string
+,subs_crdt_val string
+,disable_type string
+,creat_chnl string
+,belng_chnl string
+,area_id string
+,is_self_subs string
+,start_time string
+,exp_date string
+,disable_delay string
+,subs_type string
+,is_act string
+,pay_mode string
+,disable_lock string
+,credit_status string
+,remark string
+,user_stat string
+,status_date string
+,photo_flg string
+,high_val_monitor_type string
+,vip_type_modf_time string
+,settleday string
+,empty_card_card_num string
+,prostatus string
+,prostopkey string
+,acitve_flg string
+,is_grp_cust string
+,grp_cust_id string
+,vpmn_cust_id string
+,ld_prd_id string
+,ld_user_status string
+,roam_right_id int
+,ld_brand string
+,ld_sub_brand string
+,is_test_user string
+,MARKT_SOLUTION_ID string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
 
-
-
-----删除表加分区
-alter table mk.tm_ls_gprs_d drop  partition(statis_date=${hivevar:vi_day});
-
-insert into mk.tm_ls_gprs_d partition(statis_date=${hivevar:vi_day})
+insert into hw_tmp.tm_sc_user_base_m_mid8
 select
 a.subs_id
-,A.phone_no
-,A.call_period_id
-,A.region_code
-,A.roam_type
-,A.net_type
-,A.apn_net_id
-,A.call_cnt
-,A.comm_dur
-,A.tot_flux
-,A.up_flux
-,A.dn_flux
-,A.chrg_flux
-,A.up_chrg_flux
-,A.dn_chrg_flux
-,A.base_fee
-,A.info_fee
-,A.fav_aft_base_fee
-,A.fav_aft_info_fee
-,A.net_notebook_flg
-,A.cdr_serv_type
-,A.tariff1_lvl_up_data_vol
-,A.tariff1_lvl_down_data_vol
-,A.tariff2_lvl_down_data_vol
-,A.tariff6_lvl_up_data_vol
-,A.tariff6_lvl_down_data_vol
-,A.tariff2_lvl_up_data_vol
-,A.imei
-,A.net_notebook_flg_yj
-,A.package_info
-,A.tariff_track
-,A.lac_id
-,A.cell_id
-,case
-      when A.vregion='100'  then '10'
-      when A.vregion='200'  then '20'
-      when A.vregion='210'  then '21'
-      when A.vregion='220'  then '22'
-      when A.vregion='230'  then '23'
-      when A.vregion='240'  then '24'
-      when A.vregion='250'  then '25'
-      when A.vregion='270'  then '27'
-      when A.vregion='280'  then '28'
-      when A.vregion='290'  then '29'
-      else A.vregion
- end  as vregion
-,A.apn_carrier_id
-,A.imei_8
-,''     ----20191219,(case when b.subs_id is not null and a.package_flg in ('0','2') then a.chrg_flux else 0 end) OVERPKG_CHRG_FLUX
-,package_flg    ----20191219,(case when b.subs_id is null and a.package_flg ='0' then '1'
-        ----when b.subs_id is null and a.package_flg ='2' then '3'
-        ----else a.package_flg
-        --end)  package_flg
-,a.serv_type
-,is_bill_user
-from hw_tmp.tm_ls_gprs_d_mid01 a;
---20191219left join hw_tmp.tm_ls_gprs_d_mid02 b on a.subs_id = b.subs_id;
+,a.region_code
+,a.cust_id
+,a.using_cust
+,a.net_type
+,a.subs_brand
+,a.subs_name
+,a.pay_acct_id
+,a.phone_no
+,a.auth_mode
+,a.subs_pwd
+,a.product_cd
+,a.checkin_mode
+,a.mobile_type
+,a.lang_type
+,a.sim_num
+,a.imsi
+,a.reg_time
+,a.vip_type
+,a.vip_card_type
+,a.vip_no
+,a.cur_cust_magr
+,a.prncp_cust_magr
+,a.score
+,a.ctrl_mode
+,a.subs_crdt_val
+,a.disable_type
+,a.creat_chnl
+,a.belng_chnl
+,a.area_id
+,a.is_self_subs
+,a.start_time
+,a.exp_date
+,a.disable_delay
+,a.subs_type
+,a.is_act
+,a.pay_mode
+,a.disable_lock
+,a.credit_status
+,a.remark
+,a.user_stat
+,a.status_date
+,a.photo_flg
+,a.high_val_monitor_type
+,a.vip_type_modf_time
+,a.settleday
+,a.empty_card_card_num
+,a.prostatus
+,a.prostopkey
+,a.acitve_flg
+,coalesce(c.is_grp_cust,'0') is_grp_cust
+,c.grp_cust_id
+,case when f.member_subs_id is not null then '1' else '0' end vpmn_cust_id
+,coalesce(g.ld_prd_id,a.product_cd) ld_prd_id
+,coalesce(g.ld_user_status,a.user_stat) ld_user_status
+,case when h.subs_id is null then 0 else 1 end roam_right_id
+,j.brand ld_brand
+,j.sub_brand ld_sub_brand
+,case when j.subs_id is not null then '1' else '0' end as is_test_user
+,l.markt_solution_id
+from hw_tmp.tm_sc_user_base_m_mid7 a
+left join hw_tmp.TM_SC_USER_BASE_M_mid1 c on a.subs_id = c.subs_id
+left join (select member_subs_id from dwh.td_gc_vpmn_mem_m where STATIS_MONTH =${hivevar:vi_month} and status = 'stcmNml' group by member_subs_id) f on a.subs_id = f.member_subs_id
+left join hw_tmp.TM_SC_USER_BASE_M_MID2 g on a.subs_id = g.subs_id
+left join hw_tmp.TM_SC_USER_BASE_M_MID3 h on a.subs_id = h.subs_id
+left join mk.TM_SC_USER_BASE_m j on a.subs_id=j.subs_id and j.statis_month=${hivevar:vl_month}
+left join hw_tmp.TM_SC_USER_BASE_M_MID5 l on a.subs_id=l.subs_id
+;
+
+drop table IF   EXISTS hw_tmp.tm_sc_user_base_m_mid9;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_base_m_mid9 (
+subs_id varchar(16)
+,region_code varchar(5)
+,phone_no varchar(20)
+,subs_type varchar(16)
+,cust_id varchar(16)
+,cust_type varchar(32)
+,brand varchar(16)
+,product_cd varchar(32)
+,ld_prd_id varchar(32)
+,user_status varchar(20)
+,ld_user_status varchar(20)
+,chnl_id varchar(32)
+,chnl_type varchar(20)
+,checkin_date date
+,on_net_dur int
+,off_net_date date
+,start_date varchar(8)
+,cust_name varchar(100)
+,gender varchar(2)
+,age int
+,birth_year_mon varchar(8)
+,cert_type varchar(32)
+,cert_number varchar(32)
+,cust_edu_lvl varchar(40)
+,vocation varchar(128)
+,cust_crdt_quota int
+,cust_crdt_lvl varchar(16)
+,call_right_id int
+,cust_magr varchar(10)
+,is_grp_cust varchar(1)
+,grp_cust_id varchar(20)
+,imei varchar(20)
+,imei_eff_date varchar(8)
+,tmnl_type varchar(4)
+,pay_type varchar(16)
+,roam_right_id int
+,vip_card_type varchar(16)
+,vip_no varchar(20)
+,vip_flg int
+,vip_lvl varchar(16)
+,vip_type varchar(32)
+,vpmn_cust_id varchar(20)
+,is_photo_cust varchar(1)
+,cntct_phone varchar(20)
+,zip_code varchar(20)
+,fax_num varchar(20)
+,email varchar(64)
+,cntct_persn varchar(64)
+,is_on_net_user varchar(1)
+,is_new_user varchar(1)
+,is_off_net_user varchar(1)
+,is_cust_data_all_user varchar(1)
+,mobile_type varchar(16)
+,cust_addr varchar(200)
+,create_chnl varchar(32)
+--,sub_brand varchar(32)
+,subs_main_acctid varchar(20)
+,net_type varchar(16)
+,status_date timestamp
+,ld_brand varchar(16)
+,ld_sub_brand varchar(20)
+,is_cur_phone varchar(2)
+,is_test_user varchar(1)
+,disable_lock varchar(16)
+,markt_solution_id varchar(100)
+,region_id varchar(32)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
 
 
-----删除临时表
-DROP TABLE if exists  hw_tmp.tm_ls_gprs_d_mid01;
+insert into hw_tmp.tm_sc_user_base_m_mid9
+select
+subs_id
+,region_code
+,phone_no
+,subs_type
+,cust_id
+,cust_type
+,subs_brand
+,product_cd
+,ld_prd_id
+,user_stat
+,ld_user_status
+,belng_chnl
+,chnl_type
+,checkin_date
+,on_net_dur
+,off_net_date
+,start_date
+,cust_name
+,gender
+,age
+,birth_year_mon
+,cert_type
+,cert_number
+,cust_edu_lvl
+,vocation
+,cust_crdt_quota
+,ctrl_mode
+,1
+,prncp_cust_magr
+,is_grp_cust
+,grp_cust_id
+,''
+,''
+,''
+,pay_mode
+,roam_right_id
+,vip_card_type
+,vip_no
+,vip_flg
+,vip_lvl
+,vip_type
+,vpmn_cust_id
+,photo_flg
+,cntct_phone
+,zip_code
+,fax_num
+,email
+,cntct_persn
+,is_on_net_user
+,is_new_user
+,is_off_net_user
+,is_cust_data_all_user
+,mobile_type
+,cust_addr
+,create_chnl
+--,RPTPRODGROUP
+,pay_acct_id
+,net_type
+,status_date
+,ld_brand
+,ld_sub_brand
+,is_cur_phone
+,is_test_user
+,disable_lock
+,MARKT_SOLUTION_ID
+,region_id
+from
+(select
+a.subs_id
+,a.region_code
+,a.phone_no
+,a.subs_type
+,a.cust_id
+,b.cust_type
+,a.subs_brand
+,a.product_cd
+,a.ld_prd_id
+,a.user_stat
+,a.ld_user_status
+,a.belng_chnl
+,e.chnl_type
+,to_date(from_unixtime(UNIX_TIMESTAMP(substr(a.start_time,1,8),'yyyyMMdd'))) as checkin_date
+,case when a.user_stat not like 'US2%'
+then (${hivevar:vi_year} - cast(substr(a.reg_time,1,4) as int))*12 +
+cast(substr('${hivevar:vi_month}',5,2) as int)-cast(substr(a.reg_time,5,2) as int)
+else (cast(substr(a.status_date,1,4) as int)-cast(substr(a.reg_time,1,4) as int))*12 +
+cast(substr(a.status_date,5,2) as int)-cast(substr(a.reg_time,5,2) as int)
+end on_net_dur --在网时长
+, (case when cast(substr(regexp_replace(a.status_date,'-',''),1,8) as int) <= from_unixtime(unix_timestamp(),'yyyyMMdd') and a.user_stat like 'US2%' then to_date(from_unixtime(UNIX_TIMESTAMP(substr(a.status_date,1,8),'yyyyMMdd')))--添加状态US25 曾亮
+else to_date('2999-12-31')  end) off_net_date
+, cast(substr(regexp_replace(a.start_time,'-',''),1,8) as int) start_date
+,b.cust_name
+,b.gender
+,coalesce(b.age,0) age
+,b.birth_year_mon
+,b.cert_type
+,b.cert_number
+,b.cust_edu_lvl
+,b.vocation
+,cast(coalesce(a.subs_crdt_val,'0')as int) cust_crdt_quota
+,a.ctrl_mode
+,a.prncp_cust_magr
+,a.is_grp_cust
+,a.grp_cust_id
+,a.pay_mode
+,a.roam_right_id
+,a.vip_card_type
+,a.vip_no
+,case when a.vip_type in ('VC1000','VC1100','VC1200','VC1300','VC2000','VC2100','VC2200','VC2300')
+then 1 else 0 end vip_flg
+,case when a.vip_type in('VC2200','VC4100','VC3000','VC1600','VC1300','VC1200','VC2000'
+,'VC4000','VC1100','VC2100','VC0000','VC1000','VC2300')
+then a.vip_type
+else '999'
+end vip_lvl
+,a.vip_card_type vip_type
+,a.vpmn_cust_id
+,a.photo_flg
+,b.cntct_phone
+,b.zip_code
+,b.fax_num
+,b.email
+,b.cntct_persn
+,case when a.USER_STAT not like 'US2%'
+then '1'
+else '0'
+end is_on_net_user
+,case when a.USER_STAT not like 'US2%' and cast(substr(regexp_replace(start_time,'-',''),1,6) as int)=${hivevar:vi_month} and cast(substr(regexp_replace(a.STATUS_DATE,'-',''),1,6) as int)>=${hivevar:vi_month}
+then '1'
+else '0'
+end is_new_user
+,case when a.USER_STAT like 'US2%' and cast(substr(regexp_replace(a.STATUS_DATE,'-',''),1,6) as int)>=${hivevar:vi_month}
+then '1'
+else '0'
+end is_off_net_user
+,coalesce(b.is_cust_data_all_user,'0') is_cust_data_all_user
+,a.mobile_type
+,b.cust_addr
+,coalesce(a.creat_chnl,a.belng_chnl) create_chnl
+,a.pay_acct_id
+,a.net_type
+,from_unixtime(unix_timestamp(a.status_date,'yyyyMMddHHmmss'),'yyyy-MM-dd HH:mm:ss') as status_date
+,a.ld_brand
+,a.ld_sub_brand
+,is_act is_cur_phone
+,a.is_test_user
+,a.disable_lock disable_lock
+,a.MARKT_SOLUTION_ID
+,substr(a.belng_chnl,1,8) region_id
+,row_number () OVER (PARTITION BY a.subs_id order by a.status_date desc) ro_n
+from hw_tmp.tm_sc_user_base_m_mid8 a
+left join hw_tmp.tm_sc_user_base_m_mid6 b on a.cust_id = b.cust_id
+left join (select chnl_id,chnl_type from mk.tm_ch_chnl_base_m where statis_month =${hivevar:vi_month} group by chnl_id,chnl_type) e on a.belng_chnl= e.chnl_id
+) ta
+where ro_n=1;
+
+drop table  IF   EXISTS  hw_tmp.tm_sc_user_base_m_mid10;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_base_m_mid10 (
+product_cd string
+,rptprodgroup string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+insert into hw_tmp.tm_sc_user_base_m_mid10
+select
+concat(c.product_cd,a.segment_no) product_cd
+,c.rptprodgroup
+from pub.tdet_pub_segment_9999 a,
+(select
+b.product_cd
+,max(b.rptprodgroup) rptprodgroup
+from dwh.td_pd_main_product_proper_m b-----dwh.TD_PD_MAIN_PRD_PROPER_m (替换)
+where b.statis_month=${hivevar:vi_month}
+group by
+b.product_cd) c
+where 1=1;
+
+
+alter table mk.tm_sc_user_base_m drop partition(statis_month = ${hivevar:vi_month});
+
+insert into mk.tm_sc_user_base_m
+partition(statis_month = ${hivevar:vi_month})
+select
+a.subs_id
+,a.region_code
+,a.phone_no
+,a.subs_type
+,a.cust_id
+,a.cust_type
+,a.brand
+,a.product_cd
+,a.ld_prd_id
+,a.user_status
+,a.ld_user_status
+,a.chnl_id
+,a.chnl_type
+,a.checkin_date
+,a.on_net_dur
+,a.off_net_date
+,a.start_date
+,a.cust_name
+,a.gender
+,a.age
+,a.birth_year_mon
+,a.cert_type
+,a.cert_number
+,a.cust_edu_lvl
+,a.vocation
+,a.cust_crdt_quota
+,a.cust_crdt_lvl
+,a.call_right_id
+,a.cust_magr
+,a.is_grp_cust
+,a.grp_cust_id
+,a.imei
+,a.imei_eff_date
+,a.tmnl_type
+,a.pay_type
+,a.roam_right_id
+,a.vip_card_type
+,a.vip_no
+,a.vip_flg
+,a.vip_lvl
+,a.vip_type
+,a.vpmn_cust_id
+,a.is_photo_cust
+,a.cntct_phone
+,a.zip_code
+,a.fax_num
+,a.email
+,a.cntct_persn
+,a.is_on_net_user
+,a.is_new_user
+,a.is_off_net_user
+,a.is_cust_data_all_user
+,a.mobile_type
+,a.cust_addr
+,a.create_chnl
+,b.rptprodgroup sub_brand
+,a.subs_main_acctid
+,a.net_type
+,a.status_date
+,a.ld_brand
+,a.ld_sub_brand
+,a.is_cur_phone
+,a.is_test_user
+,a.disable_lock
+,a.markt_solution_id
+,a.region_id
+from hw_tmp.tm_sc_user_base_m_mid9 a
+left join hw_tmp.tm_sc_user_base_m_mid10 b
+on concat(a.product_cd,substr(subs_id,length(a.subs_id)-3))=b.product_cd
+;
 

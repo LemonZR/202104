@@ -123,13 +123,15 @@ def iterates(my_name, deps_list, __id_dict={}):
             dep_name = list(value.keys())[0]
             dep_value = list(value.values())[0]
             child_id = id(dep_value)
+            result.append([depth] + parents['p_tables'] + [dep_name])
             if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
                 result.append([depth] + parents['p_tables'] + [dep_name])
             else:
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
-        else:
+        elif depth == 0:
+
             result.append([depth] + parents['p_tables'] + [value])
 
     return result
@@ -191,11 +193,12 @@ if __name__ == '__main__':
     dirName = 'D:\\tmp\\mk'
     data1, data2 = run(dirName)
     print(len(data1))
-
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524.xlsx'
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    sys.exit()
+    # 先写小的，避免重复打开大数据表
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524_依赖.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
     print('写入excel：直接依赖 end' + '*' * 100)
+    print('写入excel：所有依赖 start' + '*' * 100)
+    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    print('写入excel：所有依赖 end' + '*' * 100)
