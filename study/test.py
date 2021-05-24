@@ -126,7 +126,7 @@ def iterates(my_name, deps_list, __id_dict={}):
             result.append([depth] + parents['p_tables'] + [dep_name])
             if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
-                result.append([depth] + parents['p_tables'] + [dep_name])
+                continue
             else:
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
@@ -164,19 +164,19 @@ def run(dir_name):
         result.setdefault(file, {'target_table': target_table,
                                  'deps': iterates(target_table, t_dict.get(target_table, []))})
     print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
-    excel_data_all_deps = [('脚本名', '目标表名', '目标表层级', '依赖表深度', '依赖表名',)]
+    excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
     excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
 
     print('生成excel data1 start' + '*' * 100)
     for file, info in result.items():
         deps_list = info.get('deps', [('no_dep', 0)])
-        target_table = info.get('target_table', 'erro')
+        # target_table = info.get('target_table', 'erro')
         try:
             layer_level = max((i[0] for i in deps_list)) + 1
         except:
             layer_level = '需要看前置脚本'
         for dep in deps_list:
-            excel_data_all_deps.append([file, target_table] + [layer_level] + dep)
+            excel_data_all_deps.append(dep[-1:] + dep[1:2] + [layer_level])
     print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
@@ -193,9 +193,8 @@ if __name__ == '__main__':
     dirName = 'D:\\tmp\\mk'
     data1, data2 = run(dirName)
     print(len(data1))
-    # sys.exit()
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524_依赖.xlsx'
+    result_xlsx = 'D:\\数据核对\\all_influence_20210524.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
     print('写入excel：直接依赖 end' + '*' * 100)

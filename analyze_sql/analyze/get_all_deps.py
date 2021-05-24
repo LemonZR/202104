@@ -170,7 +170,7 @@ def run(dir_name):
     print('生成excel data1 start' + '*' * 100)
     for file, info in result.items():
         deps_list = info.get('deps', [('no_dep', 0)])
-        target_table = info.get('target_table', 'erro')
+        # target_table = info.get('target_table', 'erro')
         try:
             layer_level = max((i[0] for i in deps_list)) + 1
         except:
