@@ -80,7 +80,7 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    table_pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % heads
+    table_pattern = r'(?=%s)[a-zA-Z0-9_\.]*_[a-zA-Z0-9]+(?=|;|,|\s|_\$|\))' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -108,7 +108,6 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
 
 
 def iterates(my_name, deps_list, __id_dict={}):
-    result = []
     myself_id = id(deps_list)
     __id_dict = copy.deepcopy(__id_dict)
     parents = __id_dict.setdefault('parents', {})
@@ -117,23 +116,28 @@ def iterates(my_name, deps_list, __id_dict={}):
     __p_id_list.append(myself_id)
     depth_dict = __id_dict.setdefault('depth', {})
     depth = depth_dict.setdefault(myself_id, 0)
+    result = []
+
+    # 只遍历前三层依赖
+    if len(__p_id_list) > 3:
+        return result
     for value in deps_list:
 
         if isinstance(value, dict):
+
             dep_name = list(value.keys())[0]
             dep_value = list(value.values())[0]
             child_id = id(dep_value)
-            result.append([depth] + parents['p_tables'] + [dep_name])
+
             if child_id in __p_id_list:
-                # result.append([depth] + parents + ['self' + str(depth)])
-                continue
+                result.append([depth] + parents['p_tables'] + [dep_name + '_cycle'])
             else:
+                result.append([depth] + parents['p_tables'] + [dep_name])
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
-        elif depth == 0:
-
+        else:
             result.append([depth] + parents['p_tables'] + [value])
-
+    result.sort(key=lambda x: len(x))
     return result
 
 
@@ -190,11 +194,11 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp'
+    dirName = 'D:\\tmp\\'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_dis2.xlsx'
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk_dwh.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
     print('写入excel：直接依赖 end' + '*' * 100)
