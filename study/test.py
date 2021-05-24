@@ -190,7 +190,7 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp_mk'
+    dirName = 'D:\\tmp'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
