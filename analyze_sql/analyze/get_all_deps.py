@@ -55,8 +55,10 @@ def cal_deps(dict_data: dict[str, list]):
             index = dict_data[key].index(value)
 
             new_value = dict_data.get(value, [])
+
             if new_value:
-                dict_data[key][index] = new_value
+                dict_data[key][index] = {value: new_value}
+
             else:
                 continue
 
@@ -105,22 +107,28 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     return result
 
 
-def iterates(deps_list, __myself_id_list={}):
+def iterates(my_name, deps_list, __id_dict={}):
     result = []
     myself_id = id(deps_list)
-    __myself_id_list = copy.deepcopy(__myself_id_list)
-    depth = __myself_id_list.setdefault(myself_id, 0)
+    __id_dict = copy.deepcopy(__id_dict)
+    parents = __id_dict.setdefault('parents', {})
+    parents.setdefault('p_tables', []).append(my_name)
+    __p_id_list = parents.setdefault('p_id', {})
+    depth = __p_id_list.setdefault(myself_id, 0)
     for value in deps_list:
-        child_id = id(value)
-        if isinstance(value, list):
-            if child_id in __myself_id_list.keys():
-                result.append(('self%s' % depth, depth))
-            else:
-                __myself_id_list.setdefault(child_id, depth + 1)
-                result += iterates(value, __myself_id_list)
 
+        if isinstance(value, dict):
+            dep_name = list(value.keys())[0]
+            dep_value = list(value.values())[0]
+            child_id = id(dep_value)
+            if child_id in __p_id_list.keys():
+                # result.append([depth] + parents + ['self' + str(depth)])
+                result.append([depth] + parents['p_tables'] + [dep_name])
+            else:
+                __id_dict.setdefault(child_id, depth + 1)
+                result += iterates(dep_name, dep_value, __id_dict)
         else:
-            result.append((value, depth))
+            result.append([depth] + parents['p_tables'] + [value])
 
     return result
 
@@ -150,9 +158,9 @@ def run(dir_name):
         target_table = info.get('target_table', file)
 
         result.setdefault(file, {'target_table': target_table,
-                                 'deps': iterates(t_dict.get(target_table, []))})
+                                 'deps': iterates(target_table, t_dict.get(target_table, []))})
     print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
-    excel_data_all_deps = [('脚本名', '目标表名', '依赖表名', '依赖表深度', '目标表层级')]
+    excel_data_all_deps = [('脚本名', '目标表名', '目标表层级', '依赖表深度', '依赖表名',)]
     excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
 
     print('生成excel data1 start' + '*' * 100)
@@ -160,11 +168,11 @@ def run(dir_name):
         deps_list = info.get('deps', [('no_dep', 0)])
         target_table = info.get('target_table', 'erro')
         try:
-            layer_level = max((i[1] for i in deps_list)) +1
+            layer_level = max((i[0] for i in deps_list)) + 1
         except:
             layer_level = '需要看前置脚本'
-        for dep_tuple in deps_list:
-            excel_data_all_deps.append([file, target_table] + list(dep_tuple) + [layer_level])
+        for dep in deps_list:
+            excel_data_all_deps.append([file, target_table] + [layer_level] + dep)
     print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
@@ -178,8 +186,14 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp'
+    dirName = 'D:\\tmp\\mk'
     data1, data2 = run(dirName)
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk_dwh_20210522.xlsx'
+    print(len(data1))
+
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524.xlsx'
+    print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    print('写入excel：直接依赖 end' + '*' * 100)
+    print('写入excel：所有依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
+    print('写入excel：所有依赖 end' + '*' * 100)
