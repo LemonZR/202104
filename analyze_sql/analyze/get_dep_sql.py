@@ -25,7 +25,7 @@ def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive'):
 
 def cal(files):
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=;|,|\s|_\$|\))' % heads
+    pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % heads
     match_files = {}
     result_list = [('脚本名', '目标表', '依赖表')]
     for fi in files:

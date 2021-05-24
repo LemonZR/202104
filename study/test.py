@@ -80,7 +80,7 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
+    table_pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -176,7 +176,7 @@ def run(dir_name):
         except:
             layer_level = '需要看前置脚本'
         for dep in deps_list:
-            excel_data_all_deps.append(dep[-1:] + dep[1:2] + [layer_level])
+            excel_data_all_deps.append([file] + [layer_level] + dep)
     print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
@@ -190,11 +190,11 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\mk'
+    dirName = 'D:\\tmp_mk'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\all_influence_20210524.xlsx'
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_dis2.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
     print('写入excel：直接依赖 end' + '*' * 100)
