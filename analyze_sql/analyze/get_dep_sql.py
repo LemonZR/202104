@@ -2,6 +2,8 @@
 
 import os
 import re
+import sys
+
 from tools import excelOp
 
 
@@ -22,16 +24,17 @@ def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive'):
 
 
 def cal(files):
-    heads = r'mk\.|pub|dis\.|dw\.|dwh\.|am\.|det\.'
+    heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
     pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=;|,|\s|_\$|\))' % heads
     match_files = {}
     result_list = [('脚本名', '目标表', '依赖表')]
     for fi in files:
+
         lis = []
         target_table_name = ''
         with open(fi, 'r', encoding='utf-8') as f:
             for line in f.readlines():
-                line = (line.lower().split('--')[0].split('insert')[0]).split('alter')
+                line = re.sub(r'--\s*.*\n', '\n', line).lower().split('insert')[0].split('alter')
                 dependent_table_names = re.findall(pattern, line[0], re.I)
 
                 if len(line) == 2:
@@ -44,6 +47,7 @@ def cal(files):
                         exit()
                 if dependent_table_names:
                     for dependent_table_name in dependent_table_names:
+
                         lis.append((dependent_table_name.strip()))
 
         nl = set(lis)

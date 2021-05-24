@@ -2,8 +2,8 @@
 
 import re
 import os
-import sys
 import copy
+import sys
 
 from tools import excelOp
 
@@ -85,9 +85,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
         from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
         # 将pre脚本与主脚本合并,转小写
         # pre 或 per 。。。
-        # file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
+        file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
         # 部分脚本不合常识比如mk_pm_sc_user_lte_d，前置脚本有其他词语
-
         result.setdefault(file_name, {})
         if insert_sql_list:
             for insert_sql in insert_sql_list:
@@ -98,41 +97,39 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
             for from_sql in from_sql_list:
                 dep_tables = re.findall(table_pattern, from_sql, re.I)
                 if dep_tables:
-                    dep_tables = list(set(dep_tables))
                     for dep_table in dep_tables:
                         result[file_name].setdefault('deps', []).append(dep_table.lower())
+
+        result[file_name]['deps'] = list(set(result[file_name].get('deps', [])))
 
     return result
 
 
-def iterates(deps_list, __myself_id_list=[], __depth=0):
-    __result = []
-
-    # 更新myself_id_list的id，让外部调用时不需要填入参数;同时对list 进行去重，减小变量大小
-    __myself_id_list = list(set(__myself_id_list))
+def iterates(deps_list, __myself_id_list={}):
+    result = []
     myself_id = id(deps_list)
-    __myself_id_list.append(myself_id)
+    __myself_id_list = copy.deepcopy(__myself_id_list)
+    depth = __myself_id_list.setdefault(myself_id, 0)
     for value in deps_list:
         child_id = id(value)
-
         if isinstance(value, list):
-            __depth += 1
-            if child_id in __myself_id_list:
-
-                __result.append(('self%s' % __depth, __depth, str(child_id), str(myself_id)))
+            if child_id in __myself_id_list.keys():
+                result.append(('self%s' % depth, depth))
             else:
-                __result += iterates(value, __myself_id_list, __depth)
+                __myself_id_list.setdefault(child_id, depth + 1)
+                result += iterates(value, __myself_id_list)
+
         else:
+            result.append((value, depth))
 
-            __result.append((value, __depth, str(child_id), str(myself_id)))
-
-    # 如果没有__depth 表示层级，依赖表的名字会因不同层级的汇合在一起导致重复
-    result = list(set(__result))
     return result
 
 
 def run(dir_name):
+    print('analyze start' + '*' * 100)
     data = analyze(dir_name)
+    print('analyze end' + '*' * 100)
+
     t_data = copy.deepcopy(data)
     t_dict = {}
     result = {}
@@ -144,34 +141,45 @@ def run(dir_name):
 
     # 将依赖关系查找至最底层
     # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
+    print('cal_deps start' + '*' * 100)
     cal_deps(t_dict)
+    print('cal_deps end' + '*' * 100)
+    print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
     # 将各层依赖逐一查找并替换为最底层依赖
     for file, info in t_data.items():
         target_table = info.get('target_table', file)
 
         result.setdefault(file, {'target_table': target_table,
                                  'deps': iterates(t_dict.get(target_table, []))})
-
-    excel_data_all_deps = [('脚本名', '目标表名', '依赖表名')]
+    print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
+    excel_data_all_deps = [('脚本名', '目标表名', '依赖表名', '依赖表深度', '目标表层级')]
     excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
-    for file, info in result.items():
-        deps_list = info.get('deps', [('no_dep', 'no_')])
-        target_table = info.get('target_table', 'erro')
-        for dep_tuple in deps_list:
-            excel_data_all_deps.append([file, target_table] + list(dep_tuple))
 
+    print('生成excel data1 start' + '*' * 100)
+    for file, info in result.items():
+        deps_list = info.get('deps', [('no_dep', 0)])
+        target_table = info.get('target_table', 'erro')
+        try:
+            layer_level = max((i[1] for i in deps_list)) +1
+        except:
+            layer_level = '需要看前置脚本'
+        for dep_tuple in deps_list:
+            excel_data_all_deps.append([file, target_table] + list(dep_tuple) + [layer_level])
+    print('生成excel data1 end\n' + '*' * 100)
+    print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
         deps = info.get('deps', ['no_dep'])
         target_table = info.get('target_table', 'erro')
+
         for dep in deps:
             excel_data_direct_deps.append([file, target_table, dep])
-
+    print('生成excel data2 end\n' + '*' * 100)
     return excel_data_all_deps, excel_data_direct_deps
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\mk'
+    dirName = 'D:\\tmp'
     data1, data2 = run(dirName)
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk.xlsx'
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all')
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct')
+    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk_dwh_20210522.xlsx'
+    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
