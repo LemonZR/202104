@@ -193,8 +193,8 @@ if __name__ == '__main__':
     dirName = 'D:\\tmp\\mk'
     data1, data2 = run(dirName)
     print(len(data1))
-    sys.exit()
-    # 先写小的，避免重复打开大数据表
+    # sys.exit()
+    # 先写小的，避免第二次打开大数据表
     result_xlsx = 'D:\\数据核对\\all_dependent_table_20210524_依赖.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
