@@ -1,5 +1,262 @@
-,a.markt_solution_id
-,a.mk.t_solution_idsdsdsdfsfsdf
+--<metadata>
+--<model_name>: GPRS清单日汇总
+--<keyword>: 关键字1, 关键字2
+--<description>: GPRS清单日汇总
+--<author>: 高彦豪@华为
+--<run_cycle>: D
+--<tmp_table>: hw_tmp.tm_ls_gprs_d_mid01
+--<det_table>: 码表(逗号分隔)
+--<app_table>: mk.tm_ls_gprs_d
+--<app_name>: /路径/子路径/应用专题1/应用1
+--</metadata>
 
 
-mk.tm_sc_xz_transin_subs_leiji
+
+drop table if exists hw_tmp.tm_ls_gprs_d_mid01;
+create table if not exists hw_tmp.tm_ls_gprs_d_mid01
+(
+ subs_id varchar(16)
+,phone_no varchar(20)
+,call_period_id varchar(2)
+,region_code varchar(5)
+,roam_type varchar(10)
+,net_type varchar(10)
+,apn_net_id varchar(63)
+,call_cnt bigint
+,comm_dur bigint
+,tot_flux bigint
+,up_flux bigint
+,dn_flux bigint
+,chrg_flux bigint
+,up_chrg_flux bigint
+,dn_chrg_flux bigint
+,base_fee bigint
+,info_fee bigint
+,fav_aft_base_fee bigint
+,fav_aft_info_fee bigint
+,net_notebook_flg varchar(16)
+,cdr_serv_type varchar(16)
+,tariff1_lvl_up_data_vol bigint
+,tariff1_lvl_down_data_vol bigint
+,tariff2_lvl_down_data_vol bigint
+,tariff6_lvl_up_data_vol bigint
+,tariff6_lvl_down_data_vol bigint
+,tariff2_lvl_up_data_vol bigint
+,imei varchar(20)
+,net_notebook_flg_yj varchar(2)
+,package_info varchar(128)
+,tariff_track varchar(128)
+,lac_id varchar(10)
+,cell_id varchar(10)
+,vregion varchar(9)
+,apn_carrier_id varchar(37)
+,imei_8 varchar(10)
+,package_flg varchar(1)
+,serv_type varchar(100)
+,is_bill_user int
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.tm_ls_gprs_d_mid01;
+
+insert into hw_tmp.tm_ls_gprs_d_mid01
+select
+ subs_id--用户标识
+,self_phone_no--服务号码
+,substr(call_start_time,9,2) --时段
+,substr(self_home_area,1,5)--地区区号
+,coalesce(roam_type,'')--漫游类型
+,net_type --网络类型
+,coalesce(apn_net_id,'')--APN网络标识
+,sum(cast(case when rollback_cdr_flag in('R','B') then(-1) else 1 end as bigint))--通话次数
+,sum(cast(case when rollback_cdr_flag in('R','B') then call_dur*(-1) else call_dur end as bigint))--通信时长
+
+
+
+
+,ceil(sum(case when rollback_cdr_flag in('R','B')
+then(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol+tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)*(-1)
+else(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol+tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)
+end
+*1.0/1024 ))             --总流量
+
+,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
+then(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol)*(-1)
+else(tariff1_lvl_up_data_vol+tariff2_lvl_up_data_vol)
+end as bigint)*1.0/1024))      --上行流量
+
+,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
+then(tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)*(-1)
+else(tariff1_lvl_down_data_vol+tariff2_lvl_down_data_vol)
+end as bigint)*1.0/1024 ))         --下行流量
+
+,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
+then(total_billing_vol)*(-1)
+else(total_billing_vol)
+end as bigint)*1.0/1024))          --计费流量
+
+,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
+then(total_billing_vol_up)*(-1)
+else(total_billing_vol_up)
+end as bigint)*1.0/1024))          --上行计费流量
+
+,ceil(sum(cast(case when rollback_cdr_flag in('R','B')
+then(total_billing_vol_down)*(-1)
+else(total_billing_vol_down)
+end as bigint)*1.0/1024))       --下行计费流量
+
+
+
+
+
+,sum(case when rollback_cdr_flag in('R','B')
+then(basic_fee_s)*(-100)
+else(basic_fee_s)*100
+end)
+,0--信息[Kint))--基本
+--More--(37%)
+,sum(cast(case when rollback_cdr_flag in('R','B')
+then(basic_fee)*(-100)
+else(basic_fee)*(100)
+end as bigint))--优惠后基本费
+,0--优惠后信息费
+,case when src_file_name like 'G3NB%' and upper(apn_net_id)<>'CMLAP'
+      then '1'
+      else '0'
+ end
+,coalesce(biz_id,'')  --话单服务类型
+,sum( bigint ( tariff1_lvl_up_data_vol))                                        --上行非优惠流量
+,sum( bigint ( tariff1_lvl_down_data_vol))                                      --下行非优惠流量
+,sum( bigint ( tariff2_lvl_up_data_vol))                                       --上行优惠流量
+,sum( bigint ( tariff2_lvl_down_data_vol))                                      --下行优惠流量
+,sum( bigint ( tariff6_lvl_up_data_vol))                                        --上行核减流量
+,sum( bigint ( tariff6_lvl_down_data_vol))                                      --下行核减流量
+,TRIM(IMEI)
+,case when src_file_name like 'G3NB%'
+      then '1' else '0' end
+,coalesce(package_info,'')
+,case when split(TARIFFTRACK,',')[1] is not null then split(TARIFFTRACK,',')[0] else '' end
+,coalesce(LAC_ID,'')
+,coalesce(CELL_ID,'')
+,coalesce(vregion,'')
+,coalesce(apn_carrier_id,'')
+,CASE WHEN LENGTH(TRIM(IMEI))>=8 THEN SUBSTR(TRIM(IMEI),1,8) ELSE TRIM(IMEI) END
+,case when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and TOTAL_DISCT like '%,663,0|%' then '0' --套餐外流量封顶
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '4'    --超套餐临界话单且超套餐部分不足1分钱应属于套餐内
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' then '2'    --超套餐小流量费用不足1分话单
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT not like '%,1060,%' then '4' --套餐内流量
+when total_billing_vol>0 and  basic_fee>0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '2' --超套餐临界话单且超套餐部分大于1分钱
+when total_billing_vol>0 and   basic_fee>0 and TOTAL_DISCT like '%,1060,%' then '2'     --超套餐流量
+else '6' --资费轨迹为空或国际漫游流量话单
+end
+,coalesce(serv_type,'')
+,case when basic_fee>0 then 1 else 0 end
+from dwh.td_su_cdr_gprs_d --GPRS清单
+where deal_date = ${hivevar:vi_day}
+group by
+ subs_id--用户标识
+,self_phone_no--服务号码
+,substr(call_start_time,9,2) --时段
+,substr(self_home_area,1,5)--地区区号
+,coalesce(roam_type,'')--漫游类型
+,net_type --网络类型
+,coalesce(apn_net_id,'')--APN网络标识
+,case when src_file_name like 'G3NB%' and upper(apn_net_id)<>'CMLAP'
+      then '1'
+      else '0'
+ end
+,coalesce(biz_id,'')  --话单服务类型
+,TRIM(IMEI)
+,case when src_file_name like 'G3NB%'
+      then '1' else '0' end
+,coalesce(package_info,'')
+,case when split(TARIFFTRACK,',')[1] is not null then split(TARIFFTRACK,',')[0] else '' end
+,coalesce(LAC_ID,'')
+,coalesce(CELL_ID,'')
+,coalesce(vregion,'')
+,coalesce(apn_carrier_id,'')
+,CASE WHEN LENGTH(TRIM(IMEI))>=8 THEN SUBSTR(TRIM(IMEI),1,8) ELSE TRIM(IMEI) END
+,case when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and TOTAL_DISCT like '%,663,0|%' then '0' --套餐外流量封顶
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '4'    --超套餐临界话单且超套餐部分不足1分钱应属于套餐内
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT like '%,1060,%' then '2'    --超套餐小流量费用不足1分话单
+when total_billing_vol>0 and  basic_fee=0 and TOTAL_DISCT not like '%,1060,%' then '4' --套餐内流量
+when total_billing_vol>0 and  basic_fee>0 and TOTAL_DISCT like '%,1060,%' and tarifftrack like '%\073145,%' then '2' --超套餐临界话单且超套餐部分大于1分钱
+when total_billing_vol>0 and   basic_fee>0 and TOTAL_DISCT like '%,1060,%' then '2'     --超套餐流量
+else '6' --资费轨迹为空或国际漫游流量话单
+end
+,coalesce(serv_type,'')
+,case when basic_fee>0 then 1 else 0 end
+;
+
+
+
+
+
+----删除表加分区
+alter table mk.tm_ls_gprs_d drop  partition(statis_date=${hivevar:vi_day});
+
+insert into mk.tm_ls_gprs_d partition(statis_date=${hivevar:vi_day})
+select
+a.subs_id
+,A.phone_no
+,A.call_period_id
+,A.region_code
+,A.roam_type
+,A.net_type
+,A.apn_net_id
+,A.call_cnt
+,A.comm_dur
+,A.tot_flux
+,A.up_flux
+,A.dn_flux
+,A.chrg_flux
+,A.up_chrg_flux
+,A.dn_chrg_flux
+,A.base_fee
+,A.info_fee
+,A.fav_aft_base_fee
+,A.fav_aft_info_fee
+,A.net_notebook_flg
+,A.cdr_serv_type
+,A.tariff1_lvl_up_data_vol
+,A.tariff1_lvl_down_data_vol
+,A.tariff2_lvl_down_data_vol
+,A.tariff6_lvl_up_data_vol
+,A.tariff6_lvl_down_data_vol
+,A.tariff2_lvl_up_data_vol
+,A.imei
+,A.net_notebook_flg_yj
+,A.package_info
+,A.tariff_track
+,A.lac_id
+,A.cell_id
+,case
+      when A.vregion='100'  then '10'
+      when A.vregion='200'  then '20'
+      when A.vregion='210'  then '21'
+      when A.vregion='220'  then '22'
+      when A.vregion='230'  then '23'
+      when A.vregion='240'  then '24'
+      when A.vregion='250'  then '25'
+      when A.vregion='270'  then '27'
+      when A.vregion='280'  then '28'
+      when A.vregion='290'  then '29'
+      else A.vregion
+ end  as vregion
+,A.apn_carrier_id
+,A.imei_8
+,''     ----20191219,(case when b.subs_id is not null and a.package_flg in ('0','2') then a.chrg_flux else 0 end) OVERPKG_CHRG_FLUX
+,package_flg    ----20191219,(case when b.subs_id is null and a.package_flg ='0' then '1'
+        ----when b.subs_id is null and a.package_flg ='2' then '3'
+        ----else a.package_flg
+        --end)  package_flg
+,a.serv_type
+,is_bill_user
+from hw_tmp.tm_ls_gprs_d_mid01 a;
+--20191219left join hw_tmp.tm_ls_gprs_d_mid02 b on a.subs_id = b.subs_id;
+
+
+----删除临时表
+DROP TABLE if exists  hw_tmp.tm_ls_gprs_d_mid01;
+

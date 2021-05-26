@@ -130,7 +130,7 @@ def iterates(my_name, deps_list, __id_dict={}):
             child_id = id(dep_value)
 
             if child_id in __p_id_list:
-                result.append([depth] + parents['p_tables'] + [dep_name + '_cycle'])
+                result.append([depth] + parents['p_tables'] + ['self'])
             else:
                 result.append([depth] + parents['p_tables'] + [dep_name])
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)

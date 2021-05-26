@@ -6,9 +6,9 @@ def __bisect():
     time=datetime.time
     b = sorted(a)
 
-    # c = bisect(b, 'p')
-    # print(c)
-    # b.insert(c, '-')
+    c = bisect(b, 'p')
+    print(c)
+    b.insert(c, '-')
     print(b)
 
 
