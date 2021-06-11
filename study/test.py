@@ -1,207 +1,312 @@
-# coding=utf-8
+# -*- encoding:utf-8 -*-
 
-import re
+"""
+@Author  : chenxingcong
+@Contact : chenxingcong@mail01.huawei.com
+@File    : modelMonitorDisGbase.py
+@Time    : 2021/2/23 10:57
+@Desc    :
+"""
+
+import datetime
+# from GbaseSQLEngine import GbaseSQLEngine
+import logging
 import os
-import copy
 import sys
-
-from tools import excelOp
-
-
-def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
-    file_list = []
-    for root, dirs, files in os.walk(root_dir):
-
-        for file in files:
-            file = os.path.join(root, file)
-            file_list.append(file)
-
-    return file_list
+import math
 
 
-def get_sql_dict(file) -> list:
-    try:
-        '''去掉注释'''
-        fl = open(file, 'r', encoding='gbk')
-        ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
-    except Exception as e1:
-        try:
-            fl = open(file, 'r', encoding='utf-8')
-            ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
-        except Exception as e2:
-            print(f'{file}' + str(e1) + '\n' + str(e2))
-            ff = ''
-    '''以';'为分隔拆分,忽略最后一个空语句块'''
-    sql_blks = ff.split(';')[:-1]
+def initConfig(configFile, args_period):
+    # 转化为字典
+    dictConfig = []
+    with open(configFile, 'r') as config:
+        title = ['table_name', 'period_col', 'period', 'column']
+        lines = config.readlines()
+        for l in lines:
 
-    return sql_blks
-
-
-def get_files_sql_dict(dir_name='D:\\tmp\\') -> dict[str, list]:
-    file_list = ergodic_dirs(dir_name)
-    file_layer_dict = {}
-    for file in file_list:
-        fil_name = os.path.basename(file)
-        sql_info = get_sql_dict(file)
-        file_layer_dict[fil_name] = sql_info
-    return file_layer_dict
-
-
-def cal_deps(dict_data: dict[str, list]):
-    for key, values in dict_data.items():
-
-        for value in values:
-
-            index = dict_data[key].index(value)
-
-            new_value = dict_data.get(value, [])
-
-            if new_value:
-                dict_data[key][index] = {value: new_value}
-
+            line = l.replace('\r', '').replace('\n', '')
+            i = line.split("|")
+            if len(i) == 0:
+                break
+            dictTable = dict(zip(title, i))
+            if len(args_period) == 6 and dictTable['period'] == 'M':
+                dictConfig.append(dictTable)
+            elif len(args_period) == 8 and dictTable['period'] == 'D':
+                dictConfig.append(dictTable)
             else:
-                continue
+                print(len(args_period))
+                print(dictTable['period'])
+                print(str(line) + '：该行不符合规范，请检查配置文件')
+                sys.exit()
+    # print(dictConfig)
+    # return dictConfig
+
+    if len(dictConfig) == 0:
+        print("周期参数与文件格式不符，请检查！")
+        sys.exit()
+
+    configColumns = {}
+    tableNames = set()
+    for i in dictConfig:
+        table_name = i['table_name']
+        tableNames.add(table_name)
+        period_col = i['period_col']
+        period = i['period']
+        configColumns.setdefault(table_name + period_col + period, {
+            'table_name': table_name,
+            'period_col': period_col,
+            'period': period,
+            'column': []
+        })['column'].append(i['column'])
+    return list(configColumns.values()), tableNames
 
 
-def find_pattern(sql_list, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> list:
-    pattern = pattern
-    result_list = []
-    for sql_blk in sql_list:
-        result = re.findall(pattern, sql_blk, flags=pattern_mod)
-        if result:
-            for r in result:
-                result_list.append(r)
-
-    return result_list
-
-
-def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
-    file_sqls_info = get_files_sql_dict(dir_name)
-    insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
-    from_sql_pattern = r'from[\s\S]*'
-    heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    table_pattern = r'(?=%s)[a-zA-Z0-9_\.]*_[a-zA-Z0-9]+(?=|;|,|\s|_\$|\))' % heads
-    result = {}
-    for file_name, sql_info in file_sqls_info.items():
-        insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
-        from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
-        # 将pre脚本与主脚本合并,转小写
-        # pre 或 per 。。。
-        file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
-        # 部分脚本不合常识比如mk_pm_sc_user_lte_d，前置脚本有其他词语
-        result.setdefault(file_name, {})
-        if insert_sql_list:
-            for insert_sql in insert_sql_list:
-                target_table = re.findall(table_pattern, insert_sql, re.I)
-                if target_table:
-                    result[file_name].setdefault('target_table', target_table[0].lower())
-        if from_sql_list:
-            for from_sql in from_sql_list:
-                dep_tables = re.findall(table_pattern, from_sql, re.I)
-                if dep_tables:
-                    for dep_table in dep_tables:
-                        result[file_name].setdefault('deps', []).append(dep_table.lower())
-
-        result[file_name]['deps'] = list(set(result[file_name].get('deps', [])))
-
-    return result
+def initSql(dictCofnig, args_period):
+    column = dictCofnig['column']
+    period_col = dictCofnig['period_col']
+    sumColumns = []
+    for col in column:
+        sumColumn = "'%s',':',nvl(sum(cast(%s as decimal(38,2))),0)" % (col, col)
+        sumColumns.append(sumColumn)
+    summer = ",'|',".join(sumColumns)
+    if 'N' in column and period_col == 'S':
+        sumSql = "select '%s','T',count(1),'%s' from %s" % (
+            dictCofnig['table_name'], args_period, dictCofnig['table_name'])
+    elif 'N' in column:
+        sumSql = "select '%s','T',count(1),'%s' from %s where %s=%s" % (
+            dictCofnig['table_name'], args_period, dictCofnig['table_name'], dictCofnig['period_col'], args_period)
+    elif period_col == 'S':
+        sumSql = "select '%s',concat(%s),count(1),'%s' from %s" % (
+            dictCofnig['table_name'], summer, args_period, dictCofnig['table_name'])
+    else:
+        sumSql = "select '%s',concat(%s),count(1),'%s' from %s where %s=%s" % (
+            dictCofnig['table_name'], summer, args_period, dictCofnig['table_name'], dictCofnig['period_col'],
+            args_period)
+    # print(sumSql)
+    return sumSql
 
 
-def iterates(my_name, deps_list, __id_dict={}):
-    myself_id = id(deps_list)
-    __id_dict = copy.deepcopy(__id_dict)
-    parents = __id_dict.setdefault('parents', {})
-    parents.setdefault('p_tables', []).append(my_name)
-    __p_id_list = parents.setdefault('p_id', [])
-    __p_id_list.append(myself_id)
-    depth_dict = __id_dict.setdefault('depth', {})
-    depth = depth_dict.setdefault(myself_id, 0)
-    result = []
+def partition(lst, step):
+    # division = len(lst) / float(n)
+    # return [lst[int(round(division * i)): int(round(division * (i + 1)))] for i in range(n)]
 
-    # 只遍历前三层依赖
-    if len(__p_id_list) > 3:
-        return result
-    for value in deps_list:
-
-        if isinstance(value, dict):
-
-            dep_name = list(value.keys())[0]
-            dep_value = list(value.values())[0]
-            child_id = id(dep_value)
-
-            if child_id in __p_id_list:
-                result.append([depth] + parents['p_tables'] + ['self'])
-            else:
-                result.append([depth] + parents['p_tables'] + [dep_name])
-                __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
-                result += iterates(dep_name, dep_value, __id_dict)
-        else:
-            result.append([depth] + parents['p_tables'] + [value])
-    result.sort(key=lambda x: len(x))
-    return result
+    division = int(math.ceil(float(len(lst)) / step))
+    return [lst[i * step:i * step + step] for i in range(division)]
 
 
-def run(dir_name):
-    print('analyze start' + '*' * 100)
-    data = analyze(dir_name)
-    print('analyze end' + '*' * 100)
+def args_periods(args_period):
+    # periods = [args_period]
+    periods = []
+    if len(args_period) == 8:
+        end = datetime.datetime.strptime(args_period, "%Y%m%d")
+        start = datetime.datetime.strptime('20210301', "%Y%m%d")
+        # print((end - start).days)
+        #for i in range((end - start).days ):
+        for i in range((end - start).days + 1):
+            aa = (start + datetime.timedelta(days=i)).strftime("%Y%m%d")
+            # print(aa)
+            periods.append(aa)
+        print(periods)
+        return periods
 
-    t_data = copy.deepcopy(data)
-    t_dict = {}
-    result = {}
+    else:
+        num = (int(args_period[:4]) - 2021) * 12 + (int(args_period[-2:]) - 2)
+        for i in range(num):
+            print(i)
+            periods.append(add_month('202103', i))
+            print(periods)
+        return periods
 
-    # 如果脚本没有目标表，则用脚本名替代（作为后续的键值对的键）
-    for file, info in t_data.items():  # 由于不是深复制，t_data的列表的'指针'复制给了t_dict 在循环中会发生了变化
-        target_table = info.get('target_table', file)
-        t_dict[target_table] = info.get('deps', [])
 
-    # 将依赖关系查找至最底层
-    # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
-    print('cal_deps start' + '*' * 100)
-    cal_deps(t_dict)
-    print('cal_deps end' + '*' * 100)
-    print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
-    # 将各层依赖逐一查找并替换为最底层依赖
-    for file, info in t_data.items():
-        target_table = info.get('target_table', file)
+def add_month(datamonth, num):
+    """
+    月份加减函数,返回字符串类型
+    :param datamonth: 时间(201501)
+    :param num: 要加(减)的月份数量
+    :return: 时间(str)
+    """
+    months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    datamonth = int(datamonth)
+    num = int(num)
+    year = datamonth // 100
+    new_list = []
+    s = math.ceil(abs(num) / 12)
+    for i in range(int(-s), int(s + 1)):
+        new_list += [str(year + i) + x for x in months]
+    new_list = [int(x) for x in new_list]
+    return str(new_list[new_list.index(datamonth) + num])
 
-        result.setdefault(file, {'target_table': target_table,
-                                 'deps': iterates(target_table, t_dict.get(target_table, []))})
-    print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
-    excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
-    excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
 
-    print('生成excel data1 start' + '*' * 100)
-    for file, info in result.items():
-        deps_list = info.get('deps', [('no_dep', 0)])
-        # target_table = info.get('target_table', 'erro')
+def unionAllSqls(dictCofnigs, step):
+    unionSqls = []
+    for dictCofnig, args_period in dictCofnigs:
+        sql = initSql(dictCofnig, args_period)
+        unionSqls.append((sql, dictCofnig['table_name']))
+    unionSql = []
+    for i in partition(unionSqls, step):
+        sql = []
+        tables = []
+        for d in i:
+            sql.append(d[0])
+            tables.append(d[1])
+        unionall = ' union all '.join(sql)
+        unionSql.append((unionall, tables))
+
+    return unionSql
+
+
+def mainFunc(args):
+    # configFileName = "D:\pythonfile\dwh_day.txt"
+    # args_period = '20210205'
+    # configFileName = "/home/chenxc/pythonfile/mk.txt"
+    # monitorResult = "/home/chenxc/pythonfile/monitorResult.txt"
+    step = 1
+    # 时间戳
+    timeNow = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    print(args)
+
+    if len(args[0]) == 6 or len(args[0]) == 8:
+        args_period = args[0]
+    else:
+        print("周期不正确")
+        sys.exit()
+    if os.path.isfile(args[1]):
+        configFileName = args[1]
+        # monitorResult = args[2]
+    else:
+        print("配置文件/结果文件不正确")
+        sys.exit()
+
+    if len(args_period) == 8:
+        insertTable = 'pub.tdet_jt_modeldatamonitor_dis_d'
+        errorTable = 'pub.tdet_jt_modeldatamonitor_dis_error_d'
+        statisDate = 'statis_date'
+    else:
+        insertTable = 'pub.tdet_jt_modeldatamonitor_dis_m'
+        errorTable = 'pub.tdet_jt_modeldatamonitor_dis_error_m'
+        statisDate = 'statis_month'
+
+    logger = logging.getLogger()
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    logger.setLevel(logging.DEBUG)
+
+    input_file_name = os.path.basename(configFileName).split(".")[0]
+    basedir = os.path.dirname(configFileName)
+    log_path = os.path.join(basedir, input_file_name + ".log")
+
+    _file_handler = logging.FileHandler(log_path)
+    _file_handler.setLevel(level=logging.INFO)
+    _file_handler.setFormatter(formatter)
+    logger.addHandler(_file_handler)
+    # 添加日志控制台输出
+    _console_handler = logging.StreamHandler()
+    _console_handler.setLevel(level=logging.INFO)
+    _console_handler.setFormatter(formatter)
+    logger.addHandler(_console_handler)
+
+    start_time = datetime.datetime.now()
+    gbase_db = GbaseSQLEngine()
+    cursor_gbase = gbase_db.cursor
+
+    gbase_lishi = "select d1.table_name,d1.record_cycle from %s d1 group by d1.table_name,d1.record_cycle" % insertTable
+    logger.info(gbase_lishi)
+    cursor_gbase.execute(gbase_lishi)
+    gbase_rows = cursor_gbase.fetchall()
+
+    dictCofnigs, tableNames = initConfig(configFileName, args_period)
+
+    dictAllCofnigs = []
+    for tableName in tableNames:
+        for i in args_periods(args_period):
+            aa = (tableName, i)
+            if aa not in gbase_rows:
+                for d in dictCofnigs:
+                    if tableName == d['table_name']:
+                        dictAllCofnigs.append((d, i))
+
+    unionSqls = unionAllSqls(dictAllCofnigs, step)
+
+    deleteError = "delete from %s where error_type='SqlError' and %s='%s'" % (errorTable, statisDate, args_period)
+    logger.info(deleteError)
+    cursor_gbase.execute(deleteError)
+
+    for dd in unionSqls:
+        sql, talbes = dd
+        logger.info(talbes)
+        func_start_time = datetime.datetime.now()
         try:
-            layer_level = max((i[0] for i in deps_list)) + 1
+            cursor_gbase.execute(sql)
+            rows = cursor_gbase.fetchall()
         except:
-            layer_level = '需要看前置脚本'
-        for dep in deps_list:
-            excel_data_all_deps.append([file] + [layer_level] + dep)
-    print('生成excel data1 end\n' + '*' * 100)
-    print('生成excel data2 start' + '*' * 100)
-    for file, info in data.items():
-        deps = info.get('deps', ['no_dep'])
-        target_table = info.get('target_table', 'erro')
+            logger.exception('Sql执行异常：%s' % str(talbes))
+            insertError = "insert into %s values ('SqlError','%s','%s','%s')" % (
+                errorTable, '|'.join(talbes), args_period, args_period)
+            print(insertError)
+            cursor_gbase.execute(insertError)
+            gbase_db.conn.commit()
+            continue
 
-        for dep in deps:
-            excel_data_direct_deps.append([file, target_table, dep])
-    print('生成excel data2 end\n' + '*' * 100)
-    return excel_data_all_deps, excel_data_direct_deps
+        for row in rows:
+            logger.info(row)
+            # print(row)
+            # (u'dwh.td_ac_adjustbill_log_m', u'region:406559272|billcycle:260866716174|oldcycle:260866716174',1290774)
+            # (u'dwh.td_sc_subs_m', u'T', 334605675)
+
+            try:
+                if 'T' in row:
+                    tableTitle = ['table_name', 'total']
+                    tableData = [row[0], row[2]]
+                    dictResult = dict(zip(tableTitle, tableData))
+                    # mk.tm_ac_balance_d | st20210201 | 5000 | acct_balance | 30000
+                    # result = dictResult['table_name'] + '|' + args_period + '|' + str(dictResult['total']) + '|total|' + str(dictResult['total'])
+                    insertSql = "insert into %s values('%s','%s','%s','%s','%s','%s')" % (
+                        insertTable, dictResult['table_name'], row[3], str(dictResult['total']), 'total',
+                        str(dictResult['total']), row[3])
+                    print(insertSql)
+                    cursor_gbase.execute(insertSql)
+                    gbase_db.conn.commit()
+                else:
+                    # (u'dwh.td_ac_adjustbill_log_m', u'region:406559272|billcycle:260866716174|oldcycle:260866716174',1290774)
+                    tableName = row[0]
+                    tableData = row[1]
+                    tableRownum = row[2]
+                    columnDatas = str(tableData).split('|')
+                    for i in columnDatas:
+                        columnData = str(i).split(':')
+                        column = columnData[0]
+                        rownum = columnData[1]
+                        # mk.tm_ac_balance_d | st20210201 | 5000 | acct_balance | 30000
+                        # result = tableName + '|' + args_period + '|' + str(tableRownum) + '|' + column + '|' + str(rownum)
+                        insertSql = "insert into %s values('%s','%s','%s','%s','%s','%s')" % (
+                            insertTable, tableName, row[3], str(tableRownum), column, str(rownum), row[3])
+                        print(insertSql)
+                        cursor_gbase.execute(insertSql)
+                        gbase_db.conn.commit()
+            except:
+                logger.exception('%s数据处理异常' % str(row[0]))
+                insertError = "insert into %s values ('dataError','%s','%s','%s')" % (
+                    errorTable, str(row[0]), row[3], args_period)
+                print(insertError)
+                cursor_gbase.execute(insertError)
+
+        func_end_time = datetime.datetime.now()
+        func_duration_seconds = (func_end_time - func_start_time).seconds % 60
+        func_duration_munites = (func_end_time - func_start_time).seconds / 60 % 60
+        func_duration_hours = (func_end_time - func_start_time).seconds / 60 / 60
+        print("func_Duration    : " + str(func_duration_hours) + ":" + str(func_duration_munites) + ":" + str(
+            func_duration_seconds))
+
+    gbase_db.conn.commit()
+    gbase_db.close()
+    end_time = datetime.datetime.now()
+    duration_seconds = (end_time - start_time).seconds % 60
+    duration_munites = (end_time - start_time).seconds / 60 % 60
+    duration_hours = (end_time - start_time).seconds / 60 / 60
+    print("Duration    : " + str(duration_hours) + ":" + str(duration_munites) + ":" + str(duration_seconds))
+    logger.info("Duration    : " + str(duration_hours) + ":" + str(duration_munites) + ":" + str(duration_seconds))
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\'
-    data1, data2 = run(dirName)
-    print(len(data1))
-    # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\all_dependent_table_mk_dwh.xlsx'
-    print('写入excel：直接依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
-    print('写入excel：直接依赖 end' + '*' * 100)
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    # mainFunc(sys.argv[1:])
+
+    args_periods('20210428')

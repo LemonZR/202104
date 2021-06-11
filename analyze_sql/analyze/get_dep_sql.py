@@ -74,4 +74,4 @@ if __name__ == '__main__':
     #     for file, deps in match_files.items():
     #         for dep in deps:
     #             f.write(file + ',' + dep + '\n')
-    excelOp.write_xlsx('D:\\数据核对\\all_dependent_table.xlsx', result, edit=True, sheet_name='all')
+    excelOp.write_xlsx('D:\\数据核对\\aaa.xlsx', result, edit=True, sheet_name='all')

@@ -5,7 +5,7 @@ import os
 import copy
 import sys
 
-from tools import excelOp
+from tools import excelOp_input_color
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
@@ -140,51 +140,95 @@ def iterates(my_name, deps_list, __id_dict={}):
 def run(dir_name):
     print('analyze start' + '*' * 100)
     data = analyze(dir_name)
-    print('analyze end' + '*' * 100)
+    # print('analyze end' + '*' * 100)
+    #
+    # t_data = copy.deepcopy(data)
+    # t_dict = {}
+    # result = {}
+    #
+    # # 如果脚本没有目标表，则用脚本名替代（作为后续的键值对的键）
+    # for file, info in t_data.items():  # 由于不是深复制，t_data的列表的'指针'复制给了t_dict 在循环中会发生了变化
+    #     target_table = info.get('target_table', file)
+    #     t_dict[target_table] = info.get('deps', [])
+    #
+    # # 将依赖关系查找至最底层
+    # # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
+    # print('cal_deps start' + '*' * 100)
+    # cal_deps(t_dict)
+    # print('cal_deps end' + '*' * 100)
+    # print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
+    # # 将各层依赖逐一查找并替换为最底层依赖
+    # for file, info in t_data.items():
+    #     target_table = info.get('target_table', file)
+    #
+    #     result.setdefault(file, {'target_table': target_table,
+    #                              'deps': iterates(target_table, t_dict.get(target_table, []))})
+    # print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
+    excel_data_all_deps = [
+        (('脚本名', 'CCCCFF'), ('目标表层级', 'CCCCFF'), ('依赖表深度', 'CCCCFF'), ('目标表名', 'CCCCFF'), ('依赖表名', 'CCCCFF'))]
+    excel_data_direct_deps = [
+        (('脚本名', 'CCCCFF'), ('目标表名', 'CCCCFF'), ('依赖表名', 'CCCCFF'), ('脚本p_调度', 'CCCCFF'), ('脚本t_调度', 'CCCCFF'),
+         ('依赖p_调度', 'CCCCFF'), ('依赖t_调度', 'CCCCFF'))]
 
-    t_data = copy.deepcopy(data)
-    t_dict = {}
-    result = {}
-
-    # 如果脚本没有目标表，则用脚本名替代（作为后续的键值对的键）
-    for file, info in t_data.items():  # 由于不是深复制，t_data的列表的'指针'复制给了t_dict 在循环中会发生了变化
-        target_table = info.get('target_table', file)
-        t_dict[target_table] = info.get('deps', [])
-
-    # 将依赖关系查找至最底层
-    # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
-    print('cal_deps start' + '*' * 100)
-    cal_deps(t_dict)
-    print('cal_deps end' + '*' * 100)
-    print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
-    # 将各层依赖逐一查找并替换为最底层依赖
-    for file, info in t_data.items():
-        target_table = info.get('target_table', file)
-
-        result.setdefault(file, {'target_table': target_table,
-                                 'deps': iterates(target_table, t_dict.get(target_table, []))})
-    print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
-    excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
-    excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
-
-    print('生成excel data1 start' + '*' * 100)
-    for file, info in result.items():
-        deps_list = info.get('deps', [('no_dep', 0)])
-        # target_table = info.get('target_table', 'erro')
-        try:
-            layer_level = max((i[0] for i in deps_list)) + 1
-        except:
-            layer_level = '需要看前置脚本'
-        for dep in deps_list:
-            excel_data_all_deps.append([file] + [layer_level] + dep)
-    print('生成excel data1 end\n' + '*' * 100)
+    # print('生成excel data1 start' + '*' * 100)
+    # for file, info in result.items():
+    #     deps_list = info.get('deps', [('no_dep', 0)])
+    #     # target_table = info.get('target_table', 'erro')
+    #     try:
+    #         layer_level = max((i[0] for i in deps_list)) + 1
+    #     except:
+    #         layer_level = '需要看前置脚本'
+    #     for dep in deps_list:
+    #         excel_data_all_deps.append([file] + [layer_level] + dep)
+    # print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
+    diaodus = []
+    with open('../../dustbin/diaodu', 'r', encoding='utf8') as f:
+        for diaodu in f.readlines():
+            diaodus.append(diaodu.strip())
+    jt_diaodus = []
+    with open('../../dustbin/jt_diaodu', 'r', encoding='utf8') as f:
+        for jt_diaodu in f.readlines():
+            jt_diaodus.append(jt_diaodu.strip())
+    heads = r'pub\.|dis\.'
+    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     for file, info in data.items():
         deps = info.get('deps', ['no_dep'])
         target_table = info.get('target_table', 'erro')
+        p_diaodu_name = file.rsplit('.', maxsplit=1)[0]
+        t_diaodu_name = (target_table.rsplit('_$', maxsplit=1)[0]).replace('.t', '_t')
+        p_diaodu_Color = None
+        t_diaodu_Color = None
+
+        jt_diaodu_color = None
+        if p_diaodu_name in jt_diaodus:
+            jt_diaodu_color = "32CD32"
+        if p_diaodu_name in diaodus:
+            p_diaodu_Color = "CCCCFF"
+        elif p_diaodu_name in jt_diaodus:
+            p_diaodu_Color = 'FFFF00'
+        if t_diaodu_name in diaodus:
+            t_diaodu_Color = "FF6347"
 
         for dep in deps:
-            excel_data_direct_deps.append([file, target_table, dep])
+            dep_p_diaodu_color = None
+            dep_t_diaodu_color = None
+
+            if not re.findall(table_pattern, dep, re.I):
+                continue
+
+            dep_name = dep.rsplit('_$', maxsplit=1)[0]
+            dep_p_diaodu = (dep.rsplit('_$', maxsplit=1)[0]).replace('.t', '_p')
+            dep_t_diaodu = (dep.rsplit('_$', maxsplit=1)[0]).replace('.t', '_t')
+            if dep_p_diaodu in diaodus:
+                dep_p_diaodu_color = "CCCCFF"
+            if dep_t_diaodu in diaodus:
+                dep_t_diaodu_color = "FF6347"
+            excel_data_direct_deps.append(
+                [(file, jt_diaodu_color), (target_table, None), (dep, None), (p_diaodu_name, p_diaodu_Color),
+                 (t_diaodu_name, t_diaodu_Color), (dep_p_diaodu, dep_p_diaodu_color),
+                 (dep_t_diaodu, dep_t_diaodu_color)])
+
     print('生成excel data2 end\n' + '*' * 100)
     return excel_data_all_deps, excel_data_direct_deps
 
@@ -192,12 +236,12 @@ def run(dir_name):
 if __name__ == '__main__':
     dirName = 'D:\\bd_hive\\dis'
     data1, data2 = run(dirName)
-    print(len(data1))
+    print(len(data2))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\dis_0611.xlsx'
+    result_xlsx = 'D:\\数据核对\\dis_diaodu_new.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
+    excelOp_input_color.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖_new_2')
     print('写入excel：直接依赖 end' + '*' * 100)
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    # print('写入excel：所有依赖 start' + '*' * 100)
+    # excelOp_input_color.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    # print('写入excel：所有依赖 end' + '*' * 100)
