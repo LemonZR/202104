@@ -5,19 +5,25 @@ import os
 
 
 def get_dep(file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
-    f = open(file_name, 'r', encoding='utf-8')
     lis = []
     pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % pattern
     # pattern = r'(?=%s)[a-zA-Z0-9_\.]*_[a-zA-Z0-9]+(?=|;|,|\s|_\$|\))' % pattern
-    for line in f:
-        line = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', line))
-        match = re.findall(pattern, line, re.I)
-        if match:
-            for mt in match:
-                if re.match('session', mt):
-                    continue
-                else:
-                    lis.append((mt.strip()).lower())
+    try:
+        '''去掉注释'''
+        fl = open(file_name, 'r', encoding='gbk')
+        ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
+    except Exception as e1:
+        try:
+            fl = open(file, 'r', encoding='utf-8')
+            ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
+        except Exception as e2:
+            print(f'{file}' + str(e1) + '\n' + str(e2))
+            ff = ''
+    for sql in ff.split(';')[:-1]:
+        find_result = re.findall(pattern, sql, re.I)
+        if find_result:
+            for table in find_result:
+                lis.append((table.strip()).lower())
     nl = set(lis)
     for i in nl:
         print(i)

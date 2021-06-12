@@ -102,12 +102,43 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
 
 
 if __name__ == '__main__':
-    # basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
-    # fileName = f'{basedir}\\test.xlsx'
-    # write_xlsx(fileName, data=[['head', 'head', 'head'], ['asdc', 'asd'], 'asdas'], edit=True, sheet_name='Sheet')
-    result = read_xlsx('D:\\04集中化\\b_未通过核对的月模型.xlsx', sheet_name='特殊表')
+    basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
+    fileName = f'{basedir}\\test.xlsx'
+    # write_xlsx(fileName,
+    #            data=[[('head',None), ('head',None), ('head',None)], [('asdc', 'FF6347'), ('asd',None)], [('asdas', 'FF6347')]],
+    #            edit=True, sheet_name='Sheet')
+    # result = read_xlsx(fileName, sheet_name='Sheet')
+    #
+    # for i in result:
+    #     print(i)
+    # print(write_xlsx.__annotations__)
+    # print(read_xlsx.__annotations__)
+    cs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
 
-    for i in result:
-        print(i)
-    print(write_xlsx.__annotations__)
-    print(read_xlsx.__annotations__)
+    import random
+    #
+    # a = random.choice(cs)
+    # b = random.choice(cs)
+    # c = random.choice(cs)
+    # d = random.choice(cs)
+    # e = random.choice(cs)
+    # f = random.choice(cs)
+    #
+    # data = []
+    # for i in range(100):
+    #     cc = []
+    #     for j in range(150):
+    #         g = random.choices(cs,[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], k=6)
+    #         color = ''.join(g)
+    #         print(g)
+    #         cc += [('', color)]
+    #     data.append(cc)
+    #
+    # write_xlsx(fileName, data, edit=True)
+    i = 0
+    for j in range(10000000):
+        g = random.choices(cs, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], k=6)
+        i +=1
+        if ''.join(g) =='FFFFFF':
+            print(i)
+            break
