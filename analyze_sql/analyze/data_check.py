@@ -19,7 +19,7 @@ import datetime
 import queue
 
 
-class DisAnalyze:
+class dataAnalyze:
     def __init__(self, table=None, date_str=None):
         self.table = table
         self.script_root_dir = '/data/script/hbdb/'
@@ -36,13 +36,6 @@ class DisAnalyze:
             else:
                 self.__logger.info('脚本不存在，请检查参数')
                 sys.exit()
-        # try:
-        #     self.__connect_db = sqlEngine()
-        #     self.__cursor = self.__connect_db.cursor
-        # except Exception as e:
-        #     self.__err_logger.info('连接数据库失败,退出')
-        #     sys.exit(e)
-        # self.__logger.info('初始化完毕')
 
     def __execute_sql(self, sql, __cursor):
         self.__logger.info('开始执行sql :' + sql)
@@ -161,35 +154,6 @@ class DisAnalyze:
         nl = set(lis)
         return nl
 
-    # def __init_file_stream(self):
-    #     result_file_name = os.path.basename(self.__file).split(".")[0]
-    #     result_file_dir = os.path.dirname(self.__file)
-    #     result_file = os.path.join(result_file_dir, result_file_name + "_result")
-    #     self.r_f_D = open(result_file + '_d.txt', 'w')
-    #     self.r_f_M = open(result_file + '_m.txt', 'w')
-    #     self.r_f_N = open(result_file + '_n.txt', 'w')
-
-    # def __close(self):
-
-        # try:
-        #     self.r_f_D.close()
-        # except Exception:
-        #     self.__err_logger.info('file_D 未关闭')
-        # try:
-        #     self.r_f_M.close()
-        # except Exception:
-        #     self.__err_logger.info('file_M 未关闭')
-        # try:
-        #     self.r_f_N.close()
-        # except Exception:
-        #     self.__err_logger.info('file_N 未关闭')
-        # try:
-        #     self.__connect_db.close()
-        #     self.__logger.info('数据库连接已关闭')
-        # except Exception as e:
-        #     self.__err_logger.info(e)
-        #     self.__err_logger.info('数据库连接关闭失败')
-
     def run(self, ):
         result = []
         if self.script:
@@ -215,7 +179,8 @@ class DisAnalyze:
                 sys.exit(e)
             self.get_count(self.table)
             result.append(self.queue.get())
-
+        for i in result:
+            self.__logger.info(i)
         return result
 
 
@@ -227,6 +192,6 @@ if __name__ == '__main__':
     except Exception as e:
         sys.exit('参数不正确')
 
-    r = DisAnalyze(table_name, date_str).run()
-    for i in r:
-        print(i)
+    d = dataAnalyze(table_name, date_str)
+    r = d.run()
+
