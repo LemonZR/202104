@@ -26,16 +26,30 @@ class dataAnalyze:
         self.script = ''
         self.queue = queue.Queue()
         self.dateStr = str(date_str)
+        self.result_file = './result_%s.txt' % datetime.date.today()
         self.__logger, self.__err_logger = self.__get_logger()
+        self.history = self.__get_history()
         if re.findall(r'\.sql', self.table):
             table = os.path.basename(table)
-            self.script = self.script_root_dir + re.split('_', self.table, 1)[0] + '/' + table
+            self.script = self.script_root_dir + re.split('_', table, 1)[0] + '/' + table
             self.__logger.info(self.script)
             if os.path.isfile(self.script):
                 self.__logger.info('脚本存在，将查询所有依赖')
             else:
                 self.__logger.info('脚本不存在，请检查参数')
                 sys.exit()
+
+    def __get_history(self):
+        history = ''
+        try:
+            f = open(self.result_file, 'r')
+            history = f.read()
+            self.__logger.info('获取今天历史查询记录成功')
+            f.close()
+        except Exception:
+            self.__err_logger.info('获取今天历史记录失败')
+
+        return history
 
     def __execute_sql(self, sql, __cursor):
         self.__logger.info('开始执行sql :' + sql)
@@ -86,8 +100,7 @@ class dataAnalyze:
     def get_partitions(self, table_name, __cursor):
         self.__logger.info('开始分析分区')
         table_name = table_name
-        sql = 'show partitions %s' % table_name
-        __rows = self.__execute_sql(sql, __cursor)
+
         if len(self.dateStr) == 8:
             vl_month = datetime.datetime.strptime(self.dateStr[:6] + '01', '%Y%m01') - datetime.timedelta(days=1)
             pattern = r'=%s$|=%s$|1=1' % (self.dateStr, vl_month)
@@ -97,12 +110,33 @@ class dataAnalyze:
             pattern = r'=%s$|%s$|1=1' % (self.dateStr, vi_month_last)
         else:
             sys.exit('日期输入不正确')
+        sql = 'show partitions %s' % table_name
+
+        __rows = self.__execute_sql(sql, __cursor)
         for row in __rows:
             p_date, = map(str, row)
             if re.findall(pattern, p_date):
-                self.__err_logger.info('*' * 100 + '\n分区:%s' % p_date)
+                self.__logger.info('*' * 100 + '\n分区:%s' % p_date)
                 return p_date
-        return 0
+        return ''
+
+    def get_hdfs_time(self, table_name='', p_date=''):
+        ip = os.popen('hostname -i').read().strip()
+        if ip == '133.95.9.92':
+            hdfs_path = '/user/bdoc/7/services/hive'
+        else:
+            hdfs_path = '/user/bdoc/6289/hive'
+        table_str1 = '/'.join(table_name.split('.'))
+        if p_date == '1=1':
+            p_date = ''
+        hdfs_cmd = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (hdfs_path, table_str1, p_date)
+        self.__logger.info(hdfs_cmd)
+        try:
+            time = os.popen(hdfs_cmd).read().strip()
+        except:
+            self.__logger.info('获取 %s 数据时间失败')
+            time = ''
+        return time
 
     def get_count(self, table_name):
         try:
@@ -111,18 +145,29 @@ class dataAnalyze:
         except Exception as e:
             self.__err_logger.info('连接数据库失败,退出')
             sys.exit(e)
-
         self.__logger.info('开始计数')
+
         table_name = table_name
         partition_date = self.get_partitions(table_name, __cursor)
         if partition_date:
-            sql = 'select count(*) from %s where %s ' % (table_name, partition_date)
-            result = self.__execute_sql(sql, __cursor)  # list[tuple]
-            count = str(result[0][0])
-            # count, = result[0] 可读性低
-            self.queue.put((table_name, count))
+            # 获取表数据的hdfs数据时间
+            time = self.get_hdfs_time(table_name, partition_date)
+            # 尝试获取历史记录，获取不到则执行sql查询
+            his = re.findall(r'[0-9 :\-]\|%s\s*\|%s\s*\|\d+' % (table_name, partition_date), self.history)
+            if his:
+                self.queue.put(his[0])
+                self.__logger.info('%s 从历史记录中获取到了，就不查了' % table_name)
+            else:
+
+                sql = 'select count(*) from %s where %s ' % (table_name, partition_date)
+                result = self.__execute_sql(sql, __cursor)  # list[tuple]
+                count = str(result[0][0])
+                # count, = result[0] 可读性低
+                self.queue.put([time, table_name, partition_date, count])
         else:
-            self.queue.put((table_name, 0))
+            # 需要的分区不存在，数据为0
+            self.queue.put(['0000-00-00 00:00:00', table_name, partition_date, 0])
+
         try:
             __connect_db.close()
             __cursor.close()
@@ -148,10 +193,9 @@ class dataAnalyze:
             find_result = re.findall(pattern, sql, re.I)
             if find_result:
                 for table in find_result:
-                    self.__logger.info('dep:' + table)
                     lis.append((table.strip()).lower())
         fl.close()
-        nl = set(lis)
+        nl = list(set(lis))
         return nl
 
     def run(self, ):
@@ -160,6 +204,8 @@ class dataAnalyze:
             deps = self.get_dep(self.script)
             process_pool = []
             for dep in deps:
+                self.__logger.info('table:' + dep)
+                # 如果使用union all 会影响select count(*)效率，
                 process = threading.Thread(target=self.get_count, args=(dep,))
                 process_pool.append(process)
             for p in process_pool:
@@ -168,8 +214,6 @@ class dataAnalyze:
                 p.join()
             for i in range(len(process_pool)):
                 result.append(self.queue.get())
-            return result
-
         else:
             try:
                 __connect_db = sqlEngine()
@@ -179,7 +223,20 @@ class dataAnalyze:
                 sys.exit(e)
             self.get_count(self.table)
             result.append(self.queue.get())
+        result.sort()
+
+        # 格式化文件的准备
+        d0 = max(list(map(len, list(map(lambda x: x[0], result)))))
+        d1 = max(list(map(len, list(map(lambda x: x[1], result)))))
+        d2 = max(list(map(len, list(map(lambda x: x[2], result)))))
+        d3 = max(list(map(len, list(map(lambda x: x[3], result)))))
+        fm = lambda x, y: format(x, '<%d' % y)
+        f = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
+        result = list(map(f, result))
+
         for i in result:
+            with open(self.result_file, 'a') as f:
+                f.write(i + '\n')
             self.__logger.info(i)
         return result
 
@@ -194,4 +251,3 @@ if __name__ == '__main__':
 
     d = dataAnalyze(table_name, date_str)
     r = d.run()
-
