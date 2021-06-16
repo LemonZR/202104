@@ -127,15 +127,29 @@ class dataAnalyze:
         else:
             hdfs_path = '/user/bdoc/6289/hive'
         table_str1 = '/'.join(table_name.split('.'))
+
         if p_date == '1=1':
             p_date = ''
         hdfs_cmd = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (hdfs_path, table_str1, p_date)
         self.__logger.info(hdfs_cmd)
         try:
-            time = os.popen(hdfs_cmd).read().strip()
-        except:
-            self.__logger.info('获取 %s 数据时间失败')
+            rs = os.popen(hdfs_cmd)
+            time = rs.read().strip()
+        # 报错后捕获不到异常
+        except Exception as e:
             time = ''
+        # 当获取不到hdfs文件时间时，可能是因为路径是大写，再尝试一下
+        if time == '':
+            table_str2 = table_name.split('.')[0] + '/' + table_name.split('.')[1].upper()
+            hdfs_cmd2 = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (
+                hdfs_path, table_str2, p_date)
+            self.__logger.info(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
+            try:
+                rs = os.popen(hdfs_cmd2)
+                time = rs.read().strip()
+            except Exception as e:
+                self.__logger.info('获取 %s 数据时间失败:%s' % (table_name, e))
+                time = ''
         return time
 
     def get_count(self, table_name):
@@ -153,7 +167,7 @@ class dataAnalyze:
             # 获取表数据的hdfs数据时间
             time = self.get_hdfs_time(table_name, partition_date)
             # 尝试获取历史记录，获取不到则执行sql查询
-            his = re.findall(r'[0-9 :\-]\|%s\s*\|%s\s*\|\d+' % (table_name, partition_date), self.history)
+            his = re.findall(r'[0-9 :\-]+\s*\|%s\s*\|%s\s*\|\d+' % (table_name, partition_date), self.history)
             if his:
                 self.queue.put(his[0])
                 self.__logger.info('%s 从历史记录中获取到了，就不查了' % table_name)
@@ -166,7 +180,7 @@ class dataAnalyze:
                 self.queue.put([time, table_name, partition_date, count])
         else:
             # 需要的分区不存在，数据为0
-            self.queue.put(['0000-00-00 00:00:00', table_name, partition_date, 0])
+            self.queue.put(['', table_name, partition_date, 0])
 
         try:
             __connect_db.close()
@@ -231,10 +245,12 @@ class dataAnalyze:
         d2 = max(list(map(len, list(map(lambda x: x[2], result)))))
         d3 = max(list(map(len, list(map(lambda x: x[3], result)))))
         fm = lambda x, y: format(x, '<%d' % y)
-        f = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
-        result = list(map(f, result))
+        fmt = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
 
         for i in result:
+            # i 可能是从历史结果文件中读取的，是已经格式化的字符串，则不能再格式化。
+            if isinstance(i, list):
+                i = fmt(i)
             with open(self.result_file, 'a') as f:
                 f.write(i + '\n')
             self.__logger.info(i)
@@ -243,9 +259,11 @@ class dataAnalyze:
 
 if __name__ == '__main__':
     try:
-
         table_name = sys.argv[1]
         date_str = sys.argv[2]
+
+        # 简单判断,触发异常
+        str1, str2 = table_name.split('.')
     except Exception as e:
         sys.exit('参数不正确')
 
