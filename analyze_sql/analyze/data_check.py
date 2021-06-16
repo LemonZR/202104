@@ -73,7 +73,7 @@ class dataAnalyze:
     def __get_logger(self, ):
         logger = logging.getLogger('info')
         err_logger = logging.getLogger('err')
-        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        formatter = logging.Formatter('%(asctime)s - [%(levelname)s]: %(message)s')
         logger.setLevel(logging.DEBUG)
         err_logger.setLevel(logging.DEBUG)
         input_file_name = os.path.basename('./log.log').split(".")[0]
@@ -83,7 +83,7 @@ class dataAnalyze:
         _file_handler = logging.FileHandler(log_path)
         err_handler = logging.FileHandler(err_path)
         _file_handler.setLevel(level=logging.INFO)
-        err_handler.setLevel(level=logging.INFO)
+        err_handler.setLevel(level=logging.ERROR)
         _file_handler.setFormatter(formatter)
         err_handler.setFormatter(formatter)
         logger.addHandler(_file_handler)
@@ -102,14 +102,17 @@ class dataAnalyze:
         table_name = table_name
 
         if len(self.dateStr) == 8:
-            vl_month = datetime.datetime.strptime(self.dateStr[:6] + '01', '%Y%m01') - datetime.timedelta(days=1)
+            vl_month = (datetime.datetime.strptime(self.dateStr[:6] + '01', '%Y%m01') - datetime.timedelta(
+                days=1)).strftime('%Y%m')
             pattern = r'=%s$|=%s$|1=1' % (self.dateStr, vl_month)
+            print(pattern + '*' * 100)
         elif len(self.dateStr) == 6:
             weekday, monthdays = calendar.monthrange(int(self.dateStr[:4]), int(self.dateStr[4:6]))
             vi_month_last = self.dateStr[:6] + str(monthdays)
             pattern = r'=%s$|%s$|1=1' % (self.dateStr, vi_month_last)
         else:
-            sys.exit('日期输入不正确')
+            self.__err_logger.error('日期输入不正确')
+            sys.exit()
         sql = 'show partitions %s' % table_name
 
         __rows = self.__execute_sql(sql, __cursor)
@@ -137,6 +140,7 @@ class dataAnalyze:
             time = rs.read().strip()
         # 报错后捕获不到异常
         except Exception as e:
+            print('我捕获到异常了吗?')
             time = ''
         # 当获取不到hdfs文件时间时，可能是因为路径是大写，再尝试一下
         if time == '':
@@ -148,7 +152,7 @@ class dataAnalyze:
                 rs = os.popen(hdfs_cmd2)
                 time = rs.read().strip()
             except Exception as e:
-                self.__logger.info('获取 %s 数据时间失败:%s' % (table_name, e))
+                self.__err_logger.error('获取 %s 数据时间失败:%s' % (table_name, e))
                 time = ''
         return time
 
@@ -157,9 +161,9 @@ class dataAnalyze:
             __connect_db = sqlEngine()
             __cursor = __connect_db.cursor
         except Exception as e:
-            self.__err_logger.info('连接数据库失败,退出')
+            self.__err_logger.error('连接数据库失败,退出')
             sys.exit(e)
-        self.__logger.info('开始计数')
+        self.__logger.info('查询开始')
 
         table_name = table_name
         partition_date = self.get_partitions(table_name, __cursor)
@@ -180,7 +184,8 @@ class dataAnalyze:
                 self.queue.put([time, table_name, partition_date, count])
         else:
             # 需要的分区不存在，数据为0
-            self.queue.put(['', table_name, partition_date, 0])
+            self.__err_logger.error('%s 需要的分区[%s]不存在，数据为0' % (table_name, partition_date))
+            self.queue.put(['', table_name, partition_date, '0'])
 
         try:
             __connect_db.close()
@@ -188,7 +193,7 @@ class dataAnalyze:
             self.__logger.info('数据库连接已关闭')
         except Exception as e:
             self.__err_logger.info(e)
-            self.__err_logger.info('数据库连接关闭失败')
+            self.__err_logger.error('数据库连接关闭失败')
 
     def get_dep(self, file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
         self.__logger.info('开始分析依赖表们')
@@ -201,7 +206,7 @@ class dataAnalyze:
             fl = open(file_name, 'r')
             ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
         except Exception as e:
-            self.__err_logger.info('脚本文件读取失败,退出')
+            self.__err_logger.error('脚本文件读取失败,退出')
             sys.exit(e)
         for sql in ff.split(';')[:-1]:
             find_result = re.findall(pattern, sql, re.I)
@@ -233,7 +238,7 @@ class dataAnalyze:
                 __connect_db = sqlEngine()
                 __cursor = __connect_db.cursor
             except Exception as e:
-                self.__err_logger.info('连接数据库失败,退出')
+                self.__err_logger.error('连接数据库失败,退出')
                 sys.exit(e)
             self.get_count(self.table)
             result.append(self.queue.get())
