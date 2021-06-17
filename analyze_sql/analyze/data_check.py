@@ -21,23 +21,40 @@ import queue
 
 class dataAnalyze:
     def __init__(self, table=None, date_str=None):
+
         self.table = table
         self.script_root_dir = '/data/script/hbdb/'
-        self.script = ''
         self.queue = queue.Queue()
         self.dateStr = str(date_str)
         self.result_file = './result_%s.txt' % datetime.date.today()
         self.__logger, self.__err_logger = self.__get_logger()
         self.history = self.__get_history()
+        self.script, self.date_pattern = self.__get_some__args()
+
+    def __get_some__args(self):
+        if len(self.dateStr) == 8:
+            vl_month = (datetime.datetime.strptime(self.dateStr[:6] + '01', '%Y%m01') - datetime.timedelta(
+                days=1)).strftime('%Y%m')
+            pattern = ('[a-zA-Z_]+=%s' % self.dateStr, '[a-zA-Z_]+=%s' % vl_month, '1=1')
+        elif len(self.dateStr) == 6:
+            weekday, monthdays = calendar.monthrange(int(self.dateStr[:4]), int(self.dateStr[4:6]))
+            vi_month_last = self.dateStr[:6] + str(monthdays)
+            pattern = ('[a-zA-Z_]+=%s' % self.dateStr, '[a-zA-Z_]+=%s' % vi_month_last, '1=1')
+        else:
+            self.__err_logger.error('日期输入不正确')
+            sys.exit()
         if re.findall(r'\.sql', self.table):
-            table = os.path.basename(table)
-            self.script = self.script_root_dir + re.split('_', table, 1)[0] + '/' + table
-            self.__logger.info(self.script)
-            if os.path.isfile(self.script):
+            table = os.path.basename(self.table)
+            script = self.script_root_dir + re.split('_', table, 1)[0] + '/' + table
+            self.__logger.info(script)
+            if os.path.isfile(script):
                 self.__logger.info('脚本存在，将查询所有依赖')
             else:
                 self.__logger.info('脚本不存在，请检查参数')
                 sys.exit()
+        else:
+            script = False
+        return script, pattern
 
     def __get_history(self):
         history = ''
@@ -82,8 +99,8 @@ class dataAnalyze:
         err_path = os.path.join(basedir, input_file_name + ".err")
         _file_handler = logging.FileHandler(log_path)
         err_handler = logging.FileHandler(err_path)
-        _file_handler.setLevel(level=logging.INFO)
-        err_handler.setLevel(level=logging.ERROR)
+        _file_handler.setLevel(level=logging.DEBUG)
+        err_handler.setLevel(level=logging.DEBUG)
         _file_handler.setFormatter(formatter)
         err_handler.setFormatter(formatter)
         logger.addHandler(_file_handler)
@@ -97,29 +114,16 @@ class dataAnalyze:
         err_logger.addHandler(_console_handler)
         return logger, err_logger
 
-    def get_partitions(self, table_name, __cursor):
-        self.__logger.info('开始分析分区')
-        table_name = table_name
+    def get_partitions(self, table_name='', __cursor=''):
 
-        if len(self.dateStr) == 8:
-            vl_month = (datetime.datetime.strptime(self.dateStr[:6] + '01', '%Y%m01') - datetime.timedelta(
-                days=1)).strftime('%Y%m')
-            pattern = r'=%s$|=%s$|1=1' % (self.dateStr, vl_month)
-            print(pattern + '*' * 100)
-        elif len(self.dateStr) == 6:
-            weekday, monthdays = calendar.monthrange(int(self.dateStr[:4]), int(self.dateStr[4:6]))
-            vi_month_last = self.dateStr[:6] + str(monthdays)
-            pattern = r'=%s$|%s$|1=1' % (self.dateStr, vi_month_last)
-        else:
-            self.__err_logger.error('日期输入不正确')
-            sys.exit()
         sql = 'show partitions %s' % table_name
-
+        pattern = '$|'.join(self.date_pattern) + '$'
+        self.__logger.debug('开始分析 %s的分区,查找 %s' % (table_name, pattern))
         __rows = self.__execute_sql(sql, __cursor)
         for row in __rows:
             p_date, = map(str, row)
             if re.findall(pattern, p_date):
-                self.__logger.info('*' * 100 + '\n分区:%s' % p_date)
+                self.__logger.debug( ' %s的分区:%s' % (table_name, p_date))
                 return p_date
         return ''
 
@@ -134,7 +138,7 @@ class dataAnalyze:
         if p_date == '1=1':
             p_date = ''
         hdfs_cmd = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (hdfs_path, table_str1, p_date)
-        self.__logger.info(hdfs_cmd)
+        self.__logger.debug(hdfs_cmd)
         try:
             rs = os.popen(hdfs_cmd)
             time = rs.read().strip()
@@ -147,7 +151,7 @@ class dataAnalyze:
             table_str2 = table_name.split('.')[0] + '/' + table_name.split('.')[1].upper()
             hdfs_cmd2 = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (
                 hdfs_path, table_str2, p_date)
-            self.__logger.info(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
+            self.__logger.debug(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
             try:
                 rs = os.popen(hdfs_cmd2)
                 time = rs.read().strip()
@@ -156,44 +160,46 @@ class dataAnalyze:
                 time = ''
         return time
 
-    def get_count(self, table_name):
-        try:
-            __connect_db = sqlEngine()
-            __cursor = __connect_db.cursor
-        except Exception as e:
-            self.__err_logger.error('连接数据库失败,退出')
-            sys.exit(e)
-        self.__logger.info('查询开始')
+    def get_count(self, table_name=''):
 
-        table_name = table_name
-        partition_date = self.get_partitions(table_name, __cursor)
-        if partition_date:
-            # 获取表数据的hdfs数据时间
-            time = self.get_hdfs_time(table_name, partition_date)
-            # 尝试获取历史记录，获取不到则执行sql查询
-            his = re.findall(r'[0-9 :\-]+\s*\|%s\s*\|%s\s*\|\d+' % (table_name, partition_date), self.history)
-            if his:
-                self.queue.put(his[0])
-                self.__logger.info('%s 从历史记录中获取到了，就不查了' % table_name)
-            else:
+        # 从当天的结果文件中查找历史查询记录
+        self.__logger.info('尝试从文件中获取记录：%s %s ' % (table_name, self.date_pattern))
+        his_pattern = r'([0-9 :\-]+\s*\|%s\s*\|(%s)\s*\|\d+)' % (table_name, '|'.join(self.date_pattern))
+        his = re.findall(his_pattern, self.history)  # his:[()]
+        self.__logger.debug(his_pattern)
+        if his:
+            result = list(map(str.strip, his[0][0].split('|')))
+            self.queue.put(result)
+            self.__logger.info('%s 从历史记录中获取到了，就不重新查了' % table_name)
+        else:
+            self.__logger.info('%s 未获取到历史查询记录,将重新执行查询流程' % table_name)
+            try:
+                __connect_db = sqlEngine()
+                __cursor = __connect_db.cursor
+            except Exception as e:
+                self.__err_logger.error('连接数据库失败,退出')
+                sys.exit(e)
 
+            partition_date = self.get_partitions(table_name, __cursor)
+            if partition_date:
+                # 获取表数据的hdfs数据时间
+                time = self.get_hdfs_time(table_name, partition_date)
                 sql = 'select count(*) from %s where %s ' % (table_name, partition_date)
                 result = self.__execute_sql(sql, __cursor)  # list[tuple]
                 count = str(result[0][0])
                 # count, = result[0] 可读性低
                 self.queue.put([time, table_name, partition_date, count])
-        else:
-            # 需要的分区不存在，数据为0
-            self.__err_logger.error('%s 需要的分区[%s]不存在，数据为0' % (table_name, partition_date))
-            self.queue.put(['', table_name, partition_date, '0'])
+            else:
+                # 需要的分区不存在，数据为0
+                self.__err_logger.error('%s 需要的分区[%s]不存在，数据为0' % (table_name, partition_date))
+                self.queue.put(['', table_name, partition_date, '0'])
 
-        try:
-            __connect_db.close()
-            __cursor.close()
-            self.__logger.info('数据库连接已关闭')
-        except Exception as e:
-            self.__err_logger.info(e)
-            self.__err_logger.error('数据库连接关闭失败')
+            try:
+                __connect_db.close()
+                self.__logger.debug('数据库连接已关闭')
+            except Exception as e:
+                self.__err_logger.info(e)
+                self.__err_logger.error('数据库连接关闭失败')
 
     def get_dep(self, file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
         self.__logger.info('开始分析依赖表们')
@@ -234,12 +240,7 @@ class dataAnalyze:
             for i in range(len(process_pool)):
                 result.append(self.queue.get())
         else:
-            try:
-                __connect_db = sqlEngine()
-                __cursor = __connect_db.cursor
-            except Exception as e:
-                self.__err_logger.error('连接数据库失败,退出')
-                sys.exit(e)
+
             self.get_count(self.table)
             result.append(self.queue.get())
         result.sort()
@@ -251,26 +252,25 @@ class dataAnalyze:
         d3 = max(list(map(len, list(map(lambda x: x[3], result)))))
         fm = lambda x, y: format(x, '<%d' % y)
         fmt = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
-
+        print('\n'*2+'*'*33)
         for i in result:
-            # i 可能是从历史结果文件中读取的，是已经格式化的字符串，则不能再格式化。
-            if isinstance(i, list):
-                i = fmt(i)
+            i = fmt(i)
             with open(self.result_file, 'a') as f:
                 f.write(i + '\n')
             self.__logger.info(i)
+        print('*'*33+'\n'*2)
         return result
 
 
 if __name__ == '__main__':
     try:
-        table_name = sys.argv[1]
+        table = sys.argv[1]
         date_str = sys.argv[2]
 
         # 简单判断,触发异常
-        str1, str2 = table_name.split('.')
+        str1, str2 = table.split('.')
     except Exception as e:
         sys.exit('参数不正确')
 
-    d = dataAnalyze(table_name, date_str)
+    d = dataAnalyze(table, date_str)
     r = d.run()
