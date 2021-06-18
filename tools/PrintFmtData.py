@@ -27,9 +27,18 @@ def print_fmt(data_list, start=0, end=0):
     fm = lambda x: format(x[0], '<%d' % x[1])
     fmt = lambda x: '|'.join(map(fm, map(lambda x1: (x[x1[0]], x1[1]), var_ds)))
 
-    print('\n' * 2 + '*' * 33)
+    print('\n' + '*' * 33)
     for i in data:
         i = fmt(i)
         # 这里可以把 格式化后的i 存起来并返回
         print(i)
-    print('*' * 33 + '\n' * 2)
+    print('*' * 33 + '\n')
+
+
+if __name__ == '__main__':
+    data = [
+        ['asda', 'asd', 'a'],
+        ['ad', 'd', 123],
+        ('asd', 'asd', '1')
+    ]
+    print_fmt(data)

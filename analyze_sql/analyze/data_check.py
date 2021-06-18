@@ -163,6 +163,40 @@ class dataAnalyze:
                 time = ''
         return time
 
+    def print_fmt(self, data_list, start=0, end=0):
+        """
+
+        :param data_list: 传入的 数据列表 type:[[],()...]
+        :param start: 打印的开始列
+        :param end: 打印的结束开始列
+        :return: 无返回值(可以返回格式化好的列表)
+        """
+        data = data_list
+
+        # 局部命名空间
+        __var = locals()
+
+        # 存储自定义变量，及其序号
+        var_ds = []
+
+        if end == 0 or end > len(data[0]):
+            end = len(data[0])
+        if start:
+            # 将自然序号变为数据序号
+            start = start - 1
+        for i in range(start, end):
+            __var['d' + str(i)] = max(list(map(len, list(map(lambda x: str(x[i]), data)))))
+            var_ds.append((i, __var['d' + str(i)]))
+        fm = lambda x: format(x[0], '<%d' % x[1])
+        fmt = lambda x: '|'.join(map(fm, map(lambda x1: (x[x1[0]], x1[1]), var_ds)))
+
+        print('\n' + '*' * 33)
+        for index, i in enumerate(data):
+            # 将数据格式化
+            data[index] = fmt(i)
+            self.__logger.info(data[index])
+        print('*' * 33 + '\n')
+
     def get_count(self, table_name=''):
 
         # 从当天的结果文件中查找历史查询记录
@@ -246,22 +280,16 @@ class dataAnalyze:
 
             self.get_count(self.table)
             result.append(self.queue.get())
+
         result.sort()
 
-        # 格式化文件的准备
-        d0 = max(list(map(len, list(map(lambda x: x[0], result)))))
-        d1 = max(list(map(len, list(map(lambda x: x[1], result)))))
-        d2 = max(list(map(len, list(map(lambda x: x[2], result)))))
-        d3 = max(list(map(len, list(map(lambda x: x[3], result)))))
-        fm = lambda x, y: format(x, '<%d' % y)
-        fmt = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
-        print('\n' * 2 + '*' * 33)
+        # 格式化数据
+        self.print_fmt(result)
+
         for i in result:
-            i = fmt(i)
             with open(self.result_file, 'a') as f:
                 f.write(i + '\n')
-            self.__logger.info(i)
-        print('*' * 33 + '\n' * 2)
+
         return result
 
 
@@ -271,7 +299,7 @@ if __name__ == '__main__':
         date_str = sys.argv[2]
 
         # 简单判断,触发异常
-        str1, str2 = table.split('.')
+        str1, str2 = table.rsplit('.', 1)
     except Exception as e:
         sys.exit('参数不正确')
 
