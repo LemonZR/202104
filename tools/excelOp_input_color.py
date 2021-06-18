@@ -104,41 +104,12 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
 if __name__ == '__main__':
     basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
     fileName = f'{basedir}\\test.xlsx'
-    # write_xlsx(fileName,
-    #            data=[[('head',None), ('head',None), ('head',None)], [('asdc', 'FF6347'), ('asd',None)], [('asdas', 'FF6347')]],
-    #            edit=True, sheet_name='Sheet')
+    write_xlsx(fileName,
+               data=[[('32CD32','32CD32'), ('CCCCFF','CCCCFF'), ('FFFF00','FFFF00')], [('FF6347', 'FF6347'), ('asd',None)], [('asdas', 'FF6347')]],
+               edit=True, sheet_name='Sheet')
     # result = read_xlsx(fileName, sheet_name='Sheet')
     #
     # for i in result:
     #     print(i)
     # print(write_xlsx.__annotations__)
     # print(read_xlsx.__annotations__)
-    cs = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
-
-    import random
-    #
-    # a = random.choice(cs)
-    # b = random.choice(cs)
-    # c = random.choice(cs)
-    # d = random.choice(cs)
-    # e = random.choice(cs)
-    # f = random.choice(cs)
-    #
-    # data = []
-    # for i in range(100):
-    #     cc = []
-    #     for j in range(150):
-    #         g = random.choices(cs,[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], k=6)
-    #         color = ''.join(g)
-    #         print(g)
-    #         cc += [('', color)]
-    #     data.append(cc)
-    #
-    # write_xlsx(fileName, data, edit=True)
-    i = 0
-    for j in range(10000000):
-        g = random.choices(cs, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], k=6)
-        i +=1
-        if ''.join(g) =='FFFFFF':
-            print(i)
-            break

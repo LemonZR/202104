@@ -106,35 +106,35 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
 
     return result
 
-
-def iterates(my_name, deps_list, __id_dict={}):
-    result = []
-    myself_id = id(deps_list)
-    __id_dict = copy.deepcopy(__id_dict)
-    parents = __id_dict.setdefault('parents', {})
-    parents.setdefault('p_tables', []).append(my_name)
-    __p_id_list = parents.setdefault('p_id', [])
-    __p_id_list.append(myself_id)
-    depth_dict = __id_dict.setdefault('depth', {})
-    depth = depth_dict.setdefault(myself_id, 0)
-    for value in deps_list:
-
-        if isinstance(value, dict):
-            dep_name = list(value.keys())[0]
-            dep_value = list(value.values())[0]
-            child_id = id(dep_value)
-            result.append([depth] + parents['p_tables'] + [dep_name])
-            if child_id in __p_id_list:
-                # result.append([depth] + parents + ['self' + str(depth)])
-                continue
-            else:
-                __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
-                result += iterates(dep_name, dep_value, __id_dict)
-        elif depth == 0:
-
-            result.append([depth] + parents['p_tables'] + [value])
-
-    return result
+#
+# def iterates(my_name, deps_list, __id_dict={}):
+#     result = []
+#     myself_id = id(deps_list)
+#     __id_dict = copy.deepcopy(__id_dict)
+#     parents = __id_dict.setdefault('parents', {})
+#     parents.setdefault('p_tables', []).append(my_name)
+#     __p_id_list = parents.setdefault('p_id', [])
+#     __p_id_list.append(myself_id)
+#     depth_dict = __id_dict.setdefault('depth', {})
+#     depth = depth_dict.setdefault(myself_id, 0)
+#     for value in deps_list:
+#
+#         if isinstance(value, dict):
+#             dep_name = list(value.keys())[0]
+#             dep_value = list(value.values())[0]
+#             child_id = id(dep_value)
+#             result.append([depth] + parents['p_tables'] + [dep_name])
+#             if child_id in __p_id_list:
+#                 # result.append([depth] + parents + ['self' + str(depth)])
+#                 continue
+#             else:
+#                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
+#                 result += iterates(dep_name, dep_value, __id_dict)
+#         elif depth == 0:
+#
+#             result.append([depth] + parents['p_tables'] + [value])
+#
+#     return result
 
 
 def run(dir_name):
