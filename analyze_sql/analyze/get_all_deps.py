@@ -5,7 +5,7 @@ import os
 import copy
 import sys
 
-from tools import excelOp
+from tools import excelOp, PrintFmtData
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
@@ -201,3 +201,4 @@ if __name__ == '__main__':
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
     # print('写入excel：所有依赖 end' + '*' * 100)
+    PrintFmtData.print_fmt(data2)
