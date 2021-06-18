@@ -4,9 +4,9 @@
 Author  : zhangrui
 Contact : zhangrui2@mail01.huawei.com
 Desc    : 查询一个脚本中的所有表的数据信息，或查询单个表的数据信息
-Size: 11.55 kB
+Size: 12.29 kB
 Type: Python
-Modified: 2021/6/18 9:26
+Modified: 2021/6/18 18:03
 Created: 2021/6/12 9:33
 """
 import sys
