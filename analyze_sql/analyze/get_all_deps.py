@@ -78,7 +78,7 @@ def find_pattern(sql_list, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) ->
 def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     file_sqls_info = get_files_sql_dict(dir_name)
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
-    from_sql_pattern = r'from[\s\S]*'
+    from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
     table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     result = {}
@@ -190,14 +190,14 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\dis'
+    dirName = 'D:\\tmp_mk'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\数据核对\\dis_0611.xlsx'
+    result_xlsx = 'D:\\tmp_mk\\tmp_mk.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='direct_合并_new')
+    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
     print('写入excel：直接依赖 end' + '*' * 100)
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    # print('写入excel：所有依赖 start' + '*' * 100)
+    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    # print('写入excel：所有依赖 end' + '*' * 100)

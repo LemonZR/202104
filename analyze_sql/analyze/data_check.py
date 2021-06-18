@@ -1,10 +1,13 @@
 # -*- encoding:utf-8 -*-
 
 """
-@Author  : zhangrui
-@Contact : zhangrui2@mail01.huawei.com
-@Time    : 2021/6/1w
-@Desc    :
+Author  : zhangrui
+Contact : zhangrui2@mail01.huawei.com
+Desc    : 查询一个脚本中的所有表的数据信息，或查询单个表的数据信息
+Size: 11.55 kB
+Type: Python
+Modified: 2021/6/18 9:26
+Created: 2021/6/12 9:33
 """
 import sys
 
@@ -123,7 +126,7 @@ class dataAnalyze:
         for row in __rows:
             p_date, = map(str, row)
             if re.findall(pattern, p_date):
-                self.__logger.debug( ' %s的分区:%s' % (table_name, p_date))
+                self.__logger.debug(' %s的分区:%s' % (table_name, p_date))
                 return p_date
         return ''
 
@@ -230,7 +233,7 @@ class dataAnalyze:
             process_pool = []
             for dep in deps:
                 self.__logger.info('table:' + dep)
-                # 如果使用union all 会影响select count(*)效率，
+                # 如果使用union all，需要增加表名字段， 会降低select count(*)效率，
                 process = threading.Thread(target=self.get_count, args=(dep,))
                 process_pool.append(process)
             for p in process_pool:
@@ -252,13 +255,13 @@ class dataAnalyze:
         d3 = max(list(map(len, list(map(lambda x: x[3], result)))))
         fm = lambda x, y: format(x, '<%d' % y)
         fmt = lambda x: '|'.join([fm(x[0], d0), fm(x[1], d1), fm(x[2], d2), fm(x[3], d3)])
-        print('\n'*2+'*'*33)
+        print('\n' * 2 + '*' * 33)
         for i in result:
             i = fmt(i)
             with open(self.result_file, 'a') as f:
                 f.write(i + '\n')
             self.__logger.info(i)
-        print('*'*33+'\n'*2)
+        print('*' * 33 + '\n' * 2)
         return result
 
 
