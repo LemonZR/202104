@@ -168,7 +168,7 @@ class dataAnalyze:
 
         :param data_list: 传入的 数据列表 type:[[],()...]
         :param start: 打印的开始列
-        :param end: 打印的结束开始列
+        :param end: 打印的结束列
         :return: 无返回值(可以返回格式化好的列表)
         """
         data = data_list
