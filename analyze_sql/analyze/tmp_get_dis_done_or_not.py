@@ -106,81 +106,19 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
 
     return result
 
-#
-# def iterates(my_name, deps_list, __id_dict={}):
-#     result = []
-#     myself_id = id(deps_list)
-#     __id_dict = copy.deepcopy(__id_dict)
-#     parents = __id_dict.setdefault('parents', {})
-#     parents.setdefault('p_tables', []).append(my_name)
-#     __p_id_list = parents.setdefault('p_id', [])
-#     __p_id_list.append(myself_id)
-#     depth_dict = __id_dict.setdefault('depth', {})
-#     depth = depth_dict.setdefault(myself_id, 0)
-#     for value in deps_list:
-#
-#         if isinstance(value, dict):
-#             dep_name = list(value.keys())[0]
-#             dep_value = list(value.values())[0]
-#             child_id = id(dep_value)
-#             result.append([depth] + parents['p_tables'] + [dep_name])
-#             if child_id in __p_id_list:
-#                 # result.append([depth] + parents + ['self' + str(depth)])
-#                 continue
-#             else:
-#                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
-#                 result += iterates(dep_name, dep_value, __id_dict)
-#         elif depth == 0:
-#
-#             result.append([depth] + parents['p_tables'] + [value])
-#
-#     return result
 
 
 def run(dir_name):
     print('analyze start' + '*' * 100)
     data = analyze(dir_name)
-    # print('analyze end' + '*' * 100)
-    #
-    # t_data = copy.deepcopy(data)
-    # t_dict = {}
-    # result = {}
-    #
-    # # 如果脚本没有目标表，则用脚本名替代（作为后续的键值对的键）
-    # for file, info in t_data.items():  # 由于不是深复制，t_data的列表的'指针'复制给了t_dict 在循环中会发生了变化
-    #     target_table = info.get('target_table', file)
-    #     t_dict[target_table] = info.get('deps', [])
-    #
-    # # 将依赖关系查找至最底层
-    # # 由于不是深复制，t_data的列表值会因为t_dict 在cal_deps中变化而变化
-    # print('cal_deps start' + '*' * 100)
-    # cal_deps(t_dict)
-    # print('cal_deps end' + '*' * 100)
-    # print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
-    # # 将各层依赖逐一查找并替换为最底层依赖
-    # for file, info in t_data.items():
-    #     target_table = info.get('target_table', file)
-    #
-    #     result.setdefault(file, {'target_table': target_table,
-    #                              'deps': iterates(target_table, t_dict.get(target_table, []))})
-    # print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
+
     excel_data_all_deps = [
         (('脚本名', 'CCCCFF'), ('目标表层级', 'CCCCFF'), ('依赖表深度', 'CCCCFF'), ('目标表名', 'CCCCFF'), ('依赖表名', 'CCCCFF'))]
     excel_data_direct_deps = [
         (('脚本名', 'CCCCFF'), ('目标表名', 'CCCCFF'), ('依赖表名', 'CCCCFF'), ('脚本p_调度', 'CCCCFF'), ('脚本t_调度', 'CCCCFF'),
          ('依赖p_调度', 'CCCCFF'), ('依赖t_调度', 'CCCCFF'))]
 
-    # print('生成excel data1 start' + '*' * 100)
-    # for file, info in result.items():
-    #     deps_list = info.get('deps', [('no_dep', 0)])
-    #     # target_table = info.get('target_table', 'erro')
-    #     try:
-    #         layer_level = max((i[0] for i in deps_list)) + 1
-    #     except:
-    #         layer_level = '需要看前置脚本'
-    #     for dep in deps_list:
-    #         excel_data_all_deps.append([file] + [layer_level] + dep)
-    # print('生成excel data1 end\n' + '*' * 100)
+
     print('生成excel data2 start' + '*' * 100)
     diaodus = []
     with open('../../dustbin/diaodu', 'r', encoding='utf8') as f:

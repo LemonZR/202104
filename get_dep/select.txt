@@ -1,4 +1,15 @@
-dwh.td_se_net_settle_d,dwh.td_se_net_settle_dsda,
+from (select region_code,region_id,area_id,markt_area_id,  row_number()over(partition by  area_id  order by markt_area_id  desc  ) row
+         from mk.tm_sc_broaband_detail_d where statis_date=${hivevar:vi_month_last}
+        ) b
+join (select  RELATED_WG,int_id,zh_label,full_addr, house_num ,port_num ,port_num_use,cell_source,creat_time,check_status,area_type
+            ,row_number()over(partition by  int_id  order by modify_time  desc  ) rn
+         from dwh.td_ne_add_cell_d
+       where deal_date=${hivevar:vi_month_last}
+      ) a
+     on a.int_id=b.area_id  and  a.rn=1 and b.row=1
+left join(select distinct  region_code,region_id, markt_area_id from    pub.tdet_chnl_belng_info
+          where deal_date=${hivevar:vi_month_last}
+         )c
+   on a.RELATED_WG=c.markt_area_id
 
-
-dwh.td_se_net_settle_d333;
+;
