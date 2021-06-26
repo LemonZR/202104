@@ -22,9 +22,14 @@ def print_fmt(data_list, start=0, end=0):
         # 将自然序号变为数据序号
         start = start - 1
     for i in range(start, end):
+        # 生成变量名d0,d1,d2... 并保存到var_ds中 :d0 第0列的宽度
+        # 求data列表中所有数组(列表)中第i个元素的最大长度 ，即打印时该列的宽度。
         __var['d' + str(i)] = max(list(map(len, list(map(lambda x: str(x[i]), data)))))
         var_ds.append((i, __var['d' + str(i)]))
+    # 将文本格式化为指定宽度的函数
     fm = lambda x: format(x[0], '<%d' % x[1])
+
+    # 将列表每个元素格式化为对应宽度的函数，并用 '|' 分割
     fmt = lambda x: '|'.join(map(fm, map(lambda x1: (x[x1[0]], x1[1]), var_ds)))
 
     print('\n' + '*' * 33)
