@@ -14,7 +14,7 @@ def print_fmt(data_list, start=0, end=0):
     __var = locals()
 
     # 存储自定义变量，及其序号
-    var_list = []
+    var_ds = []
 
     if end == 0 or end > len(data[0]):
         end = len(data[0])
