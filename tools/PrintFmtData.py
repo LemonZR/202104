@@ -5,7 +5,7 @@ def print_fmt(data_list, start=0, end=0):
 
     :param data_list: 传入的 数据列表 type:[[],()...]
     :param start: 打印的开始列
-    :param end: 打印的结束开始列
+    :param end: 打印的结束列
     :return: 无返回值(可以返回格式化好的列表)
     """
     data = data_list
@@ -14,7 +14,7 @@ def print_fmt(data_list, start=0, end=0):
     __var = locals()
 
     # 存储自定义变量，及其序号
-    var_ds = []
+    var_list = []
 
     if end == 0 or end > len(data[0]):
         end = len(data[0])
