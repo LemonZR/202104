@@ -190,15 +190,15 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp_mk'
+    dirName = 'D:\\bd_hive\\dis'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\tmp_mk\\tmp_mk.xlsx'
+    result_xlsx = 'D:\\all_dis_deps.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
     print('写入excel：直接依赖 end' + '*' * 100)
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
     # print('写入excel：所有依赖 end' + '*' * 100)
-    PrintFmtData.print_fmt(data1, start=0, end=4)
+

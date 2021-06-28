@@ -78,7 +78,7 @@ def find_pattern(sql_list, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) ->
 def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     file_sqls_info = get_files_sql_dict(dir_name)
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
-    from_sql_pattern = r'from[\s\S]*'
+    from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
     table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     result = {}
