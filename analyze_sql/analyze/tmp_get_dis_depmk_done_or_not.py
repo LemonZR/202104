@@ -2,8 +2,7 @@
 
 import re
 import os
-import copy
-import sys
+
 
 from tools import excelOp_input_color
 
