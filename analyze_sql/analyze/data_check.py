@@ -179,7 +179,7 @@ class dataAnalyze:
         # 存储自定义变量，及其序号
         var_ds = []
 
-        if end == 0 or end > len(data[0]):
+        if end == 0 or (bool(data) and end > len(data[0])):
             end = len(data[0])
         if start:
             # 将自然序号变为数据序号
