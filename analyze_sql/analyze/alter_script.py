@@ -44,7 +44,7 @@ def alter_files_sql_blks(dir_name='D:\\tmp\\', find_pattern='', old_pattern='', 
         fil_name = os.path.basename(file)
         sql_blks = get_sql_blks(file)
         for sql_blk_id, sql_blk in enumerate(sql_blks):
-            new_sql = re.sub(r'--\s*.*\n', '\n', sql_blk)
+            new_sql = re.sub(r'--\s*\S*\n', '\n', sql_blk)
             if re.findall(find_pattern, new_sql, flags=pattern_mod):
                 if re.findall(old_pattern, new_sql, flags=pattern_mod):
                     new_sql_blk = re.sub(old_pattern, new_str, sql_blk, flags=pattern_mod)
