@@ -212,7 +212,10 @@ class dataAnalyze:
             self.__logger.info('%s 未获取到历史查询记录,将重新执行查询流程' % table_name)
             try:
                 __connect_db = sqlEngine()
+                self.__logger.debug('connection id:%s' % id(__connect_db))
+
                 __cursor = __connect_db.cursor
+                self.__logger.debug('cursor id: %s' % id(__cursor))
             except Exception as e:
                 self.__err_logger.error('连接数据库失败,退出')
                 sys.exit(e)
@@ -247,7 +250,7 @@ class dataAnalyze:
             '''去掉注释'''
             # fl = open(file_name, 'r', encoding='gbk')
             fl = open(file_name, 'r')
-            ff = re.sub(r'\n+', '\n', re.sub(r'--\s*.*\n', '\n', fl.read()))
+            ff = re.sub(r'\n+', '\n', re.sub(r'--\s*\S*\n', '\n', fl.read()))
         except Exception as e:
             self.__err_logger.error('脚本文件读取失败,退出')
             sys.exit(e)

@@ -73,6 +73,7 @@ def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname=
             os.makedirs(f'{dirname}')
         except Exception as e:
             sys.exit(e)
+    print(len(file_dict))
     for file_name, sql_blks in file_dict.items():
         with open(f'{dirname}\\{file_name}', 'w', encoding='utf-8') as f:
             # for sql_blk in sql_blks:

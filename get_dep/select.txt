@@ -1,15 +1,632 @@
-from (select region_code,region_id,area_id,markt_area_id,  row_number()over(partition by  area_id  order by markt_area_id  desc  ) row
-         from mk.tm_sc_broaband_detail_d where statis_date=${hivevar:vi_month_last}
-        ) b
-join (select  RELATED_WG,int_id,zh_label,full_addr, house_num ,port_num ,port_num_use,cell_source,creat_time,check_status,area_type
-            ,row_number()over(partition by  int_id  order by modify_time  desc  ) rn
-         from dwh.td_ne_add_cell_d
-       where deal_date=${hivevar:vi_month_last}
-      ) a
-     on a.int_id=b.area_id  and  a.rn=1 and b.row=1
-left join(select distinct  region_code,region_id, markt_area_id from    pub.tdet_chnl_belng_info
-          where deal_date=${hivevar:vi_month_last}
-         )c
-   on a.RELATED_WG=c.markt_area_id
+--<metadata>
+--<model_name>: 移动通话对端号码统计信息
+--<keyword>: 位置, 对端号码统计信息
+--<description>: 移动通话对端号码统计信息
+--<author>: 马少鹏@华为
+--<run_cycle>: D
+--<tmp_table>: hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1,hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2,hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1，hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3
+--<tmp_table>: hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4,hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5,hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6,hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7
+--<det_table>: pub.tdet_qyh_base_info
+--<app_table>: MK.TM_PA_CMP_OPP_USER_BELONG_D
+--<app_name>: 
+--</metadata>
 
+--autor msp
+--mk.tm_pa_cmp_opp_user_d
+
+--当日通话客户基础信息表
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1 (
+opp_no varchar(16)  --对端号码
+,opp_region_code varchar(16)  --地区
+,carr_id varchar(4)  --对端运营商
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1;
+
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1
+select
+distinct opp_no          --对端号码
+,opp_region_code        --地区
+,carr_id                 --对端运营商
+from mk.tm_pa_cmp_call_info_d t --已经由336映射回312
+where statis_date=${hivevar:vi_day}
+and t.opp_region_code=t.region_code
+;
+
+
+--对端号码统计信息临时表
+
+
+drop table  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2_2;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2_2(
+opp_no varchar(16)
+,region_code varchar(16)
+,carr_id varchar(4)
+,region_id varchar(16)
+,cell_id varchar(16)
+,nm int
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+
+truncate table  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2_2;
+
+insert into  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2_2
+select opp_no,
+case when region_code='336' then '312' else region_code end region_code,
+carr_id,
+regexp_replace(region_id,'HB.XA','HB.BD') region_id,
+cell_id,
+row_number() over (partition by opp_no,case when region_code='336' then '312' else region_code end,carr_id order by start_date desc) nm --
+
+from mk.tm_pa_cmp_opp_user_d
+where statis_date=${hivevar:vl_day}
+and cast(from_unixtime(unix_timestamp(start_date,'yyyy-MM-dd'),'yyyyMMdd') as int)<=${hivevar:vl_day}--当前3个月内有效数据
+and cast(from_unixtime(unix_timestamp(end_date,'yyyy-MM-dd'),'yyyyMMdd') as int)>cast(from_unixtime(unix_timestamp('${hivevar:vl_day}','yyyyMMdd')-7776000,'yyyyMMdd') as int) --90天的秒数
+AND CELL_ID<>'999999'
+;
+
+
+
+drop table if exists  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2(
+opp_no varchar(16)
+,statis_date int
+,region_code varchar(16)
+,carr_id varchar(4)
+,region_id varchar(16)
+,cell_id varchar(16)
+,cdr_type varchar(1)
+,call_cnt int
+,call_dur int
+,sms_cnt int
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2;
+
+--通过今天的信息和到昨天为止数据比较
+--将已有数据（已分配区县）导入到目标临时表里
+--历史记录有多条的取最近的
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2
+select
+t.OPP_NO-- '竞争对手号码'
+,${hivevar:vi_day}-- '统计日期'
+,t.REGION_CODE-- '地区区号'
+,t.CARR_ID-- '运营商代码'
+,t.REGION_ID-- '地域编码'
+,t.CELL_ID
+,''
+,0
+,0
+,0
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2_2 t --由于网络路由没有添加336，因此映射回312
+join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1 t1
+on t1.opp_no=t.opp_no
+and t1.opp_region_code=t.region_code
+and  t1.carr_id=t.carr_id
+where t.nm=1    ----取最新记录
+;
+
+
+
+----3 处理当日新增数据
+--删除当日号码临时表中已经处理的数据，剩余为未分配区县的号码
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1 (
+opp_no varchar(16)  --对端号码
+,opp_region_code varchar(16)  --地区
+,carr_id varchar(4)  --对端运营商
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1;
+
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1
+select
+t.opp_no
+,t.opp_region_code
+,t.carr_id
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1 t
+left join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2 t1
+on t1.opp_no=t.opp_no
+and t1.region_code=t.opp_region_code
+and t1.carr_id=t.carr_id
+where t1.opp_no is null
+;
+
+
+--创建移动用户归属信息临时表
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3 (
+subs_id                varchar(32)      --用户号码
+,region_code           varchar(16)      --地区
+,belng_region_id       varchar(32)      --归属地域
+,belng_markt_area_id   varchar(32)      --归属区域
+,belng_cntry_id        varchar(32)      --归属乡镇
+,cell_id               varchar(16)      --归属CELL_ID
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3;
+--使用qyh_info_day数据
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3
+select
+t.subs_id
+,case when t.region_id='336' then '312' else t.region_id end as region_id
+,regexp_replace(nvl(t2.town_id,''),'HB.XA','HB.BD') as belng_region_id -- '归属县市编码'
+,regexp_replace(nvl(t2.part_id,''),'HB.XA','HB.BD') as belng_markt_area_id -- '归属营销区域编码'
+,regexp_replace(nvl(t2.country_id,''),'HB.XA','HB.BD') as belng_cntry_id -- '归属乡镇编码'
+,nvl(t2.cell_id,'999999')                --归属CELL_ID
+from mk.tm_lc_qyh_subs_info_d t
+left join pub.tdet_qyh_base_info t2  --区域化码表
+on t2.cell_id=t.cell_id and case when t2.region_id='336' then '312' else t2.region_id end=case when t.region_id='336' then '312' else t.region_id end
+where t.statis_date=${hivevar:vi_day}
+and t.checkout_time>=${hivevar:vi_month_first}
+;
+
+
+
+--创建竞争对手用户呼叫信息CELL汇总信息临时表
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4 (
+opp_no                varchar(32)      --对端号码
+,opp_region_code       varchar(16)      --地区
+,region_id             varchar(16)      --县市
+,carr_id               varchar(4)       --运营商
+,belng_region_id       varchar(32)      --归属地域
+,belng_markt_area_id   varchar(32)      --归属区域
+,belng_cntry_id        varchar(32)      --归属乡镇
+,cell_id               varchar(16)      --归属CELL_ID
+,call_dur              int          --通话时长
+,total_call_cnt        int          --通话次数（语音+短信）
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4;
+
+--插入当月通话的需要判断归属的所有用户的通话信息，到CELL_ID级
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4
+select
+t.opp_no                  --对端号码
+,t.opp_region_code            --地区
+,t.region_id              --县市
+,t.carr_id                --运营商
+,t1.belng_region_id -- '归属县市编码'
+,t1.belng_markt_area_id -- '归属营销区域编码'
+,t1.belng_cntry_id -- '归属乡镇编码'
+,t1.cell_id                --归属CELL_ID
+,sum(call_dur)               --通话时长
+,sum(call_cnt+sms_cnt) as total_call_cnt         --通话次数（语音+短信）
+from mk.tm_pa_cmp_call_info_d t --
+inner join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid3  t1  --移动用户归属信息
+on t1.subs_id=t.subs_id
+inner join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid1_1 t2  ----需要判断用户归属清单
+on  t2.opp_no=t.opp_no
+and t2.opp_region_code=t.opp_region_code
+and  t2.carr_id=t.carr_id
+where t.statis_date=${hivevar:vi_day}
+and t.opp_region_code=t.region_code --只取本地通话客户
+group by
+t.opp_no                  --对端号码
+,t.opp_region_code            --地区
+,t.region_id              --县市
+,t.carr_id                --运营商
+,t1.belng_region_id -- '归属县市编码'
+,t1.belng_markt_area_id -- '归属营销区域编码'
+,t1.belng_cntry_id -- '归属乡镇编码'
+,t1.cell_id                --归属CELL_ID
+;
+
+
+--创建竞争对手用户呼叫信息sum汇总信息临时表,用户逐层数据汇总，判断用户归属
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5 (
+opp_no                varchar(32)      --对端号码
+,opp_region_code       varchar(16)      --地区
+,region_id             varchar(16)      --县市
+,carr_id               varchar(4)       --运营商
+,belng_region_id       varchar(32)      --归属地域
+,belng_markt_area_id   varchar(32)      --归属区域
+,belng_cntry_id        varchar(32)      --归属乡镇
+,cell_id               varchar(16)      --归属CELL_ID
+,call_dur              int          --通话时长
+,total_call_cnt        int          --通话次数（语音+短信）
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5
+select
+opp_no                 --对端号码
+,opp_region_code            --地区
+,region_id              --县市
+,carr_id                --运营商
+,''
+,''
+,''
+,''
+,sum(call_dur)               --通话时长
+,sum(total_call_cnt)         --通话次数（语音+短信）
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4    --
+group by
+opp_no                 --对端号码
+,opp_region_code            --地区
+,region_id              --县市
+,carr_id                --运营商
+;
+
+
+--竞争对手用户县市归属临时表，保存用户的区县归属信息
+drop table if exists  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6 (
+opp_no                varchar(32)      --对端号码
+,opp_region_code       varchar(16)      --地区
+,region_id             varchar(16)      --县市
+,carr_id               varchar(4)       --运营商
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6;
+--判断注册区县归属
+--数据按通话次数，时长降序排列，按电话号码取第一条记录
+----即：取通话次数最多的数据，如果，通话次数相同，则通话时长最长的区县。
+----如果通话时长也相同，则随机取一个。
+
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6
+select
+opp_no                    --对端号码
+,opp_region_code          --地区
+,region_id                --县市
+,carr_id                  --运营商
+from (
+select
+opp_no                    --对端号码
+,opp_region_code          --地区
+,region_id                --县市
+,carr_id                  --运营商
+,row_number() over (partition by opp_no,opp_region_code,carr_id order by total_call_cnt desc,call_dur desc) nm  --排名
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5
+) t
+where t.nm=1
+;
+
+
+--判断竞争对手区域化信息
+
+--创建竞争对手用户归属CELL信息表，保存用户的区域化信息
+drop table if exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7;
+create table if not exists hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7 (
+opp_no                varchar(32)      --对端号码
+,opp_region_code       varchar(16)      --地区
+,carr_id               varchar(4)       --运营商
+,belng_region_id       varchar(32)      --归属地域
+,belng_markt_area_id   varchar(32)      --归属区域
+,belng_cntry_id        varchar(32)      --归属乡镇
+,cell_id               varchar(16)      --归属CELL_ID
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7;
+
+
+
+--汇总用户归属区县（区域化）通话汇总信息
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5
+select
+opp_no                 --对端号码
+,opp_region_code        --地区
+,''
+,carr_id                --运营商
+,belng_region_id        --归属地域
+,''
+,''
+,''
+,sum(call_dur)               --通话时长
+,sum(total_call_cnt)         --通话次数（语音+短信）
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4 --
+group by
+opp_no                 --对端号码
+,opp_region_code        --地区
+,carr_id                --运营商
+,belng_region_id        --归属地域
+;
+
+
+--数据按通话次数，时长降序排列，按电话号码取第一条记录
+--即：取通话次数最多的数据，如果，通话次数相同，则通话时长最长的区县。
+--如果通话时长也相同，则随机取一个。
+
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7
+select
+opp_no                    --对端号码
+,opp_region_code          --地区
+,carr_id                  --运营商
+,belng_region_id        --归属地域
+,''
+,''
+,''
+from (
+select
+opp_no                    --对端号码
+,opp_region_code          --地区
+,carr_id                  --运营商
+,belng_region_id        --归属地域
+,row_number() over (partition by opp_no,opp_region_code,carr_id order by total_call_cnt desc,call_dur desc) nm
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5 --
+) t
+where t.nm=1
+;
+
+
+
+--取已确定的归属县市下汇总用户归属营销区域（区域化）通话汇总信息
+
+
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5
+select
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE            --地区
+,''
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+,''
+,''
+,sum(t.CALL_DUR)               --通话时长
+,sum(t.TOTAL_CALL_CNT)         --通话次数（语音+短信）
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4 t   --
+inner join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7 t1  --
+on  t1.OPP_NO=t.OPP_NO
+and t1.OPP_REGION_CODE=t.OPP_REGION_CODE
+and t1.CARR_ID=t.CARR_ID
+and coalesce(t1.BELNG_REGION_ID,'')=coalesce(t.BELNG_REGION_ID,'')
+group by
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE            --地区
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+;
+
+
+
+
+--数据按通话次数，时长降序排列，按电话号码取第一条记录
+--即：取通话次数最多的数据，如果，通话次数相同，则通话时长最长的营销中心。
+--如果通话时长也相同，则随机取一个。
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,''
+,''
+from (  --
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,row_number() over (partition by opp_no,opp_region_code,carr_id,belng_region_id order by total_call_cnt desc,call_dur desc) nm  --
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5    --
+) t
+where t.nm=1
+;
+
+
+
+--取已确定的营销区域下汇总用户归属乡镇（区域化）通话汇总信息
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5 
+select
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE            --地区
+,''
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+,t.BELNG_CNTRY_ID
+,''
+,sum(t.CALL_DUR)               --通话时长
+,sum(t.TOTAL_CALL_CNT)         --通话次数（语音+短信）
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4 t   --
+inner join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7 t1  --
+on  t1.opp_no=t.opp_no
+and t1.opp_region_code=t.opp_region_code
+and t1.carr_id=t.carr_id
+and coalesce(t1.belng_region_id,'')=coalesce(t.belng_region_id,'')
+and coalesce(t1.belng_markt_area_id,'') =coalesce(t.belng_markt_area_id,'')
+group by
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE        --地区
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+,t.BELNG_CNTRY_ID
+;
+
+
+
+
+
+--数据按通话次数，时长降序排列，按电话号码取第一条记录
+--即：取通话次数最多的数据，如果，通话次数相同，则通话时长最长的乡镇。
+--如果通话时长也相同，则随机取一个。
+
+
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,BELNG_CNTRY_ID
+,''
+from (
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,BELNG_CNTRY_ID         --
+,row_number() over (partition by OPP_NO,OPP_REGION_CODE,CARR_ID,BELNG_REGION_ID ,BELNG_MARKT_AREA_ID order by TOTAL_CALL_CNT DESC,CALL_DUR DESC) nm --
+from  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5    --
+) t
+where t.nm=1
+;
+
+
+
+
+
+--取已确定的乡镇下汇总用户归属CELL（区域化）通话汇总信息
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5 
+select
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE        --地区
+,''
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+,t.BELNG_CNTRY_ID
+,t.CELL_ID
+,sum(t.CALL_DUR)               --通话时长
+,sum(t.TOTAL_CALL_CNT)         --通话次数（语音+短信）
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid4 t --
+inner join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7 t1 --
+on  t1.OPP_NO=t.OPP_NO
+and t1.OPP_REGION_CODE=t.OPP_REGION_CODE
+and t1.CARR_ID=t.CARR_ID
+and coalesce(t1.BELNG_REGION_ID,'')=coalesce(t.BELNG_REGION_ID,'')
+and coalesce(t1.BELNG_MARKT_AREA_ID,'') =coalesce(t.BELNG_MARKT_AREA_ID,'')
+and coalesce(t1.BELNG_CNTRY_ID,'')=coalesce(t.BELNG_CNTRY_ID,'')
+group by
+t.OPP_NO                 --对端号码
+,t.OPP_REGION_CODE            --地区
+,t.CARR_ID                --运营商
+,t.BELNG_REGION_ID        --归属地域
+,t.BELNG_MARKT_AREA_ID    --归属区域
+,t.BELNG_CNTRY_ID
+,t.CELL_ID
+;
+
+
+
+--数据按通话次数，时长降序排列，按电话号码取第一条记录
+--即：取通话次数最多的数据，如果，通话次数相同，则通话时长最长的CELL_ID。
+--如果通话时长也相同，则随机取一个。
+truncate table hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7;
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,BELNG_CNTRY_ID
+,CELL_ID
+from (
+select
+OPP_NO                    --对端号码
+,OPP_REGION_CODE          --地区
+,CARR_ID                  --运营商
+,BELNG_REGION_ID        --归属地域
+,BELNG_MARKT_AREA_ID    --归属区域
+,BELNG_CNTRY_ID
+,CELL_ID
+,row_number() over (partition by opp_no,opp_region_code,carr_id,belng_region_id ,belng_markt_area_id,belng_cntry_id order by total_call_cnt desc,call_dur,BELNG_REGION_ID desc) nm
+from  hw_tmp.tm_pa_cmp_opp_user_belong_d_mid5
+) t
+where t.nm=1
+;
+
+
+
+
+--添加到竞争对手用户信息临时目标表中
+insert into hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2
+select
+t.OPP_NO-- '竞争对手号码'
+,${hivevar:vi_day} as STATIS_DATE-- '统计日期'
+,t.OPP_REGION_CODE-- '地区区号'
+,t.CARR_ID-- '运营商代码'
+,t.REGION_ID-- '地域编码'
+,t1.CELL_ID
+,''
+,0
+,0
+,0
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid6 t
+join hw_tmp.tm_pa_cmp_opp_user_belong_d_mid7 t1
+on  t1.OPP_NO=t.OPP_NO
+and t1.OPP_REGION_CODE=t.OPP_REGION_CODE
+and t1.CARR_ID=t.CARR_ID
+;
+
+
+
+
+--生成结果集
+alter table mk.tm_pa_cmp_opp_user_belong_d drop partition(statis_date=${hivevar:vi_day});
+insert into mk.tm_pa_cmp_opp_user_belong_d
+partition(statis_date=${hivevar:vi_day})
+select
+t.OPP_NO
+,t.REGION_CODE
+,t.CARR_ID
+,t.REGION_ID
+,t.CELL_ID
+,t1.CDR_TYPE
+,t1.CALL_CNT
+,t1.CALL_DUR
+,t1.SMS_CNT
+from hw_tmp.tm_pa_cmp_opp_user_belong_d_mid2 t
+join (
+select
+OPP_NO-- '竞争对手号码'
+,OPP_REGION_CODE-- '对端地区区号'
+,case when CDR_TYPE='O' then 'T' else 'O' END as CDR_TYPE-- '话单类型'
+,CARR_ID-- '运营商代码'
+,sum(CALL_DUR) as CALL_DUR-- '通话时长'
+,sum(CALL_CNT) as CALL_CNT-- '通话次数'
+,sum(SMS_CNT)  as SMS_CNT-- '短信次数'
+from mk.tm_pa_cmp_call_info_d
+where STATIS_DATE=${hivevar:vi_day} and OPP_REGION_CODE=REGION_CODE
+group by
+OPP_NO-- '竞争对手号码'
+,OPP_REGION_CODE-- '对端地区区号'
+,case when CDR_TYPE='O' then 'T' else 'O' END-- '话单类型'
+,CARR_ID-- '运营商代码'
+) t1
+on t1.OPP_NO=t.OPP_NO
+and t1.OPP_REGION_CODE=t.REGION_CODE
+and t1.CARR_ID=t.CARR_ID
 ;
