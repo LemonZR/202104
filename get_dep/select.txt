@@ -1,26 +1,515 @@
---
-drop table if exists hw_tmp.tm_sc_user_fuse_mid16;--plll
-create table if not exists hw_tmp.tm_sc_user_fuse_mid16(
-    subs_id varchar(32)
-)row format delimited fields terminated by '\t' stored as rcfile;
+--<metadata>
+--<model_name>: GSM语音VOLTE话单日汇总表(非时段)
+--<keyword>: GSM语音, VOLTE话单日汇总表
+--<description>: GSM语音VOLTE话单日汇总表(非时段)
+--<author>: 李啸天@华为
+--<run_cycle>: D
+--<tmp_table>: hw_tmp.tm_ls_volte_d_mid2,hw_tmp.tm_ls_volte_d_mid3,hw_tmp.tm_ls_volte_d_mid4,hw_tmp.tm_ls_volte_d_mid5,hw_tmp.tm_ls_volte_d_mid6,
+--<tmp_table>: hw_tmp.tm_ls_volte_d_mid7,hw_tmp.tm_ls_volte_d_mid8,hw_tmp.tm_ls_volte_d_mid9
+--<det_table>: pub.tdic_set_value,pub.tdet_grp_prod_sort
+--<app_table>: mk.tm_ls_volte_d
+--<app_name>: /路径/子路径/应用专题1/应用1
+--</metadata>
 
-truncate table hw_tmp.tm_sc_user_fuse_mid16;
---insert into-- hw_tmp.tm_sc_user_fuse_mid16
+
+drop table if exists hw_tmp.tm_ls_volte_d_mid5 ;
+create table if not exists hw_tmp.tm_ls_volte_d_mid5
+(cdr_type varchar(3)
+,roam_type varchar(5)
+,call_type varchar(5)
+,self_phone_no varchar(22)
+,vregion varchar(12)
+,imei varchar(20)
+,self_home_area varchar(12)
+,self_carrier varchar(33)
+,opp_phone_no varchar(30)
+,opp_visited_area_code varchar(12)
+,other_self_home_area varchar(12)
+,opp_carrier varchar(33)
+,opp_net_type varchar(3)
+,trans_serv_vendor varchar(12)
+,imsi varchar(15)
+,active_roam_no varchar(15)
+,in_trunk_no varchar(12)
+,out_trunk_no varchar(12)
+,msc_no varchar(15)
+,lac_id varchar(20)
+,cell_id varchar(20)
+,call_start_time varchar(14)
+,call_dur int
+,partial_cdr_flag varchar(3)
+,serv_type varchar(2)
+,service_code varchar(2)
+,rfpowercapability varchar(2)
+,opplac_no varchar(6)
+,other_cell_id varchar(6)
+,billing_cycle varchar(6)
+,src_file_name varchar(24)
+,subs_id varchar(13)
+,acct_id varchar(20)
+,dest_file_name varchar(24)
+,third_self_phone_no varchar(22)
+,tariff_id varchar(15)
+,err_num varchar(4)
+,spec_call_type varchar(6)
+,basic_serv_code varchar(12)
+,msc_type varchar(5)
+,settle_partner varchar(12)
+,deal_time varchar(14)
+,total_disct varchar(90)
+,tariff_trace varchar(80)
+,partial_reference_no varchar(12)
+,trance_latied_other_party varchar(30)
+,free_format_date varchar(80)
+,call_net_type varchar(6)
+,video_call_flg varchar(10)
+,grant_dur varchar(11)
+,initiative_cut_flg varchar(3)
+,local_fee decimal(12,3)
+,roam_fee decimal(12,3)
+,toll_fee decimal(12,3)
+,local_fee_s decimal(12,3)
+,roam_fee_s decimal(12,3)
+,toll_fee_s decimal(12,3)
+,ruraladd_fee_s decimal(12,3)
+,tolladd_fee_s decimal(12,3)
+,toll_fee_2_s decimal(12,3)
+,toll_fee_2 decimal(12,3)
+,ruraladd_fee decimal(12,3)
+,tolladd_fee decimal(12,3)
+,opp_carrier_prov varchar(10)
+,is_inner varchar(1)
+,is_prov varchar(1)
+,is_wt_prov varchar(1)
+,is_dx_311 varchar(1)
+,is_xlt_311 varchar(1)
+,is_311_fix varchar(1)
+,opp_phone_no_5 varchar(5)
+,opp_phone_no_6 varchar(6)
+,opp_phone_no_7 varchar(7)
+,opp_phone_no_8 varchar(8)
+,opp_phone_no_area_5 varchar(5)
+,opp_phone_no_area_6 varchar(6)
+,opp_phone_no_area_7 varchar(7)
+,opp_phone_no_area_8 varchar(8)
+,ip_type_id varchar(10)
+,package_info varchar(128)
+,tariff_track varchar(128)
+,org_hregion varchar(12)
+,org_otherhregion varchar(12)
+,is_video_call varchar(5)
+)
+row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+ truncate table  hw_tmp.tm_ls_volte_d_mid5 ;
+
+ insert into hw_tmp.tm_ls_volte_d_mid5
+ select
+ trim(cdr_type)
+ ,trim(roam_type)
+ ,trim(call_type)
+ ,trim(self_phone_no)
+ ,trim(vregion)
+ ,trim(imei)
+ ,trim(self_home_area)
+ ,trim(self_carrier)
+ ,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+ else trim(opp_phone_no)
+ end
+ ,trim(opp_visited_area_code)
+ ,trim(other_self_home_area)
+ ,trim(opp_carrier)
+ ,trim(opp_net_type)
+ ,trans_serv_vendor
+ ,''
+ ,active_roam_no
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,trim(call_start_time)
+ ,call_dur
+ ,partial_cdr_flag
+ ,serv_type
+ ,service_code
+ ,rfpowercapability
+ ,''
+ ,''
+ ,billing_cycle
+ ,src_file_name
+ ,subs_id
+ ,acct_id
+ ,dest_file_name
+ ,third_self_phone_no
+ ,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
+ ,err_num
+ ,spec_call_type
+ ,basic_serv_code
+ ,msc_type
+ ,settle_partner
+ ,deal_time
+ ,''
+ ,''
+ ,partial_reference_no
+ ,trance_latied_other_party
+ ,free_format_date
+ ,call_net_type
+ ,video_call_flg
+ ,grant_dur
+ ,''
+ ,local_fee
+ ,roam_fee
+ ,toll_fee
+ ,local_fee_s
+ ,roam_fee_s
+ ,toll_fee_s
+ ,ruraladd_fee_s
+ ,tolladd_fee_s
+ ,toll_fee_2_s
+ ,toll_fee_2
+ ,ruraladd_fee
+ ,tolladd_fee
+ ---增加对端运营商省字段
+ ,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,case when ( trim(a.opp_carrier) like '2.310' or
+ trim(a.opp_carrier) like '2.311' or
+ trim(a.opp_carrier) like '2.312' or
+ trim(a.opp_carrier) like '2.313' or
+ trim(a.opp_carrier) like '2.314' or
+ trim(a.opp_carrier) like '2.315' or
+ trim(a.opp_carrier) like '2.316' or
+ trim(a.opp_carrier) like '2.317' or
+ trim(a.opp_carrier) like '2.318' or
+ trim(a.opp_carrier) like '2.319' or
+ trim(a.opp_carrier) like '2.335' or
+ trim(a.opp_carrier) like '2.336')
+ then '1'
+ else '0'
+ end
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,case when trim(opp_phone_no) like '17951%' then '17951'
+ when trim(opp_phone_no) like '17950%' then '17950'
+ else ''
+ end
+ ,package_info
+ --20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
+ ,tariff_trace
+ ,org_hregion --本方原归属
+ ,org_otherhregion --对方原归属
+,'0'
+ from dwh.td_su_cdr_gsm_home_d a
+ where deal_date=${hivevar:vi_day}
+ and call_net_type='VOLTE'
+ ;
+
+
+insert into hw_tmp.tm_ls_volte_d_mid5
 select
-    a.subs_id
-from mk.tm_sc_subs_privilege_d a  --用户优惠关系日表
-join
+trim(cdr_type)
+,trim(roam_type)
+,trim(call_type)
+,trim(self_phone_no)
+,trim(vregion)
+,trim(imei)
+,trim(self_home_area)
+,trim(self_carrier)
+,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+else trim(opp_phone_no)
+end
+,trim(opp_visited_area_code)
+,trim(other_self_home_area)
+,trim(opp_carrier)
+,trim(opp_net_type)
+,trans_serv_vendor
+,''
+,active_roam_no
+,''
+,''
+,''
+,''
+,''
+,trim(call_start_time)
+,call_dur
+,partial_cdr_flag
+,serv_type
+,service_code
+,rfpowercapability
+,''
+,''
+,billing_cycle
+,src_file_name
+,subs_id
+,acct_id
+,dest_file_name
+,third_self_phone_no
+,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
+,err_num
+,spec_call_type
+,basic_serv_code
+,msc_type
+,settle_partner
+,deal_time
+,''
+,''
+,partial_reference_no
+,trance_latied_other_party
+,free_format_date
+,call_net_type
+,video_call_flg
+,grant_dur
+,''
+,local_fee
+,roam_fee
+,toll_fee
+,local_fee_s
+,roam_fee_s
+,toll_fee_s
+,ruraladd_fee_s
+,tolladd_fee_s
+,toll_fee_2_s
+,toll_fee_2
+,ruraladd_fee
+,tolladd_fee
+---增加对端运营商省字段
+,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
+,''
+,''
+,''
+,''
+,''
+,case when ( trim(a.opp_carrier) like '2.310' or
+trim(a.opp_carrier) like '2.311' or
+trim(a.opp_carrier) like '2.312' or
+trim(a.opp_carrier) like '2.313' or
+trim(a.opp_carrier) like '2.314' or
+trim(a.opp_carrier) like '2.315' or
+trim(a.opp_carrier) like '2.316' or
+trim(a.opp_carrier) like '2.317' or
+trim(a.opp_carrier) like '2.318' or
+trim(a.opp_carrier) like '2.319' or
+trim(a.opp_carrier) like '2.335' or
+trim(a.opp_carrier) like '2.336')
+then '1'
+else '0'
+end
+,''
+,''
+,''
+,''
+,''
+,''
+,''
+,''
+,case when trim(opp_phone_no) like '17951%' then '17951'
+when trim(opp_phone_no) like '17950%' then '17950'
+else ''
+end
+,package_info
+--20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
+,tariff_trace
+,org_hregion --本方原归属
+,org_otherhregion --对方原归属
+,'1'
+from dwh.td_su_cdr_volte_gsm_home_d a
+where deal_date=${hivevar:vi_day}
+;
+
+drop table if exists hw_tmp.tm_ls_volte_d_mid6;
+
+create table if not exists hw_tmp.tm_ls_volte_d_mid6
 (
-    select markt_solution_id--lkkk
-    jkh
-    from pub.tdet_unlimited_flow_d  --det.tdet_unlimited_flow_d
-    where markt_solution_id_type in('不限量包','不限量套餐')
-    group by markt_solution_id
-) b
-on a.markt_solution_id=b.markt_solution_id
-where a.statis_date=${hivevar:vi_day}
-and a.is_using=1
-and a.is_on_Net_user=1
-and a.user_status not in('US28','US26')
-group by a.subs_id
+cdr_type varchar(3),
+roam_type varchar(5),
+call_type varchar(5),
+self_phone_no varchar(22),
+vregion varchar(12),
+imei varchar(20),
+self_home_area varchar(12),
+self_carrier varchar(33),
+opp_phone_no varchar(30),
+opp_visited_area_code varchar(12),
+other_self_home_area varchar(12),
+opp_carrier varchar(33),
+opp_net_type varchar(3),
+trans_serv_vendor varchar(12),
+imsi varchar(15),
+active_roam_no varchar(15),
+in_trunk_no varchar(12),
+out_trunk_no varchar(12),
+msc_no varchar(15),
+lac_id varchar(20),
+cell_id varchar(20),
+call_start_time varchar(14),
+call_dur int,
+partial_cdr_flag varchar(3),
+serv_type varchar(2),
+service_code varchar(2),
+rfpowercapability varchar(2),
+opplac_no varchar(6),
+other_cell_id varchar(6),
+billing_cycle varchar(6),
+src_file_name varchar(24),
+subs_id varchar(13),
+acct_id varchar(20),
+dest_file_name varchar(24),
+third_self_phone_no varchar(22),
+tariff_id varchar(15),
+err_num varchar(4),
+spec_call_type varchar(6),
+basic_serv_code varchar(12),
+msc_type varchar(5),
+settle_partner varchar(12),
+deal_time varchar(14),
+total_disct varchar(90),
+tariff_trace varchar(80),
+partial_reference_no varchar(12),
+trance_latied_other_party varchar(30),
+free_format_date varchar(80),
+call_net_type varchar(6),
+video_call_flg varchar(10),
+grant_dur varchar(11),
+initiative_cut_flg varchar(3),
+local_fee float,
+roam_fee float,
+toll_fee float,
+local_fee_s float,
+roam_fee_s float,
+toll_fee_s float,
+ruraladd_fee_s float,
+tolladd_fee_s float,
+toll_fee_2_s float,
+toll_fee_2 float,
+ruraladd_fee float,
+tolladd_fee float,
+opp_carrier_prov varchar(10),
+is_inner varchar(1),
+is_prov varchar(1),
+is_wt_prov varchar(1),
+is_dx_311 varchar(1),
+is_xlt_311 varchar(1),
+is_311_fix varchar(1),
+ip_type_id varchar(10),
+package_info varchar(128),
+tariff_track varchar(128),
+org_hregion varchar(12),
+org_otherhregion varchar(12),
+is_video_call varchar(5)
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+ truncate table hw_tmp.tm_ls_volte_d_mid6 ;
+
+ insert into hw_tmp.tm_ls_volte_d_mid6
+ select cdr_type
+ ,roam_type
+ ,call_type
+ ,self_phone_no
+ ,vregion
+ ,imei
+ ,self_home_area
+ ,self_carrier
+ ,case when substr(opp_phone_no,1,3) = other_self_home_area then substr(opp_phone_no,1,30)
+       else concat(other_self_home_area,substr(trim(cast(opp_phone_no as varchar(20))),1,30) )
+       end
+ ,opp_visited_area_code
+ ,other_self_home_area
+ ,opp_carrier
+ ,opp_net_type
+ ,trans_serv_vendor
+ ,imsi
+ ,active_roam_no
+ ,in_trunk_no
+ ,out_trunk_no
+ ,msc_no
+ ,lac_id
+ ,cell_id
+ ,call_start_time
+ ,call_dur
+ ,partial_cdr_flag
+ ,serv_type
+ ,service_code
+ ,rfpowercapability
+ ,opplac_no
+ ,other_cell_id
+ ,billing_cycle
+ ,src_file_name
+ ,subs_id
+ ,acct_id
+ ,dest_file_name
+ ,third_self_phone_no
+ ,tariff_id
+ ,err_num
+ ,spec_call_type
+ ,basic_serv_code
+ ,msc_type
+ ,settle_partner
+ ,deal_time
+ ,total_disct
+ ,tariff_trace
+ ,partial_reference_no
+ ,trance_latied_other_party
+ ,free_format_date
+ ,call_net_type
+ ,video_call_flg
+ ,grant_dur
+ ,initiative_cut_flg
+ ,local_fee
+ ,roam_fee
+ ,toll_fee
+ ,local_fee_s
+ ,roam_fee_s
+ ,toll_fee_s
+ ,ruraladd_fee_s
+ ,tolladd_fee_s
+ ,toll_fee_2_s
+ ,toll_fee_2
+ ,ruraladd_fee
+ ,tolladd_fee
+ ,opp_carrier_prov
+ ,''
+ ,''
+---- ,case when length(a.opp_carrier)>2 and d.value is not null then '1' else '0' end
+ ,case when length(a.opp_carrier)>2 and a.opp_carrier_prov in ('22','24','431','451','471','311','351','371','531','10') then '1' else '0' end
+ ,'0' is_dx_311
+ ,'0' is_xlt_311
+ ,is_311_fix
+ ,a.ip_type_id
+ ,package_info
+ ,tariff_track
+ ,org_hregion
+ ,org_otherhregion
+ ,is_video_call
+from hw_tmp.tm_ls_volte_d_mid5 a
+----left join hw_tmp.tm_ls_volte_d_mid1 d
+----on a.opp_carrier_prov = d.value
 ;
