@@ -6,17 +6,18 @@ import os
 
 def get_dep(file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
     lis = []
-    pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % pattern
+    pattern = r'--.*'
     # pattern = r'(?=%s)[a-zA-Z0-9_\.]*_[a-zA-Z0-9]+(?=|;|,|\s|_\$|\))' % pattern
     try:
         '''去掉注释'''
         fl = open(file_name, 'r', encoding='gbk')
-        ff = re.sub(r'\n+', '\n', re.sub(r'--.*', '\n', fl.read()))
-
+        #ff = re.sub(r'\n+', '\n', re.sub(r'--*.*', '\n', fl.read()))
+        ff=fl.read()
     except Exception as e1:
         try:
             fl = open(file, 'r', encoding='utf-8')
-            ff = re.sub(r'\n+', '\n', re.sub(r'--.*', '\n', fl.read()))
+            ff = fl.read()
+            #ff = re.sub(r'\n+', '\n', re.sub(r'--*.*', '\n', fl.read()))
         except Exception as e2:
             print(f'{file}' + str(e1) + '\n' + str(e2))
             ff = ''

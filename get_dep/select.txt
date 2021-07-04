@@ -1,3 +1,26 @@
---asd
-from mk.tm_te_tmnl_first_info_d a --            mk.tm_qyh_tmnl_first_info_d  a
+--
+drop table if exists hw_tmp.tm_sc_user_fuse_mid16;--plll
+create table if not exists hw_tmp.tm_sc_user_fuse_mid16(
+    subs_id varchar(32)
+)row format delimited fields terminated by '\t' stored as rcfile;
+
+truncate table hw_tmp.tm_sc_user_fuse_mid16;
+--insert into-- hw_tmp.tm_sc_user_fuse_mid16
+select
+    a.subs_id
+from mk.tm_sc_subs_privilege_d a  --用户优惠关系日表
+join
+(
+    select markt_solution_id--lkkk
+    jkh
+    from pub.tdet_unlimited_flow_d  --det.tdet_unlimited_flow_d
+    where markt_solution_id_type in('不限量包','不限量套餐')
+    group by markt_solution_id
+) b
+on a.markt_solution_id=b.markt_solution_id
+where a.statis_date=${hivevar:vi_day}
+and a.is_using=1
+and a.is_on_Net_user=1
+and a.user_status not in('US28','US26')
+group by a.subs_id
 ;
