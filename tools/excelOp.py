@@ -95,6 +95,50 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
     return result_list
 
 
+def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit) -> None:
+    if edit:
+        try:
+            workbook = openpyxl.load_workbook(filename)
+
+        except FileNotFoundError as fe:
+            print(f'{fe},\nI\'ll create a new workbook named {filename}')
+            workbook = openpyxl.Workbook()
+        except Exception as e:
+            sys.exit(e)
+    elif os.path.exists(filename):
+        sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
+    else:
+        workbook = openpyxl.Workbook()
+        print(f'Create a new workbook named[{filename}]')
+
+    for sheet_name, data in data_info:
+
+        try:
+            is_sheet = workbook[sheet_name]
+            workbook.remove(is_sheet)
+        except KeyError as ke:
+            print(f'{ke},\nI\'ll create a new sheet named [{sheet_name}] in workbook [{filename}]')
+        except Exception as e:
+            sys.exit(e)
+
+        new_sheet = workbook.create_sheet(sheet_name)
+
+        for row_id, row_data in enumerate(data, start=1):
+
+            head_fill = PatternFill(patternType='solid', fgColor="CCCCFF")
+            side = Side(style='thin', color='000000')
+            font = Font(b=True)
+            head_border = Border(left=side, right=side, top=side, bottom=side)
+            for col_id, cell_data in enumerate(row_data, start=1):
+                if row_id == 1:
+                    new_sheet.cell(row_id, col_id).fill = head_fill
+                    new_sheet.cell(row_id, col_id).border = head_border
+                    new_sheet.cell(row_id, col_id).font = font
+                new_sheet.cell(row_id, col_id, cell_data)
+    workbook.save(filename)
+    workbook.close()
+
+
 if __name__ == '__main__':
     # basedir = os.path.dirname(os.path.dirname(__file__)) + '\\dustbin'
     # fileName = f'{basedir}\\test.xlsx'
