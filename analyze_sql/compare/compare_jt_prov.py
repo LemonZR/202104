@@ -37,6 +37,7 @@ def get_sql_dict(file) -> dict[int, str]:
     sql_dict = {}
 
     for sql_blk_id, sql_blk in enumerate(sql_blks):
+        # 将所有空字符替换为一个空格
         new_sql_blk = re.sub(r'\s+', ' ', sql_blk)
         sql_dict.setdefault(sql_blk_id, new_sql_blk)
     return sql_dict
