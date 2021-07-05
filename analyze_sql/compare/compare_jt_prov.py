@@ -99,8 +99,8 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
 
 if __name__ == '__main__':
     filename = 'D:\\compare_jt_prov.xlsx'
-    jt_dir = 'D:\\tmp\\compare_jt'
-    prov_dir = 'D:\\tmp\\compare_hb'
+    jt_dir = 'D:\\tmp\\mk'
+    prov_dir = 'D:\\bd_hive\\mk'
     diff, sam, jt_mis, prov_mis = compare_file(jt_dir, prov_dir)
     data = [('脚本不同', diff), ('脚本一致', sam), ('集团没有的脚本', jt_mis), ('省没有的脚本', prov_mis)]
     excelOp.write_many_sheets_xlsx(filename, data, edit=True)

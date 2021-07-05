@@ -110,7 +110,12 @@ def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit) ->
     else:
         workbook = openpyxl.Workbook()
         print(f'Create a new workbook named[{filename}]')
-
+    if data_info:
+        try:
+            is_sheet = workbook['Sheet']
+            workbook.remove(is_sheet)
+        except Exception as e:
+            pass
     for sheet_name, data in data_info:
 
         try:
