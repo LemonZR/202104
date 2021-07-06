@@ -66,10 +66,10 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
     jt_missed = prov_files.difference(jt_files)
     # jt_and_prov = jt_files.intersection(prov_files)
     prov_miss = [('省侧没有的',)]
-
+    print(list(map(lambda x: (x,), jt_missed)))
     jt_miss = [('集团没有的',)]
     if jt_missed:
-        jt_miss = [('集团没有的',)] + [tuple(jt_missed)]
+        jt_miss = [('集团没有的',)] + list(map(lambda x: (x,), jt_missed))
 
     differences = [('脚本名', '集团sql', '省sql')]
     same = [('脚本一致',)]
