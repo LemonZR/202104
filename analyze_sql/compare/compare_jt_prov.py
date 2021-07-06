@@ -10,6 +10,10 @@ from tools import excelOp
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
     file_list = []
+    if os.path.isdir(root_dir):
+        print(f'{root_dir}文件夹存在')
+    else:
+        print(f'{root_dir}文件夹不存在!')
     for root, dirs, files in os.walk(root_dir):
 
         for file in files:
@@ -99,8 +103,8 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
 
 if __name__ == '__main__':
     filename = 'D:\\compare_jt_prov.xlsx'
-    jt_dir = 'D:\\tmp\\mk'
-    prov_dir = 'D:\\bd_hive\\mk'
+    jt_dir = 'D:\\tmp\\compare_jt'
+    prov_dir = 'D:\\tmp\\compare_hb'
     diff, sam, jt_mis, prov_mis = compare_file(jt_dir, prov_dir)
     data = [('脚本不同', diff), ('脚本一致', sam), ('集团没有的脚本', jt_mis), ('省没有的脚本', prov_mis)]
     excelOp.write_many_sheets_xlsx(filename, data, edit=True)
