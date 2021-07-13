@@ -70,27 +70,31 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
     if jt_missed:
         jt_miss = [('集团没有的',)] + list(map(lambda x: (x,), jt_missed))
 
-    differences = [('脚本名', '集团sql', '省sql')]
+    differences = [('脚本名', '操作方法', '集团sql(jt_script)', '省sql(E:\\git_clone\\bd_hive)')]
     same = [('脚本一致',)]
     diff_cnt = 0
     for file_name, sql_dict in jt_files_sql_dict.items():
         is_same = True
-
+        jt_file_path = f".\\jt_script\\dwh\\{file_name}"
+        prov_file_path = f'D:\\bd_hive\\dwh\\{file_name}'
         pro_file_sql_dict = prov_files_sql_dict.get(file_name, None)
         if not pro_file_sql_dict:
             prov_miss.append((file_name,))
             continue
         if len(sql_dict) != len(pro_file_sql_dict):
             is_same = False
-            differences.append((file_name, 'sql段个数不同', 'sql段个数不同'))
+            differences.append((file_name, '', f'=HYPERLINK("{jt_file_path}","sql段不同:集团脚本")',
+                                f'=HYPERLINK("{prov_file_path}","省脚本")'))
+
         else:
             for sql_id, sql in sql_dict.items():
                 prov_sql = pro_file_sql_dict.get(sql_id)
                 if sql != prov_sql:
                     is_same = False
-                    differences.append((file_name, sql, prov_sql))
-                else:
-                    continue
+
+                    differences.append((file_name, '', f'=HYPERLINK("{jt_file_path}","集团脚本")',
+                                        f'=HYPERLINK("{prov_file_path}","省脚本")'))
+                    break
         if is_same:
             same.append((file_name,))
         else:
@@ -101,9 +105,9 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
 
 
 if __name__ == '__main__':
-    filename = 'D:\\compare_jt_prov_mk.xlsx'
-    jt_dir = 'D:\\tmp\\compare_jt\\jt_script\\mk'
-    prov_dir = 'D:\\tmp\\compare_hb\\mk'
+    filename = 'D:\\compare_jt_prov_dwh_zhangrui.xlsx'
+    jt_dir = 'D:\\tmp\\compare_jt\\jt_script\\dwh'
+    prov_dir = 'D:\\bd_hive\\dwh'
     diff, sam, jt_mis, prov_mis = compare_file(jt_dir, prov_dir)
     data = [('脚本不同', diff), ('脚本一致', sam), ('集团没有的脚本', jt_mis), ('省没有的脚本', prov_mis)]
     excelOp.write_many_sheets_xlsx(filename, data, edit=True)

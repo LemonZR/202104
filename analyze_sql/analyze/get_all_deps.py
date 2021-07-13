@@ -83,20 +83,17 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
-
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
         from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
         # 将pre脚本与主脚本合并,转小写
         # pre 或 per 。。。
         file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
         # 部分脚本不合常识比如mk_pm_sc_user_lte_d，前置脚本有其他词语
-
         result.setdefault(file_name, {})
         if insert_sql_list:
             for insert_sql in insert_sql_list:
                 target_table = re.findall(table_pattern, insert_sql, re.I)
                 if target_table:
-
                     result[file_name].setdefault('target_table', target_table[0].lower())
         if from_sql_list:
             for from_sql in from_sql_list:
@@ -105,7 +102,7 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
                     for dep_table in dep_tables:
                         result[file_name].setdefault('deps', []).append(dep_table.lower())
 
-        result[file_name]['deps'] = list(set(result[file_name].get('deps', ['no_dep'])))
+        result[file_name]['deps'] = list(set(result[file_name].get('deps', [])))
 
     return result
 
@@ -183,30 +180,25 @@ def run(dir_name):
     print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
-
         deps = info.get('deps', ['no_dep'])
         target_table = info.get('target_table', 'erro')
 
         for dep in deps:
-            if file == 'mk_pm_sc_user_lte_d.sql':
-                print(dep)
-                sys.exit()
-            continue
             excel_data_direct_deps.append([file, target_table, dep])
     print('生成excel data2 end\n' + '*' * 100)
     return excel_data_all_deps, excel_data_direct_deps
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\mk'
+    dirName = 'D:\\bd_hive\\dis'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\all_mk_deps.xlsx'
+    result_xlsx = 'D:\\all_dis_deps.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
     print('写入excel：直接依赖 end' + '*' * 100)
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    # print('写入excel：所有依赖 start' + '*' * 100)
+    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
+    # print('写入excel：所有依赖 end' + '*' * 100)
 

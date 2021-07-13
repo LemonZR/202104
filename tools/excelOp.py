@@ -46,6 +46,7 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
             print(f'{fe},\nI\'ll create a new workbook named {filename}')
             workbook = openpyxl.Workbook()
         except KeyError as ke:
+            workbook = openpyxl.load_workbook(filename)
             print(f'{ke},\nI\'ll create a new sheet named [{sheet_name}] in workbook [{filename}]')
         except Exception as e:
             sys.exit(e)
@@ -106,7 +107,7 @@ def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit) ->
         except Exception as e:
             sys.exit(e)
     elif os.path.exists(filename):
-        sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True],then try again!')
+        sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True] or delete it,then try again!')
     else:
         workbook = openpyxl.Workbook()
         print(f'Create a new workbook named[{filename}]')
