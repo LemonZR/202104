@@ -3,9 +3,9 @@
 import re
 import os
 import copy
-import sys
 
-from tools import excelOp, PrintFmtData
+
+from tools import excelOp
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
@@ -190,15 +190,15 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\dis'
+    dirName = 'D:\\bd_hive\\mk'
     data1, data2 = run(dirName)
     print(len(data1))
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\all_dis_deps.xlsx'
+    result_xlsx = 'D:\\all_mk_deps.xlsx'
     print('写入excel：直接依赖 start' + '*' * 100)
     excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
     print('写入excel：直接依赖 end' + '*' * 100)
-    # print('写入excel：所有依赖 start' + '*' * 100)
-    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='all_new')
-    # print('写入excel：所有依赖 end' + '*' * 100)
+    print('写入excel：所有依赖 start' + '*' * 100)
+    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
+    print('写入excel：所有依赖 end' + '*' * 100)
 
