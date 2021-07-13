@@ -96,7 +96,7 @@ def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
     return result_list
 
 
-def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit) -> None:
+def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit=True) -> None:
     if edit:
         try:
             workbook = openpyxl.load_workbook(filename)

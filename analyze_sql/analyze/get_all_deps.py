@@ -193,12 +193,14 @@ if __name__ == '__main__':
     dirName = 'D:\\bd_hive\\mk'
     data1, data2 = run(dirName)
     print(len(data1))
+
+    result_xlsx = 'D:\\mk所有依赖关系.xlsx'
     # 先写小的，避免第二次打开大数据表
-    result_xlsx = 'D:\\all_mk_deps.xlsx'
-    print('写入excel：直接依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
-    print('写入excel：直接依赖 end' + '*' * 100)
-    print('写入excel：所有依赖 start' + '*' * 100)
-    excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
-    print('写入excel：所有依赖 end' + '*' * 100)
+    # print('写入excel：直接依赖 start' + '*' * 100)
+    # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
+    # print('写入excel：直接依赖 end' + '*' * 100)
+    # print('写入excel：所有依赖 start' + '*' * 100)
+    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
+    # print('写入excel：所有依赖 end' + '*' * 100)
+    excelOp.write_many_sheets_xlsx(filename=result_xlsx,data_info=[('直接依赖',data2),('所有依赖',data1)],edit=True)
 
