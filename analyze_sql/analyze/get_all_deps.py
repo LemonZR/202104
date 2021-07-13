@@ -131,7 +131,7 @@ def iterates(my_name, deps_list, __id_dict={}):
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
         elif depth == 0:
-
+            # 只在弟0层写dwh 和pub 表
             result.append([depth] + parents['p_tables'] + [value])
 
     return result
