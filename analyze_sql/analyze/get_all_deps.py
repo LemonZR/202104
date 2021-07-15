@@ -126,6 +126,7 @@ def iterates(my_name, deps_list, __id_dict={}):
             result.append([depth] + parents['p_tables'] + [dep_name])
             if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
+                # 这里是个环，可以做点什么
                 continue
             else:
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)

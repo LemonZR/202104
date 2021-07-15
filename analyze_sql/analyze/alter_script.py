@@ -86,8 +86,8 @@ def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname=
 if __name__ == '__main__':
     time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     dirName = 'D:\\bd_hive\\dis\\'
-    dirname_bak = f'D:\\tmp\\alter_bak_{time_str}'
-    dirname_alter_files = f'D:\\tmp\\altered_{time_str}'
+    dirname_bak = f'D:\\tmp\\alter_temporary_bak_{time_str}'
+    dirname_alter_files = f'D:\\tmp\\temporary_altered_{time_str}'
     print(dirname_bak)
     find_pattern = r'create\s*temporary'
     old_p = r'tablespace\s*=\s*\'[a-zA-Z_]*\''
