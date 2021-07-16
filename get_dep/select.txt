@@ -1,515 +1,1575 @@
 --<metadata>
---<model_name>: GSM语音VOLTE话单日汇总表(非时段)
---<keyword>: GSM语音, VOLTE话单日汇总表
---<description>: GSM语音VOLTE话单日汇总表(非时段)
---<author>: 李啸天@华为
---<run_cycle>: D
---<tmp_table>: hw_tmp.tm_ls_volte_d_mid2,hw_tmp.tm_ls_volte_d_mid3,hw_tmp.tm_ls_volte_d_mid4,hw_tmp.tm_ls_volte_d_mid5,hw_tmp.tm_ls_volte_d_mid6,
---<tmp_table>: hw_tmp.tm_ls_volte_d_mid7,hw_tmp.tm_ls_volte_d_mid8,hw_tmp.tm_ls_volte_d_mid9
---<det_table>: pub.tdic_set_value,pub.tdet_grp_prod_sort
---<app_table>: mk.tm_ls_volte_d
---<app_name>: /路径/子路径/应用专题1/应用1
+--<model_name>:全网移动客户易携出融合报表
+--<keyword>:
+--<description>: 原gp表dis.tc_xhzw_xc_rh_info_m搬迁
+--<author>: gaochaoyue@华为
+--<run_cycle>: M
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid1,hw_tmp.tm_sc_user_xh_rh_info_m_mid2,hw_tmp.tm_sc_user_xh_rh_info_m_mid3,hw_tmp.tm_sc_user_xh_rh_info_m_mid4
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid5,hw_tmp.tm_sc_user_xh_rh_info_m_mid6,hw_tmp.tm_sc_user_xh_rh_info_m_mid7,hw_tmp.tm_sc_user_xh_rh_info_m_mid8
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid9,hw_tmp.tm_sc_user_xh_rh_info_m_mid10,hw_tmp.tm_sc_user_xh_rh_info_m_mid11,hw_tmp.tm_sc_user_xh_rh_info_m_mid12
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid13,hw_tmp.tm_sc_user_xh_rh_info_m_mid14,hw_tmp.tm_sc_user_xh_rh_info_m_mid15,hw_tmp.tm_sc_user_xh_rh_info_m_mid16
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid17,hw_tmp.tm_sc_user_xh_rh_info_m_mid18,hw_tmp.tm_sc_user_xh_rh_info_m_mid19,hw_tmp.tm_sc_user_xh_rh_info_m_mid20
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid21,hw_tmp.tm_sc_user_xh_rh_info_m_mid22
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid24,hw_tmp.tm_sc_user_xh_rh_info_m_mid25,hw_tmp.tm_sc_user_xh_rh_info_m_mid26,hw_tmp.tm_sc_user_xh_rh_info_m_mid27
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid23,hw_tmp.tm_sc_user_xh_rh_info_m_mid28,hw_tmp.tm_sc_user_xh_rh_info_m_mid29,hw_tmp.tm_sc_user_xh_rh_info_m_mid30
+--<det_table>: pub.tdet_unlimited_flow_d,pub.tdet_chnl_belng_info
+--<app_table>: MK.tm_sc_user_xh_rh_info_m
+--<app_name>:
 --</metadata>
-
-
-drop table if exists hw_tmp.tm_ls_volte_d_mid5 ;
-create table if not exists hw_tmp.tm_ls_volte_d_mid5
-(cdr_type varchar(3)
-,roam_type varchar(5)
-,call_type varchar(5)
-,self_phone_no varchar(22)
-,vregion varchar(12)
-,imei varchar(20)
-,self_home_area varchar(12)
-,self_carrier varchar(33)
-,opp_phone_no varchar(30)
-,opp_visited_area_code varchar(12)
-,other_self_home_area varchar(12)
-,opp_carrier varchar(33)
-,opp_net_type varchar(3)
-,trans_serv_vendor varchar(12)
-,imsi varchar(15)
-,active_roam_no varchar(15)
-,in_trunk_no varchar(12)
-,out_trunk_no varchar(12)
-,msc_no varchar(15)
-,lac_id varchar(20)
-,cell_id varchar(20)
-,call_start_time varchar(14)
-,call_dur int
-,partial_cdr_flag varchar(3)
-,serv_type varchar(2)
-,service_code varchar(2)
-,rfpowercapability varchar(2)
-,opplac_no varchar(6)
-,other_cell_id varchar(6)
-,billing_cycle varchar(6)
-,src_file_name varchar(24)
-,subs_id varchar(13)
-,acct_id varchar(20)
-,dest_file_name varchar(24)
-,third_self_phone_no varchar(22)
-,tariff_id varchar(15)
-,err_num varchar(4)
-,spec_call_type varchar(6)
-,basic_serv_code varchar(12)
-,msc_type varchar(5)
-,settle_partner varchar(12)
-,deal_time varchar(14)
-,total_disct varchar(90)
-,tariff_trace varchar(80)
-,partial_reference_no varchar(12)
-,trance_latied_other_party varchar(30)
-,free_format_date varchar(80)
-,call_net_type varchar(6)
-,video_call_flg varchar(10)
-,grant_dur varchar(11)
-,initiative_cut_flg varchar(3)
-,local_fee decimal(12,3)
-,roam_fee decimal(12,3)
-,toll_fee decimal(12,3)
-,local_fee_s decimal(12,3)
-,roam_fee_s decimal(12,3)
-,toll_fee_s decimal(12,3)
-,ruraladd_fee_s decimal(12,3)
-,tolladd_fee_s decimal(12,3)
-,toll_fee_2_s decimal(12,3)
-,toll_fee_2 decimal(12,3)
-,ruraladd_fee decimal(12,3)
-,tolladd_fee decimal(12,3)
-,opp_carrier_prov varchar(10)
-,is_inner varchar(1)
-,is_prov varchar(1)
-,is_wt_prov varchar(1)
-,is_dx_311 varchar(1)
-,is_xlt_311 varchar(1)
-,is_311_fix varchar(1)
-,opp_phone_no_5 varchar(5)
-,opp_phone_no_6 varchar(6)
-,opp_phone_no_7 varchar(7)
-,opp_phone_no_8 varchar(8)
-,opp_phone_no_area_5 varchar(5)
-,opp_phone_no_area_6 varchar(6)
-,opp_phone_no_area_7 varchar(7)
-,opp_phone_no_area_8 varchar(8)
-,ip_type_id varchar(10)
-,package_info varchar(128)
-,tariff_track varchar(128)
-,org_hregion varchar(12)
-,org_otherhregion varchar(12)
-,is_video_call varchar(5)
+---step 3 码表打标
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid1;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid1
+(
+statis_month int
+,subs_id varchar(32)
+,phone_no varchar(20)
 )
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
- truncate table  hw_tmp.tm_ls_volte_d_mid5 ;
-
- insert into hw_tmp.tm_ls_volte_d_mid5
- select
- trim(cdr_type)
- ,trim(roam_type)
- ,trim(call_type)
- ,trim(self_phone_no)
- ,trim(vregion)
- ,trim(imei)
- ,trim(self_home_area)
- ,trim(self_carrier)
- ,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
- when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
- else trim(opp_phone_no)
- end
- ,trim(opp_visited_area_code)
- ,trim(other_self_home_area)
- ,trim(opp_carrier)
- ,trim(opp_net_type)
- ,trans_serv_vendor
- ,''
- ,active_roam_no
- ,''
- ,''
- ,''
- ,''
- ,''
- ,trim(call_start_time)
- ,call_dur
- ,partial_cdr_flag
- ,serv_type
- ,service_code
- ,rfpowercapability
- ,''
- ,''
- ,billing_cycle
- ,src_file_name
- ,subs_id
- ,acct_id
- ,dest_file_name
- ,third_self_phone_no
- ,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
- ,err_num
- ,spec_call_type
- ,basic_serv_code
- ,msc_type
- ,settle_partner
- ,deal_time
- ,''
- ,''
- ,partial_reference_no
- ,trance_latied_other_party
- ,free_format_date
- ,call_net_type
- ,video_call_flg
- ,grant_dur
- ,''
- ,local_fee
- ,roam_fee
- ,toll_fee
- ,local_fee_s
- ,roam_fee_s
- ,toll_fee_s
- ,ruraladd_fee_s
- ,tolladd_fee_s
- ,toll_fee_2_s
- ,toll_fee_2
- ,ruraladd_fee
- ,tolladd_fee
- ---增加对端运营商省字段
- ,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
- ,''
- ,''
- ,''
- ,''
- ,''
- ,case when ( trim(a.opp_carrier) like '2.310' or
- trim(a.opp_carrier) like '2.311' or
- trim(a.opp_carrier) like '2.312' or
- trim(a.opp_carrier) like '2.313' or
- trim(a.opp_carrier) like '2.314' or
- trim(a.opp_carrier) like '2.315' or
- trim(a.opp_carrier) like '2.316' or
- trim(a.opp_carrier) like '2.317' or
- trim(a.opp_carrier) like '2.318' or
- trim(a.opp_carrier) like '2.319' or
- trim(a.opp_carrier) like '2.335' or
- trim(a.opp_carrier) like '2.336')
- then '1'
- else '0'
- end
- ,''
- ,''
- ,''
- ,''
- ,''
- ,''
- ,''
- ,''
- ,case when trim(opp_phone_no) like '17951%' then '17951'
- when trim(opp_phone_no) like '17950%' then '17950'
- else ''
- end
- ,package_info
- --20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
- ,tariff_trace
- ,org_hregion --本方原归属
- ,org_otherhregion --对方原归属
-,'0'
- from dwh.td_su_cdr_gsm_home_d a
- where deal_date=${hivevar:vi_day}
- and call_net_type='VOLTE'
- ;
-
-
-insert into hw_tmp.tm_ls_volte_d_mid5
-select
-trim(cdr_type)
-,trim(roam_type)
-,trim(call_type)
-,trim(self_phone_no)
-,trim(vregion)
-,trim(imei)
-,trim(self_home_area)
-,trim(self_carrier)
-,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
-when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
-else trim(opp_phone_no)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid1;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid1
+select b.statis_month
+,b.subs_id
+,c.phone_no
+from mk.tm_sc_mob_phone_statis_m b
+join mk.tm_sc_user_statis_m c
+on b.subs_id=c.subs_id
+and c.statis_month=${hivevar:vi_month}
+where  b.statis_month = ${hivevar:vi_month}
+and b.is_mobile_phone_user = '1'
+and b.is_on_net_user = '1'
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid2;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid2
+(
+phone_no varchar(40)
+,fuwu_bmy varchar(100)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid2;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid2
+select  PHONE_NO,case when  ((service_reqst_type_3='基础套餐' or service_reqst_type_3='流量套餐')
+and service_reqst_type_2='基础服务'
+and service_reqst_type_1 ='移动业务')
+or ((service_reqst_type_3='基础套餐' or service_reqst_type_3='流量套餐')
+and service_reqst_type_2='业务营销'
+and service_reqst_type_1 ='移动业务')
+or ((service_reqst_type_4='基础套餐' or service_reqst_type_4='流量套餐')
+and (service_reqst_type_3='业务营销' )
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1 ='河北质量监督热线')
+or ( (service_reqst_type_4='基础套餐' or service_reqst_type_4='流量套餐')
+and (service_reqst_type_3='基础服务' )
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1 ='河北质量监督热线')
+or ( service_reqst_type_2='套餐挽留'
+and service_reqst_type_1='咨询')
+or ( service_reqst_type_3='新资费推广'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理')
+or  (service_reqst_type_4='对资费不满'
+and service_reqst_type_3='绿色离网'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理' )
+or ( service_reqst_type_3='新活动推广'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理')
+or ( service_reqst_type_3='新业务推广'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理' )
+or  (service_reqst_type_2='业务营销'
+and service_reqst_type_1='家庭业务')
+or  (service_reqst_type_6='费用质疑'
+and service_reqst_type_1='受理')
+or  ((service_reqst_type_3='资费套餐' or service_reqst_type_3='费用质疑')
+and service_reqst_type_2='基础业务'
+and service_reqst_type_1 ='一级客服投诉')
+or  (service_reqst_type_2='套餐挽留'
+and service_reqst_type_1 ='咨询')
+or  (service_reqst_type_3='费用质疑'
+and service_reqst_type_2='基础业务'
+and service_reqst_type_1 ='受理（旧）')
+then '资费不满意客户'
+when  (service_reqst_type_2='网络质量'
+and service_reqst_type_1='移动业务')
+or  (service_reqst_type_3='网络质量'
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1 ='河北质量监督热线' )
+or  (service_reqst_type_2='网络质量'
+and service_reqst_type_1 ='家庭业务')
+or (service_reqst_type_3='网络质量'
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1 ='咨询')
+or (service_reqst_type_4='有公告解释不认可（石家庄）'
+and service_reqst_type_3='网络质量（石家庄）'
+and service_reqst_type_2='4G网络专席(石家庄）'
+and service_reqst_type_1 ='咨询')
+or (service_reqst_type_2='基础通信'
+and service_reqst_type_1='一级客服投诉' )
+then '网络不满意客户'
+when
+( (service_reqst_type_3='家庭宽带')
+and service_reqst_type_1 ='家庭业务')
+or (service_reqst_type_4='家庭宽带'
+and service_reqst_type_2='家庭业务'
+and service_reqst_type_1 ='河北质量监督热线')
+or (service_reqst_type_3='家庭宽带'
+and service_reqst_type_2='家庭业务'
+and service_reqst_type_1 ='一级客服投诉'    )
+then '宽带不满意客户'
+when
+(service_reqst_type_3='服务触点'
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1='河北质量监督热线')
+or (service_reqst_type_2='服务触点'
+and service_reqst_type_1='移动业务' )
+or (service_reqst_type_2='服务触点'
+and service_reqst_type_1='集团业务')
+or (service_reqst_type_3='绿色离网'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理')
+or (service_reqst_type_4='服务质量'
+and service_reqst_type_3='铁通问题'
+and service_reqst_type_2='专项问题'
+and service_reqst_type_1='受理')
+or (service_reqst_type_3='服务触点'
+and service_reqst_type_2='移动业务'
+and service_reqst_type_1='受理')
+or (service_reqst_type_3='服务触点'
+and service_reqst_type_2='集团业务'
+and service_reqst_type_1='受理' )
+or (service_reqst_type_3='服务问题'
+and service_reqst_type_2='10085外呼营销'
+and service_reqst_type_1='受理' )
+or (service_reqst_type_2='服务触点'
+and service_reqst_type_1='增值业务')
+or ( service_reqst_type_2='服务质量'
+and service_reqst_type_1='一级客服投诉' )
+then '服务不满意客户'
 end
-,trim(opp_visited_area_code)
-,trim(other_self_home_area)
-,trim(opp_carrier)
-,trim(opp_net_type)
-,trans_serv_vendor
-,''
-,active_roam_no
-,''
-,''
-,''
-,''
-,''
-,trim(call_start_time)
-,call_dur
-,partial_cdr_flag
-,serv_type
-,service_code
-,rfpowercapability
-,''
-,''
-,billing_cycle
-,src_file_name
-,subs_id
-,acct_id
-,dest_file_name
-,third_self_phone_no
-,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
-,err_num
-,spec_call_type
-,basic_serv_code
-,msc_type
-,settle_partner
-,deal_time
-,''
-,''
-,partial_reference_no
-,trance_latied_other_party
-,free_format_date
-,call_net_type
-,video_call_flg
-,grant_dur
-,''
-,local_fee
-,roam_fee
-,toll_fee
-,local_fee_s
-,roam_fee_s
-,toll_fee_s
-,ruraladd_fee_s
-,tolladd_fee_s
-,toll_fee_2_s
-,toll_fee_2
-,ruraladd_fee
-,tolladd_fee
----增加对端运营商省字段
-,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
-,''
-,''
-,''
-,''
-,''
-,case when ( trim(a.opp_carrier) like '2.310' or
-trim(a.opp_carrier) like '2.311' or
-trim(a.opp_carrier) like '2.312' or
-trim(a.opp_carrier) like '2.313' or
-trim(a.opp_carrier) like '2.314' or
-trim(a.opp_carrier) like '2.315' or
-trim(a.opp_carrier) like '2.316' or
-trim(a.opp_carrier) like '2.317' or
-trim(a.opp_carrier) like '2.318' or
-trim(a.opp_carrier) like '2.319' or
-trim(a.opp_carrier) like '2.335' or
-trim(a.opp_carrier) like '2.336')
-then '1'
+from  mk.tm_cs_cmos_serv_req_d a         ---- dwh.td_cs_cmos_serv_req_d a
+WHERE
+a.STATIS_DATE in (select   max(STATIS_DATE)  from  mk.tm_cs_cmos_serv_req_d a)        ----- between ${hivevar:last6month_char}01 and ${hivevar:vi_month_last}
+and SUBSTR(a.acpt_time,1,6) BETWEEN '${hivevar:last5month_char}'  AND '${hivevar:vi_month}'
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid3;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid3
+(
+subs_id varchar(32)
+,phone_no varchar(32)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid3;
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid3
+select
+subs_id
+,phone_no
+from
+dwh.td_ne_broaband_detl_m a
+join dwh.td_sc_subs_m b
+on a.imsi=b.imsi
+and b.statis_month=${hivevar:vi_month}
+and is_act='1';
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid4;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid4
+(
+statis_month int
+,subs_id varchar(32)
+,phone_no varchar(20)
+,dissatisfied_net varchar(2)--网络不满意客户
+,dissatisfied_charge varchar(2)--潜在资费不满意客户
+,dissatisfied_kuandai varchar(2)--宽带不满意客户
+,dissatisfied_fuwu varchar(2)--服务不满意客户
+,dm_ywsk varchar(2) --异网双卡客户
+,dm_ywkd varchar(2) --异网宽带客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid4;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid4
+SELECT  A.STATIS_MONTH
+,A.SUBS_ID
+,A.PHONE_NO
+,coalesce(dissatisfied_net,'0')
+,coalesce(dissatisfied_charge,'0')
+,coalesce(dissatisfied_kuandai,'0')
+,coalesce(dissatisfied_fuwu,'0')
+,case when c.subs_id is not null and e.IS_MAIN='1' then '2'
+when c.subs_id is not null AND E.IS_MAIN='0' then '1'
+else '0'
+end dm_ywsk
+,case when d.subs_id is not null then '1' else '0' end dm_ywkd
+FROM hw_tmp.tm_sc_user_xh_rh_info_m_mid1 A
+LEFT JOIN
+(SELECT   phone_no,
+max(CASE WHEN fuwu_bmy='网络不满意客户' THEN '1' ELSE '0' END) dissatisfied_net, --网络不满意客户
+max(CASE WHEN fuwu_bmy='资费不满意客户' THEN '1' ELSE '0' END) dissatisfied_charge, --资费不满意客户
+max(CASE WHEN fuwu_bmy='宽带不满意客户' THEN '1' ELSE '0' END ) dissatisfied_kuandai,--宽带不满意客户
+max(CASE WHEN fuwu_bmy='服务不满意客户' THEN '1' ELSE '0' END ) dissatisfied_fuwu--宽带不满意客户
+FROM hw_tmp.tm_sc_user_xh_rh_info_m_mid2
+group by phone_no
+) b
+on a.phone_no=b.phone_no
+left join mk.TM_TE_QS_DOUCARD_USER_LABEL_M c ---DIS_DM.TM_QS_DOUCARD_USER_LABEL_M c ----未建表
+on a.subs_id=c.subs_id and c.statis_month=${hivevar:vi_month} and c.IS_CMCC_OPP='1' and c.is_dm_src='1'
+left  join mk.tm_sc_user_dcard_cmp_m e--- dis_dm.TM_QS_DOUCARD_DM_CMP_USER_MF_M e ----未建表
+on a.subs_id=e.subs_id and e.statis_month=${hivevar:vi_month}
+left join  hw_tmp.tm_sc_user_xh_rh_info_m_mid3 d---photo.tdet_kuandai_detl  d----未建表异网宽带脚本
+on a.subs_id=d.subs_id
+group by A.STATIS_MONTH
+,A.SUBS_ID
+,A.PHONE_NO
+,coalesce(dissatisfied_net,'0')
+,coalesce(dissatisfied_charge,'0')
+,coalesce(dissatisfied_kuandai,'0')
+,coalesce(dissatisfied_fuwu,'0')
+,case when c.subs_id is not null and e.IS_MAIN='1' then '2'
+when c.subs_id is not null AND E.IS_MAIN='0' then '1'
 else '0'
 end
-,''
-,''
-,''
-,''
-,''
-,''
-,''
-,''
-,case when trim(opp_phone_no) like '17951%' then '17951'
-when trim(opp_phone_no) like '17950%' then '17950'
-else ''
-end
-,package_info
---20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
-,tariff_trace
-,org_hregion --本方原归属
-,org_otherhregion --对方原归属
-,'1'
-from dwh.td_su_cdr_volte_gsm_home_d a
-where deal_date=${hivevar:vi_day}
+,case when d.subs_id is not null then '1' else '0' end
 ;
 
-drop table if exists hw_tmp.tm_ls_volte_d_mid6;
 
-create table if not exists hw_tmp.tm_ls_volte_d_mid6
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid5;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid5
 (
-cdr_type varchar(3),
-roam_type varchar(5),
-call_type varchar(5),
-self_phone_no varchar(22),
-vregion varchar(12),
-imei varchar(20),
-self_home_area varchar(12),
-self_carrier varchar(33),
-opp_phone_no varchar(30),
-opp_visited_area_code varchar(12),
-other_self_home_area varchar(12),
-opp_carrier varchar(33),
-opp_net_type varchar(3),
-trans_serv_vendor varchar(12),
-imsi varchar(15),
-active_roam_no varchar(15),
-in_trunk_no varchar(12),
-out_trunk_no varchar(12),
-msc_no varchar(15),
-lac_id varchar(20),
-cell_id varchar(20),
-call_start_time varchar(14),
-call_dur int,
-partial_cdr_flag varchar(3),
-serv_type varchar(2),
-service_code varchar(2),
-rfpowercapability varchar(2),
-opplac_no varchar(6),
-other_cell_id varchar(6),
-billing_cycle varchar(6),
-src_file_name varchar(24),
-subs_id varchar(13),
-acct_id varchar(20),
-dest_file_name varchar(24),
-third_self_phone_no varchar(22),
-tariff_id varchar(15),
-err_num varchar(4),
-spec_call_type varchar(6),
-basic_serv_code varchar(12),
-msc_type varchar(5),
-settle_partner varchar(12),
-deal_time varchar(14),
-total_disct varchar(90),
-tariff_trace varchar(80),
-partial_reference_no varchar(12),
-trance_latied_other_party varchar(30),
-free_format_date varchar(80),
-call_net_type varchar(6),
-video_call_flg varchar(10),
-grant_dur varchar(11),
-initiative_cut_flg varchar(3),
-local_fee float,
-roam_fee float,
-toll_fee float,
-local_fee_s float,
-roam_fee_s float,
-toll_fee_s float,
-ruraladd_fee_s float,
-tolladd_fee_s float,
-toll_fee_2_s float,
-toll_fee_2 float,
-ruraladd_fee float,
-tolladd_fee float,
-opp_carrier_prov varchar(10),
-is_inner varchar(1),
-is_prov varchar(1),
-is_wt_prov varchar(1),
-is_dx_311 varchar(1),
-is_xlt_311 varchar(1),
-is_311_fix varchar(1),
-ip_type_id varchar(10),
-package_info varchar(128),
-tariff_track varchar(128),
-org_hregion varchar(12),
-org_otherhregion varchar(12),
-is_video_call varchar(5)
-)row format delimited
-fields terminated by '\t'
-stored as rcfile;
+statis_month int
+,subs_id varchar(32)
+,self_phone_no varchar(32)
+,opp_phone_no varchar(32)
+,opp_carr varchar(10)
+,o_chrg_dur int
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
 
- truncate table hw_tmp.tm_ls_volte_d_mid6 ;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid5;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid5
+select ${hivevar:vi_month}
+,subs_id
+,self_phone_no
+,opp_phone_no
+,opp_carrier
+,sum(case when partial_cdr_flag in('R','B') then ceil(call_dur*1.0/60)*(-1) else ceil(call_dur*1.0/60) end) --计费时长取分 向上取整
+from DWH.TD_SU_CDR_GSM_HOME_D  a
+where deal_date between ${hivevar:vi_month}01 and ${hivevar:vi_month}31
+AND CDR_TYPE='O'
+group by subs_id
+,self_phone_no
+,opp_phone_no
+,OPP_CARRIER
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid6;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid6
+(
+statis_month int
+,subs_id varchar(32)
+,self_phone_no varchar(32)
+,yw_dur_rate decimal(20,2)
+,yw_num_rare decimal(20,2)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid6;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid6
+select statis_month
+,subs_id
+,self_phone_no
+, case when SUM(CASE WHEN SUBSTR(opp_carr,1,1) IN ('3','4') THEN o_chrg_dur END)*1.0=0 then 0 else  SUM(CASE WHEN SUBSTR(opp_carr,1,1) IN ('3','4') THEN o_chrg_dur END)*1.0 /sum(o_chrg_dur)  end
+,case when count(distinct CASE WHEN SUBSTR(opp_carr,1,1) IN ('3','4') THEN opp_phone_no END)*1.0=0 then 0 else count(distinct CASE WHEN SUBSTR(opp_carr,1,1) IN ('3','4') THEN opp_phone_no END)*1.0/count(distinct opp_phone_no) end
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid5
+where o_chrg_dur>0
+group by statis_month
+,subs_id
+,self_phone_no
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid7;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid7
+(
+statis_month int
+,subs_id varchar(32)
+,phone_no varchar(20)
+,dissatisfied_net varchar(2) --网络不满意客户
+,dissatisfied_charge varchar(2) --潜在资费不满意客户
+,dissatisfied_kuandai varchar(2) --宽带不满意客户
+,dissatisfied_fuwu varchar(2) --服务不满意客户
+,dm_ywsk varchar(2) --异网双卡客户
+,dm_ywkd varchar(2) --异网宽带客户
+,net_high  varchar(2) --异网高话务客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid7;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid7
+select a.statis_month
+,a.subs_id
+,a.phone_no
+,a.dissatisfied_net
+,a.dissatisfied_charge
+,a.dissatisfied_kuandai
+,a.dissatisfied_fuwu
+,a.dm_ywsk
+,a.dm_ywkd
+,case when b.subs_id is not null then '1' else '0' end
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid4 a
+left join (select  subs_id from hw_tmp.tm_sc_user_xh_rh_info_m_mid6 where  (yw_dur_rate>0.6 or yw_num_rare>0.6) group by  subs_id )b
+on a.subs_id=b.subs_id
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid8;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid8
+(
+statis_month int
+,subs_id varchar(32)
+,phone_no varchar(20)
+,real_fee int
+,dissatisfied_net varchar(2)--网络不满意客户
+,dissatisfied_charge varchar(2)--潜在资费不满意客户
+,dissatisfied_kuandai varchar(2)--宽带不满意客户
+,dissatisfied_fuwu varchar(2)--服务不满意客户
+,dm_ywsk varchar(2)--异网双卡客户
+,dm_ywkd varchar(2)--异网宽带客户
+,net_high varchar(2)--异网高话务客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid8;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid8
+select a.statis_month
+,a.subs_id
+,a.phone_no
+,b.real_fee
+,a.dissatisfied_net
+,a.dissatisfied_charge
+,a.dissatisfied_kuandai
+,a.dissatisfied_fuwu
+,a.dm_ywsk
+,a.dm_ywkd
+,a.net_high
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid7 a
+left join mk.tm_sc_user_statis_m b
+on a.subs_id = b.subs_id
+and b.statis_month = ${hivevar:vi_month};
 
- insert into hw_tmp.tm_ls_volte_d_mid6
- select cdr_type
- ,roam_type
- ,call_type
- ,self_phone_no
- ,vregion
- ,imei
- ,self_home_area
- ,self_carrier
- ,case when substr(opp_phone_no,1,3) = other_self_home_area then substr(opp_phone_no,1,30)
-       else concat(other_self_home_area,substr(trim(cast(opp_phone_no as varchar(20))),1,30) )
-       end
- ,opp_visited_area_code
- ,other_self_home_area
- ,opp_carrier
- ,opp_net_type
- ,trans_serv_vendor
- ,imsi
- ,active_roam_no
- ,in_trunk_no
- ,out_trunk_no
- ,msc_no
- ,lac_id
- ,cell_id
- ,call_start_time
- ,call_dur
- ,partial_cdr_flag
- ,serv_type
- ,service_code
- ,rfpowercapability
- ,opplac_no
- ,other_cell_id
- ,billing_cycle
- ,src_file_name
- ,subs_id
- ,acct_id
- ,dest_file_name
- ,third_self_phone_no
- ,tariff_id
- ,err_num
- ,spec_call_type
- ,basic_serv_code
- ,msc_type
- ,settle_partner
- ,deal_time
- ,total_disct
- ,tariff_trace
- ,partial_reference_no
- ,trance_latied_other_party
- ,free_format_date
- ,call_net_type
- ,video_call_flg
- ,grant_dur
- ,initiative_cut_flg
- ,local_fee
- ,roam_fee
- ,toll_fee
- ,local_fee_s
- ,roam_fee_s
- ,toll_fee_s
- ,ruraladd_fee_s
- ,tolladd_fee_s
- ,toll_fee_2_s
- ,toll_fee_2
- ,ruraladd_fee
- ,tolladd_fee
- ,opp_carrier_prov
- ,''
- ,''
----- ,case when length(a.opp_carrier)>2 and d.value is not null then '1' else '0' end
- ,case when length(a.opp_carrier)>2 and a.opp_carrier_prov in ('22','24','431','451','471','311','351','371','531','10') then '1' else '0' end
- ,'0' is_dx_311
- ,'0' is_xlt_311
- ,is_311_fix
- ,a.ip_type_id
- ,package_info
- ,tariff_track
- ,org_hregion
- ,org_otherhregion
- ,is_video_call
-from hw_tmp.tm_ls_volte_d_mid5 a
-----left join hw_tmp.tm_ls_volte_d_mid1 d
-----on a.opp_carrier_prov = d.value
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid9;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid9
+(--- statis_month int,
+subs_id varchar(32)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid9;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid9
+select  ----statis_month,
+subs_id
+from MK.TM_SC_USER_FUSE_M a
+where statis_month=${hivevar:vi_month}
+---and a.is_all_arr='0'
+and is_union_pay=0
+and is_comm_user=1
+group by subs_id
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid10;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid10
+(
+statis_month int
+,subs_id varchar(32)
+,phone_no varchar(20)
+,real_fee int
+,dissatisfied_net varchar(2)	 --网络不满意客户
+,dissatisfied_charge varchar(2)	 --潜在资费不满意客户
+,dissatisfied_kuandai varchar(2)  --宽带不满意客户
+,dissatisfied_fuwu varchar(2)  --服务不满意客户
+,dm_ywsk varchar(2)	  --异网双卡客户
+,dm_ywkd varchar(2)     --异网宽带客户
+,net_high  varchar(2)  --异网高话务客户
+,is_grp varchar(2)     --政企成员客户
+,is_qqt varchar(2)  --全球通客户
+,is_dsj  varchar(2) --单手机客户
+,gjz_dnx_guhua	varchar(2) --无固话
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid10;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid10
+select
+a.statis_month
+,a.subs_id
+,a.phone_no
+,a.real_fee
+,a.dissatisfied_net --网络不满意客户,
+,a.dissatisfied_charge --潜在资费不满意客户
+,a.dissatisfied_kuandai --宽带不满意客户
+,a.dissatisfied_fuwu --服务不满意客户
+,a.dm_ywsk --异网双卡客户
+,a.dm_ywkd --异网宽带客户
+,a.net_high --异网高话务客户
+,case when b.subs_id is not null then '1' else '0' end --政企成员客户
+,case when real_fee * 0.01 > 50 and f.subs_id is not null and e.subs_id is not null then '1' else '0' end  --全球通客户
+,case when real_fee * 0.01 > 50 and e.subs_id is not null then '1' else '0' end  --单手机客户
+,1
+from  hw_tmp.tm_sc_user_xh_rh_info_m_mid8 a
+left join MK.TM_GC_NETUSER_YWJT_M b----DIS.tc_sc_netuser_ywjt_m
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month}
+left join (select entity_oid as subs_id from DWh.TD_SC_ENTITY_ATTR_D t  where attr_type = 'GotoneLevel'
+and deal_date=cast(regexp_replace(date_add(from_unixtime(unix_timestamp(),'yyyy-MM-dd'),-1),'-','') as int)
+and from_unixtime(unix_timestamp(t.adddata1,'yyyy-MM-dd'),'yyyyMMdd')>deal_date
+) f
+on a.subs_id=f.subs_id
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid9 e
+on a.subs_id=e.subs_id ----and e.statis_month=${hivevar:vi_month}
+group by a.statis_month
+,a.subs_id
+,a.phone_no
+,a.real_fee
+,a.dissatisfied_net --网络不满意客户,
+,a.dissatisfied_charge --潜在资费不满意客户
+,a.dissatisfied_kuandai --宽带不满意客户
+,a.dissatisfied_fuwu --服务不满意客户
+,a.dm_ywsk --异网双卡客户
+,a.dm_ywkd --异网宽带客户
+,a.net_high --异网高话务客户
+,case when b.subs_id is not null then '1' else '0' end --政企成员客户
+,case when real_fee * 0.01 > 50 and f.subs_id is not null and e.subs_id is not null then '1' else '0' end  --全球通客户
+,case when real_fee * 0.01 > 50 and e.subs_id is not null then '1' else '0' end  --单手机客户
+
+
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid11;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid11
+(
+phone_no varchar(20)
+,jt_101 varchar(2)  --客服咨询携转客户
+,jt_201  varchar(2)  --网络不满意客户
+,jt_202  varchar(2)--潜在资费不满意客户
+,jt_203 varchar(2)--宽带不满意客户
+,jt_401 varchar(2) --单手机客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid11;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid11
+SELECT MSISDN
+,max(case when cust_label='101' then 1 else 0 end)  --客服咨询携转客户
+,max(case when cust_label='201' then 1 else 0 end)  --网络不满意客户
+,max(case when cust_label='202' then 1 else 0 end)  --潜在资费不满意客户
+,max(case when cust_label='203' then 1 else 0 end)  --宽带不满意客户
+,max(case when cust_label='401' then 1 else 0 end)  --单手机客户
+FROM dwh.td_sc_serv_single_lable_m a  ---集团下发需要刘洋建表91037
+where a.statis_month=${hivevar:vi_month} ---- in (select max(statis_month) from  dwh.td_sc_serv_single_lable_m b)  --客户类及单手机客户标签信息
+group by msisdn
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid12;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid12
+(
+phone_no varchar(20)
+,jt_301 varchar(2)  --异网双卡客户
+,jt_302  varchar(2)  --异网宽带客户（集中化）
+,jt_303  varchar(2)--异网宽带客户（省份）
+,jt_304 varchar(2)--异网高话务客户
+,jt_305 varchar(2) --政企成员客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid12;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid12
+SELECT MSISDN
+,max(case when cust_label ='301' then '1' else '0' end)  --异网双卡客户
+,max(case when cust_label ='302' then '1' else '0' end)  --异网宽带客户（集中化）
+,max(case when cust_label ='303' then '1' else '0' end)  --异网宽带客户（省份）
+,max(case when cust_label ='304' then '1' else '0' end)  --异网高话务客户
+,max(case when cust_label ='305' then '1' else '0' end)  --政企成员客户
+FROM DWH.TD_SC_XHZW_NET_GRP_M   ----dwh.td_sc_net_grp_lable_m a----DW.TD_XHZW_NET_GRP_LABLE_M  ---集团下发需要刘洋建表       ----------------------------------没数据###########################################################
+
+where statis_month =${hivevar:vi_month}      ----in (select max(statis_month) from DWH.td_sc_net_grp_lable_m b)
+group by msisdn
+;
+ drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid13;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid13
+(
+statis_month int
+,phone_no varchar(20)
+,subs_id varchar(32)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid13;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid13
+select ${hivevar:vi_month},
+a.phone_no,
+b.subs_id
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid11 a
+join mk.tm_sc_user_statis_m b
+on a.phone_no=b.phone_no and b.statis_month=${hivevar:vi_month}
+and is_on_net_user='1'
+union all
+select ${hivevar:vi_month},
+a.phone_no,
+b.subs_id
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid12 a
+join mk.tm_sc_user_statis_m b
+on a.phone_no=b.phone_no and b.statis_month=${hivevar:vi_month}
+and is_on_net_user='1'
+union all
+select ${hivevar:vi_month},
+phone_no,
+subs_id
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid10
+where statis_month=${hivevar:vi_month}
+;
+ drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid14;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid14
+(
+statis_month int
+,phone_no varchar(20)
+,subs_id varchar(32)
+,dissatisfied_net varchar(2)--网络不满意客户
+,dissatisfied_charge varchar(2)--潜在资费不满意客户
+,dissatisfied_kuandai varchar(2)--宽带不满意客户
+,dissatisfied_fuwu varchar(2)  --服务不满意客户
+,dm_ywsk varchar(2)--异网双卡客户
+,dm_ywkd varchar(2)--异网宽带客户
+,net_high  varchar(2)--异网高话务客户
+,is_grp varchar(2)--政企成员客户
+,is_qqt varchar(2)--全球通客户
+,is_dsj  varchar(2)--单手机客户
+,gjz_dnx_guhua varchar(2)--无固话
+,jt_101 varchar(2)--客服咨询携转客户
+,jt_201  varchar(2)--网络不满意客户
+,jt_202  varchar(2)--潜在资费不满意客户
+,jt_203 varchar(2)--宽带不满意客户
+,jt_401 varchar(2)--单手机客户
+,jt_301 varchar(2)--异网双卡客户
+,jt_302  varchar(2) --异网宽带客户（集中化）
+,jt_303  varchar(2)--异网宽带客户（省份）
+,jt_304 varchar(2)--异网高话务客户
+,jt_305 varchar(2) --政企成员客户
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid14;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid14
+select
+a.statis_month
+,a.phone_no
+,a.subs_id
+,coalesce(b.dissatisfied_net,'0')--网络不满意客户
+,coalesce(b.dissatisfied_charge,'0')--潜在资费不满意客户
+,coalesce(b.dissatisfied_kuandai,'0')--宽带不满意客户
+,coalesce(dissatisfied_fuwu,'0')--服务不满意客户
+,coalesce(b.dm_ywsk,'0')--异网双卡客户
+,coalesce(b.dm_ywkd,'0')--异网宽带客户
+,coalesce(b.net_high,'0')--异网高话务客户
+,coalesce(b.is_grp,'0')--政企成员客户
+,coalesce(b.is_qqt,'0')--全球通客户
+,coalesce(b.is_dsj,'0')--单手机客户
+,coalesce(b.gjz_dnx_guhua,'0')--无固话
+,coalesce(jt_101,'0')--客服咨询携转客户
+,coalesce(jt_201,'0')--网络不满意客户
+,coalesce(jt_202,'0')--潜在资费不满意客户
+,coalesce(jt_203,'0')--宽带不满意客户
+,coalesce(jt_401,'0')--单手机客户
+,coalesce(jt_301,'0')--异网双卡客户
+,coalesce(jt_302,'0')--异网宽带客户（集中化）
+,coalesce(jt_303,'0')--异网宽带客户（省份）
+,coalesce(jt_304,'0')--异网高话务客户
+,coalesce(jt_305,'0')--政企成员客户
+from (select statis_month,phone_no,max(subs_id) subs_id
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid13 group by statis_month,phone_no) a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid10 b
+on a.subs_id=b.subs_id and b.statis_month=${hivevar:vi_month}
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid11  c
+on a.phone_no=c.phone_no
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid12  d
+on a.phone_no=d.phone_no
+;
+
+
+
+--<metadata>
+--<model_name>: 不能直接提供授权码客户清单报表
+--<keyword>: 用户, 不能直接提供授权码客户
+--<description>: 不能直接提供授权码客户清单报表
+--<author>: 闫素婷@华为
+--<run_cycle>: M
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid1,hw_tmp.tm_sc_user_xh_rh_info_m_mid2,hw_tmp.tm_sc_user_xh_rh_info_m_mid3,hw_tmp.tm_sc_user_xh_rh_info_m_mid4
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid5,hw_tmp.tm_sc_user_xh_rh_info_m_mid6,hw_tmp.tm_sc_user_xh_rh_info_m_mid7,hw_tmp.tm_sc_user_xh_rh_info_m_mid8
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid9,hw_tmp.tm_sc_user_xh_rh_info_m_mid10,hw_tmp.tm_sc_user_xh_rh_info_m_mid11,hw_tmp.tm_sc_user_xh_rh_info_m_mid12
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid13,hw_tmp.tm_sc_user_xh_rh_info_m_mid14,hw_tmp.tm_sc_user_xh_rh_info_m_mid15,hw_tmp.tm_sc_user_xh_rh_info_m_mid16
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid17,hw_tmp.tm_sc_user_xh_rh_info_m_mid18,hw_tmp.tm_sc_user_xh_rh_info_m_mid19,hw_tmp.tm_sc_user_xh_rh_info_m_mid20
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid21,hw_tmp.tm_sc_user_xh_rh_info_m_mid22
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid24,hw_tmp.tm_sc_user_xh_rh_info_m_mid25,hw_tmp.tm_sc_user_xh_rh_info_m_mid26,hw_tmp.tm_sc_user_xh_rh_info_m_mid27
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid23,hw_tmp.tm_sc_user_xh_rh_info_m_mid28,hw_tmp.tm_sc_user_xh_rh_info_m_mid29,hw_tmp.tm_sc_user_xh_rh_info_m_mid30
+--<det_table>: pub.tdet_unlimited_flow_d,pub.tdet_chnl_belng_info
+--<app_table>: MK.TM_SC_USER_XH_RH_INFO_M
+--<app_name>:
+--</metadata>
+---step 3 码表打标
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid15;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid15
+(
+statis_month int
+,region_code varchar(32)
+,region_id varchar(32)
+,create_chnl varchar(120)
+,subs_id varchar(32)
+,cust_id varchar(32)
+,phone_no varchar(32)
+,real_fee decimal(20,2)
+,tot_fee  decimal(20,2)
+,start_month  string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid15;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid15
+select a.statis_month
+,a.region_code
+,a.region_id
+,a.chnl_id
+,a.subs_id
+,a.cust_id
+,a.phone_no
+,coalesce(a.real_fee,0)*0.01
+,coalesce(a.tot_fee,0)*0.01
+,substr(regexp_replace(start_date,'-',''),1,6)
+from mk.tm_sc_user_statis_m  a
+join mk.tm_sc_mob_phone_statis_m b
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month}
+and b.is_on_net_user='1'
+and b.IS_MOBILE_PHONE_USER='1'
+where a.statis_month=${hivevar:vi_month}
+and a.is_on_net_user='1';
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid16;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid16
+(
+statis_month int
+,region_code  varchar(32)
+,region_id   varchar(32)
+,create_chnl  varchar(120)
+,subs_id varchar(32)
+,phone_no varchar(32)
+,real_fee decimal(20,2)
+,tot_fee decimal(20,2)
+,is_qqt int
+,is_grp int
+,is_bxl int
+,start_month   string
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid16;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid16
+select
+a.statis_month
+,a.region_code
+,a.region_id
+,a.create_chnl
+,a.subs_id
+,a.phone_no
+,a.real_fee
+,a.tot_fee
+,cast(c.is_qqt as int)
+,cast(b.is_grp_cust as int)
+,case when b.is_bxl_tc='1' or b.is_bxl_pag='1' then 1 else 0 end
+,a.start_month
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid15 a
+left join MK.TM_SC_SUBS_MARKT_M  b ----还没建表
+  on a.subs_id=b.subs_id
+  and b.statis_month=${hivevar:vi_month}
+left join mk.tm_sc_globale_detl_d c
+ on a.subs_id=c.subs_id
+  and is_qqt='1'
+  and c.statis_date=${hivevar:vi_month_last};
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid17;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid17
+(----statis_month int,
+subs_id varchar(32)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid17;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid17
+-----select
+-----distinct statis_month,a.subs_id
+-----from mk.tm_sc_subs_privilege_m a
+-----join pub.tdet_unlimited_flow_d b
+-----on b.markt_solution_id_type in('日租卡')  and  a.markt_solution_Id =b.markt_solution_Id
+-----where a.statis_month = ${hivevar:vi_month}
+-----and is_using=1
+-----and is_on_Net_user=1;
+select a.subs_id
+  from
+     ( select concat(d.markt_solution_Id,e.segment_no) as markt_solution_id_join
+	     from pub.tdet_unlimited_flow_d d ----不限量优惠码表
+		 join pub.tdet_pub_segment_9999 e
+		   on 1=1
+		where d.markt_solution_id_type in('日租卡')----只提取优惠类型是日租卡的
+     ) c
+  join
+     ( select b.subs_id,concat(b.markt_solution_id,substr(b.subs_id,-4)) as markt_solution_id_join
+         from mk.tm_sc_subs_privilege_m b
+		where b.statis_month = ${hivevar:vi_month}
+		  and b.is_using=1
+		  and b.is_on_net_user=1
+     ) a
+  on a.markt_solution_id_join=c.markt_solution_id_join
+ group by a.subs_id;
+
+
+
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid18;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid18
+(statis_month int
+,region_code varchar(32)
+,subs_id varchar(32)
+,ctc_fee decimal(20,2)
+,chrg_flux decimal(20,2)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid18;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid18
+SELECT
+a.statis_month
+,a.region_code
+,a.subs_id
+,sum(FAV_AFT_BASE_FEE)*0.01
+,sum(chrg_flux)*1.0/1024
+FROM mk.tm_ls_gprs_m  a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid17 c
+     on a.SUBS_id =c.SUBS_id    ----and c.STATIS_MONTH =a.STATIS_MONTH
+WHERE a.STATIS_MONTH =${hivevar:vi_month}
+and c.SUBS_id is null
+and coalesce(FAV_AFT_BASE_FEE,0)>0
+GROUP BY a.statis_month
+,a.region_code
+,a.subs_id
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid19;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid19
+(statis_month int
+,region_code varchar(32)
+,subs_id    varchar(32)
+,ctc_fee    decimal(20,2)
+,chrg_flux  decimal(20,2)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid19;                   ------------------------------限制了出账金额大于 超套金额 (gprs话单hive比gp多)
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid19
+select
+ c.statis_month
+,c.region_code
+,c.subs_id
+,c.ctc_fee
+,c.chrg_flux
+from
+hw_tmp.tm_sc_user_xh_rh_info_m_mid16 a
+join hw_tmp.tm_sc_user_xh_rh_info_m_mid18 c
+on a.SUBS_id =c.SUBS_id
+and c.STATIS_MONTH = ${hivevar:vi_month}
+where  a.tot_fee-coalesce(c.ctc_fee,0)>0  and coalesce(c.ctc_fee,0)>0
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid20;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid20
+(statis_month  int
+,region_code   varchar(32)
+,region_id     varchar(32)
+,create_chnl   varchar(120)
+,subs_id        varchar(32)
+,phone_no       varchar(32)
+,start_month      int
+,real_fee         decimal(20,2)
+,is_qqt           int
+,is_grp           int
+,is_bxl          int
+,gprs_ct_fee decimal(20,2)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid20;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid20
+select
+ a.statis_month
+,a.region_code
+,a.region_id
+,a.create_chnl
+,a.subs_id
+,a.phone_no
+,cast(a.start_month as int)
+,a.real_fee
+,a.is_qqt
+,a.is_grp
+,a.is_bxl
+,b.ctc_fee
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid16 a
+left join  hw_tmp.tm_sc_user_xh_rh_info_m_mid19  b
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month};
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid21;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid21
+( statis_month int,
+subs_id varchar(20),
+fee bigint
+----,o_chrg_dur int,
+-----chrg_dur int
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid21;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid21
+select statis_month
+      ,subs_id
+      ,chrg_dur_fee
+   from mk.tm_sc_subs_over_gsm_gprs_m
+where statis_month = ${hivevar:vi_month}
+;
+------sum(base_fee)+sum(toll_fee)+sum(toll_extra_fee)+sum(roam_fee),
+------sum(case when cdr_type='O' THEN CHRG_DUR END),
+------sum(CHRG_DUR)
+------from mk.tm_ls_voc_m
+------where statis_month = ${hivevar:vi_month}
+------and (base_fee+toll_fee+toll_extra_fee+roam_fee)>0
+------and TARIFF_TRACK not in( '9512')
+------and roam_type not like '3%'
+------and call_type not like '23%'
+------group by statis_month,subs_id
+-------;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid22;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid22
+( region_code  varchar(32)
+,region_id   varchar(32)
+,create_chnl  varchar(120)
+,subs_id varchar(32)
+,phone_no varchar(32)
+,start_month  int
+,real_fee decimal(20,2)
+,is_qqt int
+,is_grp int
+,is_bxl int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid22;
+INSERT INTO hw_tmp.tm_sc_user_xh_rh_info_m_mid22
+select
+region_code
+,region_id
+,create_chnl
+,a.subs_id
+,phone_no
+,start_month
+,real_fee
+,is_qqt
+,is_grp
+,is_bxl
+,gprs_ct_fee
+,fee
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid20 a
+left join  hw_tmp.tm_sc_user_xh_rh_info_m_mid21  b
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month}
+group by
+region_code
+,region_id
+,create_chnl
+,a.subs_id
+,phone_no
+,start_month
+,real_fee
+,is_qqt
+,is_grp
+,is_bxl
+,gprs_ct_fee
+,fee ;
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid23;
+CREATE TABLE IF NOT EXISTS  hw_tmp.tm_sc_user_xh_rh_info_m_mid23
+( statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid23;
+
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid23
+select
+ ${hivevar:vi_month}
+,b.region_code
+,b.region_id
+,c.region_id_name
+,c.markt_area_id
+,c.markt_area_name
+,b.phone_no
+,b.subs_id
+,b.start_month
+,b.is_qqt
+,b.real_fee
+,count(distinct case when a.subs_id is not  null then a.subs_id  end)
+from
+hw_tmp.tm_sc_user_xh_rh_info_m_mid22  b
+left join am.ta_sc_subs_carryout_list_m a----photo.tdet_yixie_subs_detl a未建表
+ on a.subs_id=b.subs_id and a.statis_month=${hivevar:vi_month}  and a.carryout_flag=1
+join pub.tdet_chnl_belng_info c
+on b.create_chnl=c.chnl_id
+where c.deal_date = ${hivevar:vi_month_last}
+group by
+b.region_code
+,b.region_id
+,c.region_id_name
+,c.markt_area_id
+,c.markt_area_name
+,b.phone_no
+,b.subs_id
+,b.start_month
+,b.is_qqt
+,b.real_fee
+;
+------drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid24;
+------CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid24
+------(
+------statis_month int
+------,region_code  varchar(32)
+------,region_id   varchar(120)
+------,region_id_name varchar(120)
+------,area_id varchar(120)
+------,area_id_name varchar(200)
+------,phone_no varchar(32)
+------,subs_id varchar(32)
+------,start_month  int
+------,is_gqt int
+------,real_fee decimal(20,2)
+------,is_yixie int
+------,is_grp_user  int
+------,is_bxl_user  int
+------,is_high_user int
+------)ROW FORMAT DELIMITED
+------FIELDS TERMINATED BY '\t'
+------STORED AS RCFILE;
+------truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid24;
+------insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid24
+------select a.*
+------,coalesce(b.is_grp_user,0)
+------,coalesce(b.is_no_limit,0)
+------,coalesce(b.is_high_value,0)
+------from hw_tmp.tm_sc_user_xh_rh_info_m_mid23 a
+------left join MK.TM_SC_USER_FUSE_M  b
+------on a.subs_id=b.subs_id
+------and b.statis_month=${hivevar:vi_month}
+------;
+--<metadata>
+--<model_name>: 不能直接提供授权码客户清单报表
+--<keyword>: 用户, 不能直接提供授权码客户
+--<description>: 不能直接提供授权码客户清单报表
+--<author>: 闫素婷@华为
+--<run_cycle>: M
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid1,hw_tmp.tm_sc_user_xh_rh_info_m_mid2,hw_tmp.tm_sc_user_xh_rh_info_m_mid3,hw_tmp.tm_sc_user_xh_rh_info_m_mid4
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid5,hw_tmp.tm_sc_user_xh_rh_info_m_mid6,hw_tmp.tm_sc_user_xh_rh_info_m_mid7,hw_tmp.tm_sc_user_xh_rh_info_m_mid8
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid9,hw_tmp.tm_sc_user_xh_rh_info_m_mid10,hw_tmp.tm_sc_user_xh_rh_info_m_mid11,hw_tmp.tm_sc_user_xh_rh_info_m_mid12
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid13,hw_tmp.tm_sc_user_xh_rh_info_m_mid14,hw_tmp.tm_sc_user_xh_rh_info_m_mid15,hw_tmp.tm_sc_user_xh_rh_info_m_mid16
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid17,hw_tmp.tm_sc_user_xh_rh_info_m_mid18,hw_tmp.tm_sc_user_xh_rh_info_m_mid19,hw_tmp.tm_sc_user_xh_rh_info_m_mid20
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid21,hw_tmp.tm_sc_user_xh_rh_info_m_mid22
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid24,hw_tmp.tm_sc_user_xh_rh_info_m_mid25,hw_tmp.tm_sc_user_xh_rh_info_m_mid26,hw_tmp.tm_sc_user_xh_rh_info_m_mid27
+--<tmp_table>: hw_tmp.tm_sc_user_xh_rh_info_m_mid23,hw_tmp.tm_sc_user_xh_rh_info_m_mid28,hw_tmp.tm_sc_user_xh_rh_info_m_mid29,hw_tmp.tm_sc_user_xh_rh_info_m_mid30
+--<det_table>: pub.tdet_unlimited_flow_d,pub.tdet_chnl_belng_info
+--<app_table>: MK.tm_sc_user_xh_rh_info_m
+--<app_name>:
+--</metadata>
+
+---step 3 码表打标
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid25;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid25
+(statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+----,is_grp_user  int
+----,is_bxl_user  int
+----,is_high_user int
+,is_grp int
+,jt_305 int
+) ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid25;
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid25
+select
+ a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+,coalesce(cast(b.is_grp  as int),0)
+,coalesce(cast(b.jt_305  as int),0)
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid23 a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid14 b -----未建表dis.tc_biaoqian_transfer_m
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month};
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid26;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid26
+(
+statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id    varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+----,is_grp_user  int
+----,is_bxl_user  int
+----,is_high_user int
+,is_grp int
+,jt_305 int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid26;
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid26
+select
+ a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+,a.is_grp
+,a.jt_305
+,coalesce(gprs_ct_fee,0)
+,coalesce(gsm_ct_fee,0)
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid25  a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid22  b
+on a.subs_id=b.subs_id
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid27;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid27
+(statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+----,is_grp_user int
+----,is_bxl_user int
+----,is_high_user int
+,is_grp int
+,jt_305 int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+,dm_ywsk int
+,jt_301 int
+,dm_ywkd int
+,jt_302 int
+,net_high int
+,jt_304 int
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid27;
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid27
+select
+a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+----,a.is_grp_user
+----,a.is_bxl_user
+----,a.is_high_user
+,a.is_grp
+,a.jt_305
+,a.gprs_ct_fee
+,a.gsm_ct_fee
+,coalesce(cast(dm_ywsk as int),0)
+,coalesce(cast(jt_301 as int),0)
+,coalesce(cast(dm_ywkd as int),0)
+,coalesce(cast(jt_302 as int),0)
+,coalesce(cast(net_high as int),0)
+,coalesce(cast(jt_304 as int),0)
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid26  a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid14 b--未建表
+on a.subs_id=b.subs_id;
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid28;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid28
+( statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+----,is_grp_user  int
+----,is_bxl_user  int
+----,is_high_user int
+,is_grp int
+,jt_305 int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+,dm_ywsk int
+,jt_301 int
+,dm_ywkd int
+,jt_302 int
+,net_high int
+,jt_304 int
+,is_zixun int
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid28;
+insert into hw_tmp.tm_sc_user_xh_rh_info_m_mid28
+select
+a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+----,a.is_grp_user
+----,a.is_bxl_user
+----,a.is_high_user
+,a.is_grp
+,a.jt_305
+,a.gprs_ct_fee
+,a.gsm_ct_fee
+,a.dm_ywsk
+,a.jt_301
+,a.dm_ywkd
+,a.jt_302
+,a.net_high
+,a.jt_304
+,case when b.MSISDN is not null then 1 else 0 end
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid27  a
+left join
+(SELECT  phone_no MSISDN
+	  FROM mk.tm_cs_10086_consult_trans_d a
+	WHERE a.STATIS_DATE in (select max(statis_date) from mk.tm_cs_10086_consult_trans_d b)
+	  AND a.TJ_DATE between ${hivevar:last5month_char}01  and  ${hivevar:vi_month_last}
+      group by phone_no
+  ----select distinct a.phone_no MSISDN
+ ---- from DWH.TD_CS_INCOME_CALL_YSXH_D a----DW.TD_XHZW_10086_CONSULT_USERS_M
+ ----  where a.deal_Date in (select max(b.deal_Date) from DWH.TD_CS_INCOME_CALL_YSXH_D b )
+) b
+on a.phone_no=b.MSISDN
+;
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid29;
+CREATE TABLE IF NOT EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid29
+(statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+---,is_grp_user int
+---,is_bxl_user int
+---,is_high_user int
+,is_grp int
+,jt_305 int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+,dm_ywsk int
+,jt_301 int
+,dm_ywkd int
+,jt_302 int
+,net_high int
+,jt_304 int
+,is_zixun int
+,jt_101 int
+,dissatisfied_charge int
+,jt_202 int
+,dissatisfied_net int
+,jt_201 int
+,dissatisfied_kuandai int
+,jt_203 int
+,dissatisfied_fuwu int
+) ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table hw_tmp.tm_sc_user_xh_rh_info_m_mid29;
+insert into  hw_tmp.tm_sc_user_xh_rh_info_m_mid29
+select
+a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+----,a.is_grp_user
+----,a.is_bxl_user
+----,a.is_high_user
+,a.is_grp
+,a.jt_305
+,a.gprs_ct_fee
+,a.gsm_ct_fee
+,a.dm_ywsk
+,a.jt_301
+,a.dm_ywkd
+,a.jt_302
+,a.net_high
+,a.jt_304
+,a.is_zixun
+,coalesce( cast(jt_101 as int),0)
+,coalesce(cast(dissatisfied_charge as int),0)
+,coalesce(cast(jt_202 as int),0)
+,coalesce(cast(dissatisfied_net as int),0)
+,coalesce(cast(jt_201 as int),0)
+,coalesce(cast(dissatisfied_kuandai as int),0)
+,coalesce(cast(jt_203 as int),0)
+,coalesce(cast(dissatisfied_fuwu as int),0)
+from hw_tmp.tm_sc_user_xh_rh_info_m_mid28  a
+left join hw_tmp.tm_sc_user_xh_rh_info_m_mid14 b
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month};
+
+drop table  IF EXISTS hw_tmp.tm_sc_user_xh_rh_info_m_mid30;
+CREATE TABLE IF NOT EXISTS  hw_tmp.tm_sc_user_xh_rh_info_m_mid30
+(
+statis_month int
+,region_code  varchar(32)
+,region_id   varchar(120)
+,region_id_name varchar(120)
+,area_id varchar(120)
+,area_id_name varchar(200)
+,phone_no varchar(32)
+,subs_id varchar(32)
+,start_month  int
+,is_gqt int
+,real_fee decimal(20,2)
+,is_yixie int
+----,is_grp_user  int
+----,is_bxl_user  int
+----,is_high_user int
+,is_grp int
+,jt_305 int
+,gprs_ct_fee decimal(20,2)
+,gsm_ct_fee decimal(20,2)
+,dm_ywsk int
+,jt_301 int
+,dm_ywkd int
+,jt_302 int
+,net_high int
+,jt_304 int
+,is_zixun int
+,jt_101 int
+,dissatisfied_charge int
+,jt_202 int
+,dissatisfied_net int
+,jt_201 int
+,dissatisfied_kuandai int
+,jt_203 int
+,dissatisfied_fuwu int
+,is_qqjh_arr  int
+,is_qqjh_ronghe int
+,is_vnet_arr  int
+,is_vnet_ronghe int
+,is_xqw int
+,is_xqw_act  int
+,is_hm int
+,is_gy_arr int
+,is_gy_ronghe int
+,is_tmnl int
+,is_hfhy int
+,is_tf int
+,is_once_qqjh int
+,is_once_kd  int
+,is_change_tmnl int
+,is_kd_cover  int
+,is_comm_user int
+,is_grp_user   int
+)ROW FORMAT DELIMITED
+FIELDS TERMINATED BY '\t'
+STORED AS RCFILE;
+truncate table  hw_tmp.tm_sc_user_xh_rh_info_m_mid30;
+insert into  hw_tmp.tm_sc_user_xh_rh_info_m_mid30
+select
+a.statis_month
+,a.region_code
+,a.region_id
+,a.region_id_name
+,a.area_id
+,a.area_id_name
+,a.phone_no
+,a.subs_id
+,a.start_month
+,a.is_gqt
+,a.real_fee
+,a.is_yixie
+----,a.is_grp_user
+----,a.is_bxl_user
+----,a.is_high_user
+,a.is_grp
+,a.jt_305
+,a.gprs_ct_fee
+,a.gsm_ct_fee
+,a.dm_ywsk
+,a.jt_301
+,a.dm_ywkd
+,a.jt_302
+,a.net_high
+,a.jt_304
+,a.is_zixun
+,a.jt_101
+,a.dissatisfied_charge
+,a.jt_202
+,a.dissatisfied_net
+,a.jt_201
+,a.dissatisfied_kuandai
+,a.jt_203
+,a.dissatisfied_fuwu
+,coalesce(is_fam_Vnet,0)
+,coalesce(is_fam_Vnet_act,0)
+,coalesce(is_grp_Vnet,0)
+,coalesce(is_grp_Vnet_act,0)
+,coalesce(is_country_vnet,0)
+,0
+,coalesce(is_znrh_home,0)
+,coalesce(is_gyrh_home,0)
+,coalesce(is_gyrh_home_act,0)
+,coalesce(is_terminal_contract,0)
+,coalesce(is_charge_contract,0)
+,coalesce(is_union_pay,0)
+,coalesce(is_had_qqw,0)
+,coalesce(is_had_broadband,0)
+,coalesce(is_to_renew_terminal,0)
+,c.if_cover ----coalesce(is_broadband_covered,0)
+,coalesce(is_comm_user,0)
+,coalesce(b.is_grp_user,0)
+from
+hw_tmp.tm_sc_user_xh_rh_info_m_mid29 a
+left join MK.TM_SC_USER_FUSE_M  b                --------------
+on a.subs_id=b.subs_id
+and b.statis_month=${hivevar:vi_month}
+left join mk.tm_lc_cell_user_stay_m c
+on a.subs_id=c.subs_id
+and c.statis_month=${hivevar:vi_month}
+;
+
+
+
+
+ALTER TABLE MK.TM_SC_USER_XH_RH_INFO_M  DROP IF EXISTS partition(statis_month=${hivevar:vi_month});
+
+
+
+
+insert into mk.TM_SC_USER_XH_RH_INFO_M partition(statis_month=${hivevar:vi_month})
+
+select
+region_code
+,region_id
+,region_id_name
+,area_id
+,area_id_name
+,phone_no
+,a.subs_id
+,start_month
+,is_gqt
+,real_fee
+,is_grp_user ---政企客户
+,case when c.subs_id  is not null then 1 else 0 end  ---不限量
+,is_grp ---异网高份额集团成员--本省
+,gprs_ct_fee ---流量超套
+,gsm_ct_fee ---语音超套
+,dm_ywsk---异网双卡标记-本省    *****
+,dm_ywkd---异网宽带标记-本省
+,net_high---异网高话务标记-本省    *****
+,is_zixun --客服咨询携转标记-本省  *****
+,0 ---上网搜索携转客户 *****
+,dissatisfied_charge ---资费不满客户标记-本省
+,dissatisfied_net ---网络不满客户标记-本省
+,dissatisfied_kuandai ---宽带不满客户标记-本省
+,dissatisfied_fuwu ---服务不满客户标记-本省  ****
+,is_yixie --- 易携出模型客户    ***
+,jt_305 --- 异网高份额集团成员--集团
+,jt_301 --异网双卡标记-集团       ***
+,jt_302 --异网宽带标记-集团  ***
+,jt_304 --异网高话务标记-集团     ***
+,jt_101 --客服咨询携转标记-集团   ***
+,jt_202 --资费不满客户标记-集团   ***
+,jt_201 --网络不满客户标记-集团   ***
+,jt_203 --宽带不满客户标记-集团   ***
+,0 --服务不满客户标记-集团        ***
+ ,case when d.subs_id  is not null  then 1 else 0  end--高价值
+
+----,is_comm_user
+----,is_qqjh_arr
+----,is_qqjh_ronghe
+----,is_vnet_arr
+
+,is_vnet_ronghe ----集团V网huoyue     -----------调整之前到达arr
+,is_xqw --------乡情网
+,is_xqw_act ------------乡情网活跃
+,is_hm
+,is_gy_arr ----固移融合
+,is_gy_ronghe --------固移融合活跃
+,is_tmnl ------------终端合约
+,is_hfhy ----------话费合约
+,is_tf ----统付
+,is_once_qqjh --是否曾办过亲情网
+,is_once_kd--------是否曾办过宽带
+,is_change_tmnl------------是否换机节点客户
+,is_kd_cover------------是否宽带覆盖   *****
+,case when b.subs_id is not null then 1 else 0 end
+,is_comm_user
+,is_qqjh_arr
+,is_qqjh_ronghe
+,is_vnet_arr
+
+from
+hw_tmp.tm_sc_user_xh_rh_info_m_mid30 a
+left join
+( select  subsid  as subs_id
+	 from dwh.td_pd_subs_attr_d
+	where deal_date=${hivevar:vi_month_last}
+	  and upper(attrid)='ISEASYCARRIEROUT'
+	  and status='1'
+	  and substr(regexp_replace(statusdate,'-',''),1,6) between ${hivevar:last5month_char} and ${hivevar:vi_month}
+)b
+on a.subs_id=b.subs_id
+
+left join (select  a1.subs_id
+from  mk.tm_sc_subs_privilege_m a1
+join (select  markt_solution_Id  from pub.tdet_unlimited_flow_d
+        where markt_solution_id_type in('不限量包','不限量套餐')
+            group by markt_solution_Id
+     ) b1
+on a1.markt_solution_Id  =b1.markt_solution_Id
+where a1.statis_month = ${hivevar:vi_month}
+and a1.is_using=1
+and a1.is_on_Net_user=1
+and a1.user_status not in('US28','US26')
+group by a1.subs_id) c
+on a.subs_id=c.subs_id
+
+left join (select subs_id
+          from mk.tm_ac_zkzr_fee_m
+		     where statis_month = ${hivevar:vi_month}
+			 and is_on_net_user=1
+             and real_fee>=50
+            group by subs_id
+
+     )d
+on a.subs_id=d.subs_id
+
+
+
+
 ;

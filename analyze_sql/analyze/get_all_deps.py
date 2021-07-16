@@ -80,7 +80,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
+    #table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
+    table_pattern = r'(?=%s)\.t【分层标记】_【主题域缩写】_【实体自定义】'
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)

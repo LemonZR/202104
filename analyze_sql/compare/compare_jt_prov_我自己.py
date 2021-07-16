@@ -75,8 +75,8 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
     diff_cnt = 0
     for file_name, sql_dict in jt_files_sql_dict.items():
         is_same = True
-        jt_file_path = f".\\jt_script\\dwh\\{file_name}"
-        prov_file_path = f'D:\\bd_hive\\dwh\\{file_name}'
+        jt_file_path = f".\\jt_script\\dis\\{file_name}"
+        prov_file_path = f'D:\\bd_hive\\dis\\{file_name}'
         pro_file_sql_dict = prov_files_sql_dict.get(file_name, None)
         if not pro_file_sql_dict:
             prov_miss.append((file_name,))
@@ -105,9 +105,9 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
 
 
 if __name__ == '__main__':
-    filename = 'D:\\compare_jt_prov_dwh_zhangrui.xlsx'
-    jt_dir = 'D:\\tmp\\compare_jt\\jt_script\\dwh'
-    prov_dir = 'D:\\bd_hive\\dwh'
+    filename = 'D:\\compare_jt_prov_dis_new.xlsx'
+    jt_dir = r'D:\bigdata\集中化搬迁\开发区svn文件\集中化数据核对\常用脚本解析文件\\jt_script\dis'
+    prov_dir = 'D:\\bd_hive\\dis'
     diff, sam, jt_mis, prov_mis = compare_file(jt_dir, prov_dir)
     data = [('脚本不同', diff), ('脚本一致', sam), ('集团没有的脚本', jt_mis), ('省没有的脚本', prov_mis)]
     excelOp.write_many_sheets_xlsx(filename, data, edit=True)
