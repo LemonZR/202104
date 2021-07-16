@@ -79,8 +79,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
-    # table_pattern = r'(?=%s)[a-zA-Z]+\.[tT][a-zA-Z]+_[a-zA-Z0-9_]*(?=|;|,|\s|_\$|\))' % heads
+    # table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
+    table_pattern = r'(?=%s)[a-zA-Z]+\.[tT][a-zA-Z]+_[a-zA-Z0-9_]*(?=|;|,|\s|_\$|\))' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     data1, data2 = run(dirName)
     print(len(data1))
 
-    result_xlsx = 'D:\\mk所有依赖关系.xlsx'
+    result_xlsx = 'D:\\mk所有依赖关系_old.xlsx'
     # 先写小的，避免第二次打开大数据表
     # print('写入excel：直接依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
