@@ -4,7 +4,6 @@ import re
 import os
 import copy
 
-
 from tools import excelOp
 
 
@@ -80,8 +79,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    #table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
-    table_pattern = r'(?=%s)\.t【分层标记】_【主题域缩写】_【实体自定义】'
+    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
+    # table_pattern = r'(?=%s)[a-zA-Z]+\.[tT][a-zA-Z]+_[a-zA-Z0-9_]*(?=|;|,|\s|_\$|\))' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -204,5 +203,4 @@ if __name__ == '__main__':
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
     # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx,data_info=[('直接依赖',data2),('所有依赖',data1)],edit=True)
-
+    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2), ('所有依赖', data1)], edit=True)
