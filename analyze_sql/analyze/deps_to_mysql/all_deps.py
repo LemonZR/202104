@@ -3,8 +3,22 @@
 import re
 import os
 import copy
+import sys
 
+import pymysql
 from tools import excelOp
+
+
+def get_connection():
+    try:
+        connection = pymysql.connect(
+            host='133.96.95.233', port=3306, user='root',
+            passwd='password', db='bigdata', charset='utf8mb4',
+            cursorclass=pymysql.cursors.DictCursor)
+        cursor = connection.cursor()
+    except Exception as e:
+        sys.exit(e)
+    return connection, cursor
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
@@ -191,16 +205,24 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\tmp_bdhive'
-    data1, data2 = run(dirName)
-    print(len(data1))
-
-    result_xlsx = 'D:\\dwh所有依赖关系_old.xlsx'
-    # 先写小的，避免第二次打开大数据表
-    # print('写入excel：直接依赖 start' + '*' * 100)
-    # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
-    # print('写入excel：直接依赖 end' + '*' * 100)
-    # print('写入excel：所有依赖 start' + '*' * 100)
-    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
-    # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2), ('所有依赖', data1)], edit=True)
+    # dirName = 'D:\\bd_hive\\mk'
+    # data1, data2 = run(dirName)
+    # print(len(data1))
+    #
+    # result_xlsx = 'D:\\mk所有依赖关系_old.xlsx'
+    # # 先写小的，避免第二次打开大数据表
+    # # print('写入excel：直接依赖 start' + '*' * 100)
+    # # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
+    # # print('写入excel：直接依赖 end' + '*' * 100)
+    # # print('写入excel：所有依赖 start' + '*' * 100)
+    # # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
+    # # print('写入excel：所有依赖 end' + '*' * 100)
+    # excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2), ('所有依赖', data1)], edit=True)
+    con, cur = get_connection()
+    cur.execute("use bigdata")
+    cur.execute('create table mk_all_depends(script_name varchar(100),target_table_name varchar(100),depend_name varchar(100))')
+    # cur.execute('create table mk_all_depends(script_name varchar(100),target_table_name varchar(100),depend_name json)')
+    result = cur.fetchall()
+    cur.close()
+    con.close()
+    print(result)

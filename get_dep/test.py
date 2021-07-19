@@ -35,3 +35,4 @@ if __name__ == '__main__':
     file_name = 'select.txt'
     file = os.getcwd() + '\\' + file_name
     get_dep(file, )
+    import difflib

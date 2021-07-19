@@ -4,7 +4,7 @@ import re
 import os
 import copy
 
-from tools import excelOp
+import pymysql
 
 
 def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
@@ -123,12 +123,14 @@ def iterates(my_name, deps_list, __id_dict={}):
             dep_name = list(value.keys())[0]
             dep_value = list(value.values())[0]
             child_id = id(dep_value)
-            result.append([depth] + parents['p_tables'] + [dep_name])
+
             if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
                 # 这里是个环，可以做点什么
+                result.append([depth] + parents['p_tables'] + [dep_name, 'EndCycle'])
                 continue
             else:
+                result.append([depth] + parents['p_tables'] + [dep_name])
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
         elif depth == 0:
@@ -165,7 +167,8 @@ def run(dir_name):
         result.setdefault(file, {'target_table': target_table,
                                  'deps': iterates(target_table, t_dict.get(target_table, []))})
     print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
-    excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
+    # excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
+    mysql_data = []
     excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
 
     print('生成excel data1 start' + '*' * 100)
@@ -177,7 +180,13 @@ def run(dir_name):
         except:
             layer_level = '需要看前置脚本'
         for dep in deps_list:
-            excel_data_all_deps.append([file] + [layer_level] + dep)
+            is_cycle = 1 if dep[-1] == 'EndCycle' else 0
+            target_table = dep[1]
+            deps = dep[2:]
+            tup = (file, target_table, layer_level, is_cycle, '|'.join(deps))
+            mysql_data.append(tup)
+
+            # excel_data_all_deps.append([file] + [layer_level] + dep[2:])
     print('生成excel data1 end\n' + '*' * 100)
     print('生成excel data2 start' + '*' * 100)
     for file, info in data.items():
@@ -187,20 +196,34 @@ def run(dir_name):
         for dep in deps:
             excel_data_direct_deps.append([file, target_table, dep])
     print('生成excel data2 end\n' + '*' * 100)
-    return excel_data_all_deps, excel_data_direct_deps
+    return mysql_data, excel_data_direct_deps
+
+
+def get_connection():
+    connection = pymysql.connect(
+        host='133.96.95.233'
+        , port=3306
+        , user='root'
+        , passwd='password'
+        , db='bigdata'
+        , charset='utf8mb4'
+        , cursorclass=pymysql.cursors.DictCursor)
+    cur = connection.cursor()
+    return connection, cur
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\tmp_bdhive'
-    data1, data2 = run(dirName)
-    print(len(data1))
-
-    result_xlsx = 'D:\\dwh所有依赖关系_old.xlsx'
-    # 先写小的，避免第二次打开大数据表
-    # print('写入excel：直接依赖 start' + '*' * 100)
-    # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
-    # print('写入excel：直接依赖 end' + '*' * 100)
-    # print('写入excel：所有依赖 start' + '*' * 100)
-    # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
-    # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2), ('所有依赖', data1)], edit=True)
+    dirName = 'D:\\bd_hive\\dwh'
+    mysql_data, data2 = run(dirName)
+    print(mysql_data[5])
+    con, cur = get_connection()
+    cur.execute('use bigdata ')
+    # (file, target_table, layer_level, is_cycle, '|'.join(deps))
+    # cur.execute('create table mk_all_deps_info (script_name varchar(100),table_name varchar(100),level int, is_cycle varchar(1) ,deps varchar(1024)) ')
+    # cur.execute('desc mk_all_deps_info')
+    sql = 'insert into mk_all_deps_info values(%s,%s,%d,%d,%s)'
+    for i in mysql_data:
+        print(i)
+    # cur.execute(sql, mysql_data)
+    # re = cur.fetchall()
+    # print(re)
