@@ -40,11 +40,11 @@ class HiveSQLEngine(object):
         self.init_conn()
 
     def init_conn(self):
-        zkClient = KazooClient(hosts="133.95.16.3:2181,"
-                                     "133.95.16.4:2181,"
-                                     "133.95.16.5:2181,"
-                                     "133.95.16.12:2181,"
-                                     "133.95.16.13:2181")
+        zkClient = KazooClient(hosts="127.0.0.3:2181,"
+                                     "127.0.0.4:2181,"
+                                     "127.0.0.5:2181,"
+                                     "127.0.0.12:2181,"
+                                     "127.0.0.13:2181")
         zkClient.start()
         result = zkClient.get_children("/hiveserver2")
         zkClient.stop()
@@ -65,12 +65,12 @@ class HiveSQLEngine(object):
             sys.exit(9)
 
         host_mapping = {
-            "bdmn003": '133.95.16.3',
-            "bdmn004": '133.95.16.4',
-            "bdmn005": '133.95.16.5',
-            "bdmn008": '133.95.16.8',
-            "bdmn012": '133.95.16.12',
-            "bdmn013": '133.95.16.13'
+            "bdmn003": '127.0.0.3',
+            "bdmn004": '127.0.0.4',
+            "bdmn005": '127.0.0.5',
+            "bdmn008": '127.0.0.8',
+            "bdmn012": '127.0.0.12',
+            "bdmn013": '127.0.0.13'
         }
         host = host_mapping[choice(host_list)]
         logger.info("Available Host:" + ",".join(host_list))
