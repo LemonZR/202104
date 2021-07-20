@@ -3,7 +3,7 @@
 import re
 import os
 import copy
-
+import pattern_conf
 from tools import excelOp
 
 
@@ -80,7 +80,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
     # table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
-    table_pattern = r'(?=%s)[a-zA-Z]+\.[tT][a-zA-Z]+_[a-zA-Z0-9_]*(?=|;|,|\s|_\$|\))' % heads
+    pattern = pattern_conf.table_pattern
+    table_pattern = r'(?=%s)%s(?=|;|,|\s|_\$|\))' % (heads, pattern)
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -191,11 +192,11 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\tmp_bdhive'
+    dirName = 'D:\\bd_hive\\dis'
     data1, data2 = run(dirName)
     print(len(data1))
 
-    result_xlsx = 'D:\\dwh所有依赖关系_old.xlsx'
+    result_xlsx = 'D:\\dis_直接依赖.xlsx'
     # 先写小的，避免第二次打开大数据表
     # print('写入excel：直接依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
@@ -203,4 +204,4 @@ if __name__ == '__main__':
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
     # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2), ('所有依赖', data1)], edit=True)
+    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2)], edit=True)
