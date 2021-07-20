@@ -123,16 +123,18 @@ def iterates(my_name, deps_list, __id_dict={}):
             dep_name = list(value.keys())[0]
             dep_value = list(value.values())[0]
             child_id = id(dep_value)
-            result.append([depth] + parents['p_tables'] + [dep_name])
+            # result.append([depth] + parents['p_tables'] + [dep_name])
             if child_id in __p_id_list:
                 # result.append([depth] + parents + ['self' + str(depth)])
                 # 这里是个环，可以做点什么
+                result.append([depth] + parents['p_tables'] + [dep_name, 'EndCycle'])
                 continue
             else:
                 __id_dict.setdefault('depth', {}).setdefault(child_id, depth + 1)
                 result += iterates(dep_name, dep_value, __id_dict)
-        elif depth == 0:
+        #elif depth == 0:
             # 只在弟0层写dwh 和pub 表
+        else:
             result.append([depth] + parents['p_tables'] + [value])
 
     return result
@@ -160,10 +162,11 @@ def run(dir_name):
     print('将各层依赖逐一查找并替换为最底层依赖 start' + '*' * 100)
     # 将各层依赖逐一查找并替换为最底层依赖
     for file, info in t_data.items():
-        target_table = info.get('target_table', file)
+        if file == 'mk_pm_sc_user_statis_m.sql':
+            target_table = info.get('target_table', file)
 
-        result.setdefault(file, {'target_table': target_table,
-                                 'deps': iterates(target_table, t_dict.get(target_table, []))})
+            result.setdefault(file, {'target_table': target_table,
+                                     'deps': iterates(target_table, t_dict.get(target_table, []))})
     print('将各层依赖逐一查找并替换为最底层依赖 end' + '*' * 100)
     excel_data_all_deps = [('脚本名', '目标表层级', '依赖表深度', '目标表名', '依赖表名')]
     excel_data_direct_deps = [('脚本名', '目标表名', '依赖表名')]
@@ -195,7 +198,7 @@ if __name__ == '__main__':
     data1, data2 = run(dirName)
     print(len(data1))
 
-    result_xlsx = 'D:\\dwh所有依赖关系_old.xlsx'
+    result_xlsx = 'D:\\所有依赖关系_old.xlsx'
     # 先写小的，避免第二次打开大数据表
     # print('写入excel：直接依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')

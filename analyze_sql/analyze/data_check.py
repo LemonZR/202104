@@ -201,11 +201,14 @@ class dataAnalyze:
 
         # 从当天的结果文件中查找历史查询记录
         self.__logger.info('尝试从文件中获取记录：%s %s ' % (table_name, self.date_pattern))
-        his_pattern = r'([0-9 :\-]+\s*\|%s\s*\|(%s)\s*\|\d+)' % (table_name, '|'.join(self.date_pattern))
-        his = re.findall(his_pattern, self.history)  # his:[()]
+        # his_pattern = r'([0-9 :\-]+\s*\|%s\s*\|(%s)\s*\|\d+)' % (table_name, '|'.join(self.date_pattern))
+        his_pattern = r'[0-9 :\-]+\s*\|%s\s*\|(?:%s)\s*\|\d+' % (table_name, '|'.join(self.date_pattern))
+        # his = re.findall(his_pattern, self.history)  # his:[()]
+        his = re.findall(his_pattern, self.history)  # his: [string]
         self.__logger.debug(his_pattern)
         if his:
-            result = list(map(str.strip, his[0][0].split('|')))
+            # result = list(map(str.strip, his[0][0].split('|')))
+            result = list(map(str.strip, his[0].split('|')))
             self.queue.put(result)
             self.__logger.info('%s 从历史记录中获取到了，就不重新查了' % table_name)
         else:

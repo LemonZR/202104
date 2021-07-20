@@ -1,1676 +1,515 @@
 --<metadata>
---<model_name>: 普通语音月汇总
---<keyword>: 普通语音, 月汇总
---<description>: 普通语音月汇总
---<author>: 马少朋@华为
---<run_cycle>: M
---<tmp_table>: hw_tmp.tm_ls_voc_m_mid_1,hw_tmp.tm_ls_voc_m_mid_2_3,hw_tmp.tm_ls_voc_m_mid_2_4,hw_tmp.tm_ls_voc_m_mid_2_5,hw_tmp.tm_ls_voc_m_mid_3,hw_tmp.tm_ls_voc_m_mid_4_4,hw_tmp.tm_ls_voc_m_mid_5,hw_tmp.tm_ls_voc_m_mid_6,hw_tmp.tm_ls_voc_m_mid_7,hw_tmp.tm_ls_voc_m_mid_8
---<det_table>: 码表(逗号分隔)
---<app_table>: mk.tm_ls_voc_m
+--<model_name>: GSM语音VOLTE话单日汇总表(非时段)
+--<keyword>: GSM语音, VOLTE话单日汇总表
+--<description>: GSM语音VOLTE话单日汇总表(非时段)
+--<author>: 李啸天@华为
+--<run_cycle>: D
+--<tmp_table>: hw_tmp.tm_ls_volte_d_mid2,hw_tmp.tm_ls_volte_d_mid3,hw_tmp.tm_ls_volte_d_mid4,hw_tmp.tm_ls_volte_d_mid5,hw_tmp.tm_ls_volte_d_mid6,
+--<tmp_table>: hw_tmp.tm_ls_volte_d_mid7,hw_tmp.tm_ls_volte_d_mid8,hw_tmp.tm_ls_volte_d_mid9
+--<det_table>: pub.tdic_set_value,pub.tdet_grp_prod_sort
+--<app_table>: mk.tm_ls_volte_d
 --<app_name>: /路径/子路径/应用专题1/应用1
 --</metadata>
 
 
-
-
-
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_1;
-create table if not exists hw_tmp.tm_ls_voc_m_mid_1
-(
-subs_id string
-,self_phone_no string
-,self_home_area string
-,imei string
-,cdr_type string
-,call_type string
-,opp_net_type string
-,roam_type string
-,opp_phone_no string
-,trans_serv_vendor string
-,rfpowercapability string
-,spec_call_type string
-,service_code string
-,tariff_id string
-,call_net_type string
-,opp_carrier string
-,other_self_home_area string
-,vregion string
-,opp_visited_area_code string
-,partial_cdr_flag string
-,call_dur int
-,local_fee double
-,toll_fee_2 double
-,tolladd_fee double
-,roam_fee_s double
-,local_fee_s double
-,toll_fee_s double
-,toll_fee_2_s double
-,tolladd_fee_s double
-,ruraladd_fee_s double
-,ruraladd_fee double
-,video_call_flg string
-,package_info string
-,tariff_trace string
-,org_hregion string
-,org_otherhregion string
-,call_cnt bigint
-,call_dur_1 double
-,toll_dur_1 double
-,chrg_dur_1 double
-,fav_dur_1 double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,is_call_10086  	 varchar(1)
-,is_three_second  varchar(1)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_1;
-
-insert into hw_tmp.tm_ls_voc_m_mid_1
-select
-subs_id
-,self_phone_no
-,self_home_area
-,imei
-,cdr_type
-,call_type
-,opp_net_type
-,roam_type
-,opp_phone_no
-,trans_serv_vendor
-,rfpowercapability
-,spec_call_type
-,service_code
-,tariff_id
-,call_net_type
-,opp_carrier
-,other_self_home_area
-,vregion
-,opp_visited_area_code
-,partial_cdr_flag
-,sum(call_dur)
-,sum(local_fee)
-,sum(toll_fee)
-,sum(toll_fee_2)
-,sum(roam_fee_s)
-,sum(local_fee_s)
-,sum(toll_fee_s)
-,sum(toll_fee_2_s)
-,sum(tolladd_fee_s)
-,sum(ruraladd_fee_s)
-,sum(ruraladd_fee)
-,video_call_flg
-,package_info
-,tariff_trace
-,org_hregion
-,org_otherhregion
-,sum(case when partial_cdr_flag in('R','B') then (-1) else 1 end)--通话次数
-,sum(case when partial_cdr_flag in('R','B') then call_dur*(-1) else call_dur end) --通话时长
-,sum((case when partial_cdr_flag in('R','B') then (case when substr(call_type,1,1) = '2' then ceil(call_dur*1.0/6) else 0 end)*(-1)
-else (case when substr(call_type,1,1) = '2' then ceil(call_dur*1.0/6) else 0 end) end))--长途时长
-,sum(case when partial_cdr_flag in('R','B') then ceil(call_dur*1.0/60)*(-1) else ceil(call_dur*1.0/60) end)--计费时长取分 向上取整
-,sum(case when partial_cdr_flag in('R','B') then (case when spec_call_type in ('90','91','92') then call_dur else 0 end)*(-1)
-else (case when spec_call_type in ('90','91','92') then call_dur else 0 end) end)--优惠时长
-,sum(case when partial_cdr_flag in('R','B') then (local_fee)*(-100) else (local_fee)*100 end)--基本费
-,sum(case when partial_cdr_flag in('R','B') then (toll_fee+toll_fee_2)*(-100) else  (toll_fee+toll_fee_2)*100 end)--长途费
-,sum(tolladd_fee)--长途附加费
-,sum(case when partial_cdr_flag in('R','B') then (roam_fee) *(-100) else (roam_fee)*100  end)--漫游费
-,0--信息费 语言话单里面没有信息费
-,sum(case when partial_cdr_flag in('R','B') then ((local_fee_s+roam_fee_s)-(local_fee+roam_fee))*(-100) else ((local_fee_s+roam_fee_s)-(local_fee+roam_fee))*100 end)--优惠基本费
-,sum(case when partial_cdr_flag in('R','B')
-then (toll_fee_s+toll_fee_2_s-toll_fee-toll_fee_2)*(-100) else (toll_fee_s+toll_fee_2_s-toll_fee-toll_fee_2)*100 end)--优惠长途费
-,sum(case when partial_cdr_flag in('R','B') then (tolladd_fee_s-tolladd_fee)*(-100) else  (tolladd_fee_s-tolladd_fee)*100 end) --优惠长途附加费
-,0--优惠信息费
-,sum(case when partial_cdr_flag in('R','B') then ceil(call_dur*1.0/6)*(-1) else ceil(call_dur*1.0/6) end)--6秒计费时长取分 向上取整
-,sum(case when partial_cdr_flag in('R','B') then (local_fee_s+roam_fee_s+toll_fee_s+toll_fee_2_s)*(-100)
-else (local_fee_s+roam_fee_s+toll_fee_s+toll_fee_2_s)*100
-end)
-,sum(case when partial_cdr_flag in('R','B') then (local_fee+roam_fee+toll_fee+toll_fee_2)*(-100)
-else (local_fee+roam_fee+toll_fee+toll_fee_2)*100
-end)
-,case when opp_phone_no like '10086%' and call_type like '1%' then '1' else '0' end----拨打10086
-,case when spec_call_type like '90%' and (local_fee+roam_fee+toll_fee)=0 then '1' else '0' end----3秒短话单,充值电话等免费电话
-from dwh.td_su_cdr_gsm_home_d
-where deal_date  between ${hivevar:vi_month_first} and ${hivevar:vi_month_last}
---where deal_date  between 20191001 and 20191031
-group by
-subs_id
-,self_phone_no
-,self_home_area
-,imei
-,cdr_type
-,call_type
-,opp_net_type
-,roam_type
-,opp_phone_no
-,trans_serv_vendor
-,rfpowercapability
-,spec_call_type
-,service_code
-,tariff_id
-,call_net_type
-,opp_carrier
-,other_self_home_area
-,vregion
-,opp_visited_area_code
-,partial_cdr_flag
-,video_call_flg
-,package_info
-,tariff_trace
-,org_hregion
-,org_otherhregion
-,case when opp_phone_no like '10086%' and call_type like '1%' then '1' else '0' end
-,case when spec_call_type like '90%' and (local_fee+roam_fee+toll_fee)=0 then '1' else '0' end
-;
-
-
-
-insert into hw_tmp.tm_ls_voc_m_mid_1
-select
-subs_id
-,self_phone_no
-,self_home_area
-,imei
-,cdr_type
-,call_type
-,opp_net_type
-,roam_type
-,opp_phone_no
-,trans_serv_vendor
-,rfpowercapability
-,spec_call_type
-,service_code
-,''
-,call_net_type
-,opp_carrier
-,other_self_home_area
-,vregion
-,opp_visited_area_code
-,partial_cdr_flag
-,sum(call_dur)
-,sum(local_fee)
-,sum(toll_fee)
-,sum(0)
-,sum(0)
-,sum(0)
-,sum(0)
-,sum(0)
-,sum(0)
-,sum(0)
-,sum(ruraladd_fee)
-,video_call_flg
-,package_info
-,tariff_trace
-,org_hregion
-,org_otherhregion
-,sum(case when partial_cdr_flag in('R','B') then (-1) else 1 end)--通话次数
-,sum(case when partial_cdr_flag in('R','B') then call_dur*(-1) else call_dur end) --通话时长
-,sum((case when partial_cdr_flag in('R','B') then (case when substr(call_type,1,1) = '2' then ceil(call_dur*1.0/6) else 0 end)*(-1)
-else (case when substr(call_type,1,1) = '2' then ceil(call_dur*1.0/6) else 0 end) end))--长途时长
-,sum(case when partial_cdr_flag in('R','B') then ceil(call_dur*1.0/60)*(-1) else ceil(call_dur*1.0/60) end)--计费时长取分 向上取整
-,sum(case when partial_cdr_flag in('R','B') then (case when spec_call_type in ('90','91','92') then call_dur else 0 end)*(-1)
-else (case when spec_call_type in ('90','91','92') then call_dur else 0 end) end)--优惠时长
-,sum(case when partial_cdr_flag in('R','B') then (local_fee)*(-100) else (local_fee)*100 end)--基本费
-,sum(case when partial_cdr_flag in('R','B') then (toll_fee+0)*(-100) else  (toll_fee+0)*100 end)--长途费
-,sum(tolladd_fee)--长途附加费
-,sum(case when partial_cdr_flag in('R','B') then (roam_fee) *(-100) else (roam_fee)*100  end)--漫游费
-,0--信息费 语言话单里面没有信息费
-,sum(case when partial_cdr_flag in('R','B') then ((0+0)-(local_fee+roam_fee))*(-100) else ((0+0)-(local_fee+roam_fee))*100 end)--优惠基本费
-,sum(case when partial_cdr_flag in('R','B')
-then (0+0-toll_fee-0)*(-100) else (0+0-toll_fee-0)*100 end)--优惠长途费
-,sum(case when partial_cdr_flag in('R','B') then (0-tolladd_fee)*(-100) else  (0-tolladd_fee)*100 end) --优惠长途附加费
-,0--优惠信息费
-,sum(case when partial_cdr_flag in('R','B') then ceil(call_dur*1.0/6)*(-1) else ceil(call_dur*1.0/6) end)--6秒计费时长取分 向上取整
-,sum(case when partial_cdr_flag in('R','B') then (0+0+0+0)*(-100)
-else (0+0+0+0)*100
-end)
-,sum(case when partial_cdr_flag in('R','B') then (local_fee+roam_fee+toll_fee+0)*(-100)
-else (local_fee+roam_fee+toll_fee+0)*100
-end)
-,case when opp_phone_no like '10086%' and call_type like '1%' then '1' else '0' end    ----拨打10086
-,case when spec_call_type like '90%' and (local_fee+roam_fee+toll_fee)=0 then '1' else '0' end   ----3秒短话单,充值电话等免费电话
-from dwh.td_su_cdr_vpmn_home_d
-where deal_date  between ${hivevar:vi_month_first} and ${hivevar:vi_month_last}
---where deal_date  between 20191001 and 20191031
-group by
-subs_id
-,self_phone_no
-,self_home_area
-,imei
-,cdr_type
-,call_type
-,opp_net_type
-,roam_type
-,opp_phone_no
-,trans_serv_vendor
-,rfpowercapability
-,spec_call_type
-,service_code
-,call_net_type
-,opp_carrier
-,other_self_home_area
-,vregion
-,opp_visited_area_code
-,partial_cdr_flag
-,video_call_flg
-,package_info
-,tariff_trace
-,org_hregion
-,org_otherhregion
-,case when opp_phone_no like '10086%' and call_type like '1%' then '1' else '0' end
-,case when spec_call_type like '90%' and (local_fee+roam_fee+toll_fee)=0 then '1' else '0' end
-;
-
-
---------------------------------------------------------------------
-
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_2_3;
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_2_3
-(
-subs_id varchar(16)
-,phone_no varchar(33)
-,region_code varchar(12)
+drop table if exists hw_tmp.tm_ls_volte_d_mid5 ;
+create table if not exists hw_tmp.tm_ls_volte_d_mid5
+(cdr_type varchar(3)
+,roam_type varchar(5)
+,call_type varchar(5)
+,self_phone_no varchar(22)
+,vregion varchar(12)
 ,imei varchar(20)
-,imei_8 varchar(8)
-,cdr_type varchar(3)
-,call_type varchar(10)
-,opp_type varchar(33)
-,toll_type varchar(10)
-,roam_type varchar(10)
-,ip_type_id varchar(10)
-,cdr_serv_type varchar(8)
-,v_call_type varchar(2)
-,net_type varchar(10)
+,self_home_area varchar(12)
+,self_carrier varchar(33)
+,opp_phone_no varchar(30)
+,opp_visited_area_code varchar(12)
+,other_self_home_area varchar(12)
 ,opp_carrier varchar(33)
-,opp_area_cd varchar(12)
-,roam_area_id varchar(20)
-,opp_visited_area_code varchar(20)
-,call_cnt bigint
-,call_dur double
-,toll_dur double
-,chrg_dur double
-,fav_dur double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,video_call_flg varchar(16)
+,opp_net_type varchar(3)
+,trans_serv_vendor varchar(12)
+,imsi varchar(15)
+,active_roam_no varchar(15)
+,in_trunk_no varchar(12)
+,out_trunk_no varchar(12)
+,msc_no varchar(15)
+,lac_id varchar(20)
+,cell_id varchar(20)
+,call_start_time varchar(14)
+,call_dur int
+,partial_cdr_flag varchar(3)
+,serv_type varchar(2)
+,service_code varchar(2)
+,rfpowercapability varchar(2)
+,opplac_no varchar(6)
+,other_cell_id varchar(6)
+,billing_cycle varchar(6)
+,src_file_name varchar(24)
+,subs_id varchar(13)
+,acct_id varchar(20)
+,dest_file_name varchar(24)
+,third_self_phone_no varchar(22)
+,tariff_id varchar(15)
+,err_num varchar(4)
+,spec_call_type varchar(6)
+,basic_serv_code varchar(12)
+,msc_type varchar(5)
+,settle_partner varchar(12)
+,deal_time varchar(14)
+,total_disct varchar(90)
+,tariff_trace varchar(80)
+,partial_reference_no varchar(12)
+,trance_latied_other_party varchar(30)
+,free_format_date varchar(80)
+,call_net_type varchar(6)
+,video_call_flg varchar(10)
+,grant_dur varchar(11)
+,initiative_cut_flg varchar(3)
+,local_fee decimal(12,3)
+,roam_fee decimal(12,3)
+,toll_fee decimal(12,3)
+,local_fee_s decimal(12,3)
+,roam_fee_s decimal(12,3)
+,toll_fee_s decimal(12,3)
+,ruraladd_fee_s decimal(12,3)
+,tolladd_fee_s decimal(12,3)
+,toll_fee_2_s decimal(12,3)
+,toll_fee_2 decimal(12,3)
+,ruraladd_fee decimal(12,3)
+,tolladd_fee decimal(12,3)
+,opp_carrier_prov varchar(10)
+,is_inner varchar(1)
+,is_prov varchar(1)
+,is_wt_prov varchar(1)
+,is_dx_311 varchar(1)
+,is_xlt_311 varchar(1)
+,is_311_fix varchar(1)
+,opp_phone_no_5 varchar(5)
+,opp_phone_no_6 varchar(6)
+,opp_phone_no_7 varchar(7)
+,opp_phone_no_8 varchar(8)
+,opp_phone_no_area_5 varchar(5)
+,opp_phone_no_area_6 varchar(6)
+,opp_phone_no_area_7 varchar(7)
+,opp_phone_no_area_8 varchar(8)
+,ip_type_id varchar(10)
 ,package_info varchar(128)
 ,tariff_track varchar(128)
 ,org_hregion varchar(12)
 ,org_otherhregion varchar(12)
-,serv_type varchar(20)
-,serv_code varchar(30)
-,serv_scope varchar(1)
-,is_311_fix varchar(5)
-,opp_phone_no string
-,other_self_home_area string
-,is_call_10086    varchar(1)
-,is_three_second  varchar(1)
+,is_video_call varchar(5)
 )
 row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-truncate table hw_tmp.tm_ls_voc_m_mid_2_3;
+ truncate table  hw_tmp.tm_ls_volte_d_mid5 ;
 
-insert into hw_tmp.tm_ls_voc_m_mid_2_3
+ insert into hw_tmp.tm_ls_volte_d_mid5
+ select
+ trim(cdr_type)
+ ,trim(roam_type)
+ ,trim(call_type)
+ ,trim(self_phone_no)
+ ,trim(vregion)
+ ,trim(imei)
+ ,trim(self_home_area)
+ ,trim(self_carrier)
+ ,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+ when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+ else trim(opp_phone_no)
+ end
+ ,trim(opp_visited_area_code)
+ ,trim(other_self_home_area)
+ ,trim(opp_carrier)
+ ,trim(opp_net_type)
+ ,trans_serv_vendor
+ ,''
+ ,active_roam_no
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,trim(call_start_time)
+ ,call_dur
+ ,partial_cdr_flag
+ ,serv_type
+ ,service_code
+ ,rfpowercapability
+ ,''
+ ,''
+ ,billing_cycle
+ ,src_file_name
+ ,subs_id
+ ,acct_id
+ ,dest_file_name
+ ,third_self_phone_no
+ ,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
+ ,err_num
+ ,spec_call_type
+ ,basic_serv_code
+ ,msc_type
+ ,settle_partner
+ ,deal_time
+ ,''
+ ,''
+ ,partial_reference_no
+ ,trance_latied_other_party
+ ,free_format_date
+ ,call_net_type
+ ,video_call_flg
+ ,grant_dur
+ ,''
+ ,local_fee
+ ,roam_fee
+ ,toll_fee
+ ,local_fee_s
+ ,roam_fee_s
+ ,toll_fee_s
+ ,ruraladd_fee_s
+ ,tolladd_fee_s
+ ,toll_fee_2_s
+ ,toll_fee_2
+ ,ruraladd_fee
+ ,tolladd_fee
+ ---增加对端运营商省字段
+ ,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,case when ( trim(a.opp_carrier) like '2.310' or
+ trim(a.opp_carrier) like '2.311' or
+ trim(a.opp_carrier) like '2.312' or
+ trim(a.opp_carrier) like '2.313' or
+ trim(a.opp_carrier) like '2.314' or
+ trim(a.opp_carrier) like '2.315' or
+ trim(a.opp_carrier) like '2.316' or
+ trim(a.opp_carrier) like '2.317' or
+ trim(a.opp_carrier) like '2.318' or
+ trim(a.opp_carrier) like '2.319' or
+ trim(a.opp_carrier) like '2.335' or
+ trim(a.opp_carrier) like '2.336')
+ then '1'
+ else '0'
+ end
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,''
+ ,case when trim(opp_phone_no) like '17951%' then '17951'
+ when trim(opp_phone_no) like '17950%' then '17950'
+ else ''
+ end
+ ,package_info
+ --20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
+ ,tariff_trace
+ ,org_hregion --本方原归属
+ ,org_otherhregion --对方原归属
+,'0'
+ from dwh.td_su_cdr_gsm_home_d a
+ where deal_date=${hivevar:vi_day}
+ and call_net_type='VOLTE'
+ ;
+
+
+insert into hw_tmp.tm_ls_volte_d_mid5
 select
-subs_id
-,trim(self_phone_no)--服务号码
-,trim(self_home_area)--地市编码
-,substr(IMEI,1,14)
-,substr(IMEI,1,8)
-,cdr_type--话单类型
-,call_type--呼叫类型
-,opp_net_type--对端类型
-,case when call_type in ('11','12') then '0'
-when call_type in ('21') then '1'
-when call_type in ('22') then '2'
-when call_type in ('231','232','233') then '3'
-when call_type in ('234') then '4'
-end--长途类型
-,roam_type--漫游类型
-,case when trim(opp_phone_no) like '17951%' then '17951'
-when trim(opp_phone_no) like '17950%' then '17950'
-when opp_phone_no like '12593%'     then '12593'
-when not trans_serv_vendor='OTHER'  then trim(trans_serv_vendor)
-when rfpowercapability  like 'id%'  then 'IP_CAR'   ---IP直通车
-when spec_call_type  like '800%'     then 'OTSV421'
-when spec_call_type  like '802%'     then 'OTSV423'
-when spec_call_type  like '811%'     then 'OTSV422'
-when spec_call_type  like '8163%'    then 'OTSV451'
-when spec_call_type  like '8169%'    then 'OTSV452'
-when spec_call_type  like '855%'     then 'OTSV43'
-when spec_call_type  like '888%'     then 'OTSV44'
-when spec_call_type  like '8%'  or  spec_call_type  like '866%'  then 'OTSV41'
-else ''
+trim(cdr_type)
+,trim(roam_type)
+,trim(call_type)
+,trim(self_phone_no)
+,trim(vregion)
+,trim(imei)
+,trim(self_home_area)
+,trim(self_carrier)
+,case when trim(opp_phone_no) like '+86%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-2,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '86%' and length(trim(opp_phone_no))>11 then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '00%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-1,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '0%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-0,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '179510%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '17951%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '179500%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-5,length(trim(opp_phone_no)))
+when trim(opp_phone_no) like '17950%' then substr(trim(opp_phone_no),length(trim(opp_phone_no))-4,length(trim(opp_phone_no)))
+else trim(opp_phone_no)
 end
-,case when spec_call_type in ('866') then '01'--01-手机上网业务
-when (spec_call_type='TY' or spec_call_type like 'Y%' or spec_call_type like 'X%') and spec_call_type not like 'Y15%' then '02' --02-音信互动业务
-when spec_call_type like 'E%'  then '03'--03-娱音在线业务
-when opp_phone_no='12530' then '04'--04-12530业务
-when substr(opp_phone_no,1,5) = '12590' and (substr(spec_call_type,1,1)='Y' or substr(spec_call_type,1,2)='TY') then '05'--05语音杂志
-when opp_phone_no='12530999' then '06'--06-12530999业务
-when substr(service_code,1,1) = '2' then '07'--07-呼转话单标志
-when opp_phone_no='10000' then '08'--08-电信10000
-when substr(opp_phone_no,1,5)='10086' then '09'--09-移动10086
-when substr(opp_phone_no,1,5)='12593' then '10'--10-12593长途
-when opp_phone_no='12121' then '11'--11-12121天气查询
-when opp_phone_no='114' then '26'--26-114查号
-when opp_phone_no='118114' then '27'--27-118114查号
-when opp_phone_no='116114' then '28'--28-116114查号
-when opp_phone_no='4006640066' then '13'--13-芒果热线
-when opp_phone_no='4006161616' then '14'--14-elong热线
-when opp_phone_no in('8008206666','40082066666') then '15'--15-携程热线
-when substr(opp_phone_no,1,5)='12520' then '16'--16-飞信语聊
-when opp_phone_no='16898777' then '17'--17-彩票开奖信息电话
-when opp_phone_no='10010' then '18'--18-联通10010
-when substr(opp_phone_no,1,5)='12580' then '19'--19-12580
-when spec_call_type like 'Y15%' then '20'--20-MUSIC
-when spec_call_type like 'W%' then '21'--21-语音聊天(LIAOTIAN)
-when spec_call_type like 'K%' then '22'--22-广播(GUANGBO)
-when spec_call_type like 'E5%' then '23'--23-手机钱包(QIANBAO)
-when spec_call_type like 'E%' and spec_call_type not like 'E5%' then '24'--24-娱音在线业务(YUYIN)
-when RFPOWERCAPABILITY like 'id%' then '25'--25-IP卡(IPCAR)
-else spec_call_type end--话单服务类型
-,case when tariff_id like '%V' then 'V' else 'G' end --v网通话类型
-,call_net_type --网络类型
-,substr(opp_carrier,1,14)--对端运营商
-,trim(other_self_home_area)--对端归属区号
-,trim(VREGION)--漫游地区代码
-,trim(OPP_VISITED_AREA_CODE)--对方访问地区代码
-
-,call_cnt--通话次数
-,call_dur_1
-,toll_dur_1
-,chrg_dur_1
-,fav_dur_1
-,base_fee
-,toll_fee
-,toll_extra_fee
+,trim(opp_visited_area_code)
+,trim(other_self_home_area)
+,trim(opp_carrier)
+,trim(opp_net_type)
+,trans_serv_vendor
+,''
+,active_roam_no
+,''
+,''
+,''
+,''
+,''
+,trim(call_start_time)
+,call_dur
+,partial_cdr_flag
+,serv_type
+,service_code
+,rfpowercapability
+,''
+,''
+,billing_cycle
+,src_file_name
+,subs_id
+,acct_id
+,dest_file_name
+,third_self_phone_no
+,case when msc_type = '109' then 'VI' else tariff_id end as tariff_id
+,err_num
+,spec_call_type
+,basic_serv_code
+,msc_type
+,settle_partner
+,deal_time
+,''
+,''
+,partial_reference_no
+,trance_latied_other_party
+,free_format_date
+,call_net_type
+,video_call_flg
+,grant_dur
+,''
+,local_fee
 ,roam_fee
-,info_fee
-,fav_base_fee
-,fav_toll_fee
-,fav_toll_extra_fee
-,fav_info_fee
-,chrg_dur_6
-,bef_fav_tot_fee
-,fav_aft_tot_fee
-,video_call_flg--视频通话标识
-,case when instr(package_info,',')<>0 then substr(package_info,1,instr(package_info,',')-1) end
-,case when instr(TARIFF_TRACE,',')<>0 then substr(TARIFF_TRACE,1,instr(TARIFF_TRACE,',')-1) end
-,org_hregion--携号转移新增
-,org_otherhregion--携号转移新增
-,case when opp_phone_no like '12580%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___12580%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____12580%' )
-then 'mishu'---移动秘书
-when opp_phone_no like '12530900%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___12530900%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____12530900%' )
-then 'mmr900'--无限音乐俱乐部语音搜索
-when opp_phone_no like '12530999%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___12530999%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____12530999%' )
-then 'mmr999'--无限音乐俱乐部点歌
-when opp_phone_no like '12530%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___12530%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____12530%' )
-then 'mmr'--彩铃
-when opp_phone_no like '12536%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___12536%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____12536%' )
-then 'voicesms'--语音短信
-when opp_phone_no like '13903140008%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___13903140008%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____13903140008%' )
-then 'diange1'--点歌1
-when opp_phone_no like '13903140009%' or
-((substr(opp_phone_no,1,3)between '310' and '319' or substr(opp_phone_no,1,3)='335' or substr(opp_phone_no,1,3)='336') and opp_phone_no like '___13903140009%' ) or
-((substr(opp_phone_no,1,4)between '0310' and '0319' or substr(opp_phone_no,1,4)='0335' or substr(opp_phone_no,1,4)='0336') and opp_phone_no like '____13903140009%' )
-then 'diange2'--点歌2
-when spec_call_type like 'E5%' then 'qianbo'--手机钱包 12588
-when spec_call_type like 'K%' then ' broadcast'--广播
-when spec_call_type like 'W%' then ' chat'--聊天
-when spec_call_type like 'Y15%' then 'music'--无线音乐 12530999点歌 12530900语音搜索
-when (spec_call_type like 'X%' or spec_call_type like 'Y%' or spec_call_type like 'TY%') and spec_call_type not like 'Y15%' then 'yinxin'---语音杂志业务
-when spec_call_type like 'E%' and spec_call_type not like 'E5%' then 'yuyin'---移动沙龙
-when spec_call_type like 'P%' then trim(spec_call_type)
-when video_call_flg='M' then 'video'---视频通话
-end as serv_type
-,''--serv_code
-, case when (spec_call_type like 'X%' or spec_call_type like 'Y%' or spec_call_type like 'TY%') and spec_call_type not like 'Y15%' and
-(substr(opp_phone_no,1,6) in ('125900','125904','125905','125906','125907','125908') or
-substr(opp_phone_no,1,5)='12596' or
-substr(opp_phone_no,1,11) in ('17951125900','17951125904','17951125905','17951125906','17951125907','17951125908') or
-substr(opp_phone_no,1,10)='1795112596' or
-substr(opp_phone_no,1,11) in ('17950125900','17950125904','17950125905','17950125906','17950125907','17950125908') or
-substr(opp_phone_no,1,10)='1795012596'
-) then '1'
-when (spec_call_type like 'X%' or spec_call_type like 'Y%' or spec_call_type like 'TY%') and spec_call_type not like 'Y15%' and
-( substr(opp_phone_no,1,6) in ('125901','125902','125903','125909') or
-substr(opp_phone_no,1,5)='12559' or
-substr(opp_phone_no,1,11) in ('17951125901','17951125902','17951125903','17951125909') or
-substr(opp_phone_no,1,10)='1795112559' or
-substr(opp_phone_no,1,11) in ('17950125901','17950125902','17950125903','17950125909') or
-substr(opp_phone_no,1,10)='1795012559'
-) then '0'---
-else '1' end as serv_scope
-,case when ( trim(opp_carrier) in('2.310','2.311','2.312','2.313','2.314','2.315','2.316','2.317','2.318','2.319','2.335','2.336'))
+,toll_fee
+,local_fee_s
+,roam_fee_s
+,toll_fee_s
+,ruraladd_fee_s
+,tolladd_fee_s
+,toll_fee_2_s
+,toll_fee_2
+,ruraladd_fee
+,tolladd_fee
+---增加对端运营商省字段
+,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),length(a.opp_carrier)-1,length(a.opp_carrier)) end
+,''
+,''
+,''
+,''
+,''
+,case when ( trim(a.opp_carrier) like '2.310' or
+trim(a.opp_carrier) like '2.311' or
+trim(a.opp_carrier) like '2.312' or
+trim(a.opp_carrier) like '2.313' or
+trim(a.opp_carrier) like '2.314' or
+trim(a.opp_carrier) like '2.315' or
+trim(a.opp_carrier) like '2.316' or
+trim(a.opp_carrier) like '2.317' or
+trim(a.opp_carrier) like '2.318' or
+trim(a.opp_carrier) like '2.319' or
+trim(a.opp_carrier) like '2.335' or
+trim(a.opp_carrier) like '2.336')
 then '1'
 else '0'
 end
-,case when trim(OPP_PHONE_NO) like '+86%' then substr(trim(OPP_PHONE_NO),4)
-when trim(OPP_PHONE_NO) like '86%' and length(trim(OPP_PHONE_NO))>11 then substr(trim(OPP_PHONE_NO),3)
-when trim(OPP_PHONE_NO) like '00%' then substr(trim(OPP_PHONE_NO),3)
-when trim(OPP_PHONE_NO) like '0%' then substr(trim(OPP_PHONE_NO),2)
-when trim(OPP_PHONE_NO) like '179510%' then substr(trim(OPP_PHONE_NO),7)
-when trim(OPP_PHONE_NO) like '17951%' then substr(trim(OPP_PHONE_NO),6)
-when trim(OPP_PHONE_NO) like '179500%' then substr(trim(OPP_PHONE_NO),7)
-when trim(OPP_PHONE_NO) like '17950%' then substr(trim(OPP_PHONE_NO),6)
-else trim(OPP_PHONE_NO)
+,''
+,''
+,''
+,''
+,''
+,''
+,''
+,''
+,case when trim(opp_phone_no) like '17951%' then '17951'
+when trim(opp_phone_no) like '17950%' then '17950'
+else ''
 end
-,trim(OTHER_SELF_HOME_AREA)
-,is_call_10086
-,is_three_second
-FROM hw_tmp.tm_ls_voc_m_mid_1;
-
-
-
-
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_2_4;
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_2_4
-(
-subs_id varchar(16)
-,phone_no varchar(33)
-,region_code varchar(12)
-,imei varchar(20)
-,imei_8 varchar(8)
-,cdr_type varchar(3)
-,call_type varchar(10)
-,opp_type varchar(33)
-,toll_type varchar(10)
-,roam_type varchar(10)
-,ip_type_id varchar(10)
-,cdr_serv_type varchar(8)
-,v_call_type varchar(2)
-,net_type varchar(10)
-,opp_carrier varchar(33)
-,opp_area_cd varchar(12)
-,roam_area_id varchar(20)
-,opp_visited_area_code varchar(20)
-,call_cnt bigint
-,call_dur double
-,toll_dur double
-,chrg_dur double
-,fav_dur double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,video_call_flg varchar(16)
-,package_info varchar(128)
-,tariff_track varchar(128)
-,org_hregion varchar(12)
-,org_otherhregion varchar(12)
-,serv_type varchar(20)
-,serv_code varchar(30)
-,serv_scope varchar(1)
-,is_311_fix varchar(5)
-,opp_phone_no string
-,other_self_home_area string
-,is_call_10086  varchar(1)
-,is_three_second  varchar(1)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_2_4;
-
-insert into hw_tmp.tm_ls_voc_m_mid_2_4
-select
-subs_id
-,phone_no
-,region_code
-,imei
-,imei_8
-,cdr_type
-,call_type
-,opp_type
-,toll_type
-,roam_type
-,ip_type_id
-,cdr_serv_type
-,v_call_type
-,net_type
-,opp_carrier
-,opp_area_cd
-,roam_area_id
-,opp_visited_area_code
-,sum(call_cnt)
-,sum(call_dur)
-,sum(toll_dur)
-,sum(chrg_dur)
-,sum(fav_dur)
-,sum(base_fee)
-,sum(toll_fee)
-,sum(toll_extra_fee)
-,sum(roam_fee)
-,sum(info_fee)
-,sum(fav_base_fee)
-,sum(fav_toll_fee)
-,sum(fav_toll_extra_fee)
-,sum(fav_info_fee)
-,sum(chrg_dur_6)
-,sum(bef_fav_tot_fee)
-,sum(fav_aft_tot_fee)
-,video_call_flg
 ,package_info
-,tariff_track
-,org_hregion
-,org_otherhregion
-,serv_type
-,serv_code
-,serv_scope
-,is_311_fix
-,opp_phone_no
-,other_self_home_area
-,is_call_10086
-,is_three_second
-FROM hw_tmp.tm_ls_voc_m_mid_2_3
-group by
-subs_id
-,phone_no
-,region_code
-,imei
-,imei_8
-,cdr_type
-,call_type
-,opp_type
-,toll_type
-,roam_type
-,ip_type_id
-,cdr_serv_type
-,v_call_type
-,net_type
-,opp_carrier
-,opp_area_cd
-,roam_area_id
-,opp_visited_area_code
-,video_call_flg
-,package_info
-,tariff_track
-,org_hregion
-,org_otherhregion
-,serv_type
-,serv_code
-,serv_scope
-,is_311_fix
-,opp_phone_no
-,other_self_home_area
-,is_call_10086
-,is_three_second
+--20120726 cuijb 携号转移增加本方原归属地和对方原归属地字段
+,tariff_trace
+,org_hregion --本方原归属
+,org_otherhregion --对方原归属
+,'1'
+from dwh.td_su_cdr_volte_gsm_home_d a
+where deal_date=${hivevar:vi_day}
 ;
 
+drop table if exists hw_tmp.tm_ls_volte_d_mid6;
 
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_2_5;
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_2_5
+create table if not exists hw_tmp.tm_ls_volte_d_mid6
 (
-subs_id string
-,phone_no string
-,region_code string
-,imei string
-,imei_8 string
-,cdr_type string
-,call_type string
-,opp_type string
-,toll_type string
-,roam_type string
-,ip_type_id string
-,cdr_serv_type string
-,v_call_type string
-,net_type string
-,opp_carrier string
-,opp_area_cd string
-,roam_area_id string
-,opp_visited_area_code string
-,call_cnt bigint
-,call_dur double
-,toll_dur double
-,chrg_dur double
-,fav_dur double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,video_call_flg string
-,package_info string
-,tariff_track string
-,org_hregion string
-,org_otherhregion string
-,serv_type string
-,serv_code string
-,serv_scope string
-,is_311_fix string
-,opp_phone_no string
-,other_self_home_area string
-,is_call_10086  varchar(1)
-,is_three_second  varchar(1)
-,opp_carrier_prov string
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_2_5;
-insert into hw_tmp.tm_ls_voc_m_mid_2_5
-select
- a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,a.is_call_10086
-,a.is_three_second
-,case when length(a.opp_carrier)>2 and length(trim(a.opp_carrier))<12 then substr(trim(a.opp_carrier),3) end
-from hw_tmp.tm_ls_voc_m_mid_2_4 a;
-
-
-
------------------------------------------------------------------
-
-
-------------------------------------------------------------------------------------------
-
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_3;
-create table if not exists hw_tmp.tm_ls_voc_m_mid_3
-(
-set_id      int,
-apply_time  varchar(14),
-expire_time varchar(14),
-value varchar(100),
-value_length int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_3;
-
-insert into hw_tmp.tm_ls_voc_m_mid_3
-select
-set_id,
-apply_time,
-expire_time,
-trim(value),
-length(trim(value))
-from pub.tdic_set_value
-where deal_date=${hivevar:vi_month_last}
-and set_id=82
-and apply_time<concat(cast(${hivevar:vi_month_last} as string),'235959')
-and coalesce(expire_time,from_unixtime(unix_timestamp(),'yyyyMMddHHmmss'))>concat(cast(${hivevar:vi_month_last} as string),'000000')
-group by
-set_id,
-apply_time,
-expire_time,
-trim(value),
-length(trim(value));
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_4_4;
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_4_4
-(
-subs_id string
-,phone_no string
-,region_code string
-,imei string
-,imei_8 string
-,cdr_type string
-,call_type string
-,opp_type string
-,toll_type string
-,roam_type string
-,ip_type_id string
-,cdr_serv_type string
-,v_call_type string
-,net_type string
-,opp_carrier string
-,opp_area_cd string
-,roam_area_id string
-,opp_visited_area_code string
-,call_cnt bigint
-,call_dur double
-,toll_dur double
-,chrg_dur double
-,fav_dur double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,video_call_flg string
-,package_info string
-,tariff_track string
-,org_hregion string
-,org_otherhregion string
-,serv_type string
-,serv_code string
-,serv_scope string
-,is_311_fix string
-,opp_phone_no string
-,other_self_home_area string
-,is_wt_prov string
-,is_dx_311 string
-,is_call_10086  varchar(1)
-,is_three_second  varchar(1)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_4_4;
-
-insert into hw_tmp.tm_ls_voc_m_mid_4_4
-select b.subs_id
-,b.phone_no
-,b.region_code
-,b.imei
-,b.imei_8
-,b.cdr_type
-,b.call_type
-,b.opp_type
-,b.toll_type
-,b.roam_type
-,b.ip_type_id
-,b.cdr_serv_type
-,b.v_call_type
-,b.net_type
-,b.opp_carrier
-,b.opp_area_cd
-,b.roam_area_id
-,b.opp_visited_area_code
-,b.call_cnt
-,b.call_dur
-,b.toll_dur
-,b.chrg_dur
-,b.fav_dur
-,b.base_fee
-,b.toll_fee
-,b.toll_extra_fee
-,b.roam_fee
-,b.info_fee
-,b.fav_base_fee
-,b.fav_toll_fee
-,b.fav_toll_extra_fee
-,b.fav_info_fee
-,b.chrg_dur_6
-,b.bef_fav_tot_fee
-,b.fav_aft_tot_fee
-,b.video_call_flg
-,b.package_info
-,b.tariff_track
-,b.org_hregion
-,b.org_otherhregion
-,b.serv_type
-,b.serv_code
-,b.serv_scope
-,b.is_311_fix
-,b.opp_phone_no
-,b.other_self_home_area
-,b.is_wt_prov
-,b.is_dx_311
-,b.is_call_10086
-,b.is_three_second
- from
-(
-select
-/*+mapjoin(b)*/
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,case when length(a.opp_carrier)>2 AND  b.value is not null then '1' else '0' end is_wt_prov
-,'0' is_dx_311
-,is_call_10086
-,is_three_second
-from hw_tmp.tm_ls_voc_m_mid_2_5 a
-left join hw_tmp.tm_ls_voc_m_mid_3 b
-on a.opp_carrier_prov=b.value
-where opp_carrier_prov not in ('311','10')
-) b
-;
-
-
-
-
-insert into hw_tmp.tm_ls_voc_m_mid_4_4
-select b.subs_id
-,b.phone_no
-,b.region_code
-,b.imei
-,b.imei_8
-,b.cdr_type
-,b.call_type
-,b.opp_type
-,b.toll_type
-,b.roam_type
-,b.ip_type_id
-,b.cdr_serv_type
-,b.v_call_type
-,b.net_type
-,b.opp_carrier
-,b.opp_area_cd
-,b.roam_area_id
-,b.opp_visited_area_code
-,b.call_cnt
-,b.call_dur
-,b.toll_dur
-,b.chrg_dur
-,b.fav_dur
-,b.base_fee
-,b.toll_fee
-,b.toll_extra_fee
-,b.roam_fee
-,b.info_fee
-,b.fav_base_fee
-,b.fav_toll_fee
-,b.fav_toll_extra_fee
-,b.fav_info_fee
-,b.chrg_dur_6
-,b.bef_fav_tot_fee
-,b.fav_aft_tot_fee
-,b.video_call_flg
-,b.package_info
-,b.tariff_track
-,b.org_hregion
-,b.org_otherhregion
-,b.serv_type
-,b.serv_code
-,b.serv_scope
-,b.is_311_fix
-,b.opp_phone_no
-,b.other_self_home_area
-,b.is_wt_prov
-,b.is_dx_311
-,b.is_call_10086
-,b.is_three_second
-from
-(
-select
-/*+mapjoin(b)*/
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,'1' is_wt_prov
-,'0' is_dx_311
-,is_call_10086
-,is_three_second
-from hw_tmp.tm_ls_voc_m_mid_2_5 a
-where opp_carrier_prov = '10'
-) b
-;
-
-
-insert into hw_tmp.tm_ls_voc_m_mid_4_4
-select b.subs_id
-,b.phone_no
-,b.region_code
-,b.imei
-,b.imei_8
-,b.cdr_type
-,b.call_type
-,b.opp_type
-,b.toll_type
-,b.roam_type
-,b.ip_type_id
-,b.cdr_serv_type
-,b.v_call_type
-,b.net_type
-,b.opp_carrier
-,b.opp_area_cd
-,b.roam_area_id
-,b.opp_visited_area_code
-,b.call_cnt
-,b.call_dur
-,b.toll_dur
-,b.chrg_dur
-,b.fav_dur
-,b.base_fee
-,b.toll_fee
-,b.toll_extra_fee
-,b.roam_fee
-,b.info_fee
-,b.fav_base_fee
-,b.fav_toll_fee
-,b.fav_toll_extra_fee
-,b.fav_info_fee
-,b.chrg_dur_6
-,b.bef_fav_tot_fee
-,b.fav_aft_tot_fee
-,b.video_call_flg
-,b.package_info
-,b.tariff_track
-,b.org_hregion
-,b.org_otherhregion
-,b.serv_type
-,b.serv_code
-,b.serv_scope
-,b.is_311_fix
-,b.opp_phone_no
-,b.other_self_home_area
-,b.is_wt_prov
-,b.is_dx_311
-,b.is_call_10086
-,b.is_three_second
-from
-(
-select
-/*+mapjoin(b)*/
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,'0' as is_wt_prov
-,'0' is_dx_311
-,is_call_10086
-,is_three_second
-from hw_tmp.tm_ls_voc_m_mid_2_5 a
-where opp_carrier_prov is null
-) b
-;
-
-
-
-
-
-
-insert into hw_tmp.tm_ls_voc_m_mid_4_4
-select b.subs_id
-,b.phone_no
-,b.region_code
-,b.imei
-,b.imei_8
-,b.cdr_type
-,b.call_type
-,b.opp_type
-,b.toll_type
-,b.roam_type
-,b.ip_type_id
-,b.cdr_serv_type
-,b.v_call_type
-,b.net_type
-,b.opp_carrier
-,b.opp_area_cd
-,b.roam_area_id
-,b.opp_visited_area_code
-,b.call_cnt
-,b.call_dur
-,b.toll_dur
-,b.chrg_dur
-,b.fav_dur
-,b.base_fee
-,b.toll_fee
-,b.toll_extra_fee
-,b.roam_fee
-,b.info_fee
-,b.fav_base_fee
-,b.fav_toll_fee
-,b.fav_toll_extra_fee
-,b.fav_info_fee
-,b.chrg_dur_6
-,b.bef_fav_tot_fee
-,b.fav_aft_tot_fee
-,b.video_call_flg
-,b.package_info
-,b.tariff_track
-,b.org_hregion
-,b.org_otherhregion
-,b.serv_type
-,b.serv_code
-,b.serv_scope
-,b.is_311_fix
-,b.opp_phone_no
-,b.other_self_home_area
-,b.is_wt_prov
-,b.is_dx_311
-,b.is_call_10086
-,b.is_three_second
-from
-(
-select
-/*+mapjoin(b)*/
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,'1' as is_wt_prov
-,'0' is_dx_311
-,is_call_10086
-,is_three_second
-from hw_tmp.tm_ls_voc_m_mid_2_5 a
-where opp_carrier_prov = '311'
-) b
-;
-
-
-
-
-
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_5
-( set_id int,
-apply_time varchar(14),
-expire_time varchar(14),
-value varchar(100)
+cdr_type varchar(3),
+roam_type varchar(5),
+call_type varchar(5),
+self_phone_no varchar(22),
+vregion varchar(12),
+imei varchar(20),
+self_home_area varchar(12),
+self_carrier varchar(33),
+opp_phone_no varchar(30),
+opp_visited_area_code varchar(12),
+other_self_home_area varchar(12),
+opp_carrier varchar(33),
+opp_net_type varchar(3),
+trans_serv_vendor varchar(12),
+imsi varchar(15),
+active_roam_no varchar(15),
+in_trunk_no varchar(12),
+out_trunk_no varchar(12),
+msc_no varchar(15),
+lac_id varchar(20),
+cell_id varchar(20),
+call_start_time varchar(14),
+call_dur int,
+partial_cdr_flag varchar(3),
+serv_type varchar(2),
+service_code varchar(2),
+rfpowercapability varchar(2),
+opplac_no varchar(6),
+other_cell_id varchar(6),
+billing_cycle varchar(6),
+src_file_name varchar(24),
+subs_id varchar(13),
+acct_id varchar(20),
+dest_file_name varchar(24),
+third_self_phone_no varchar(22),
+tariff_id varchar(15),
+err_num varchar(4),
+spec_call_type varchar(6),
+basic_serv_code varchar(12),
+msc_type varchar(5),
+settle_partner varchar(12),
+deal_time varchar(14),
+total_disct varchar(90),
+tariff_trace varchar(80),
+partial_reference_no varchar(12),
+trance_latied_other_party varchar(30),
+free_format_date varchar(80),
+call_net_type varchar(6),
+video_call_flg varchar(10),
+grant_dur varchar(11),
+initiative_cut_flg varchar(3),
+local_fee float,
+roam_fee float,
+toll_fee float,
+local_fee_s float,
+roam_fee_s float,
+toll_fee_s float,
+ruraladd_fee_s float,
+tolladd_fee_s float,
+toll_fee_2_s float,
+toll_fee_2 float,
+ruraladd_fee float,
+tolladd_fee float,
+opp_carrier_prov varchar(10),
+is_inner varchar(1),
+is_prov varchar(1),
+is_wt_prov varchar(1),
+is_dx_311 varchar(1),
+is_xlt_311 varchar(1),
+is_311_fix varchar(1),
+ip_type_id varchar(10),
+package_info varchar(128),
+tariff_track varchar(128),
+org_hregion varchar(12),
+org_otherhregion varchar(12),
+is_video_call varchar(5)
 )row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-truncate table  hw_tmp.tm_ls_voc_m_mid_5;
+ truncate table hw_tmp.tm_ls_volte_d_mid6 ;
 
-insert into hw_tmp.tm_ls_voc_m_mid_5
-select set_id
-,apply_time
-,expire_time
-,trim(value)
-from pub.tdic_set_value
-where deal_date=${hivevar:vi_month_last} and set_id =85
-and apply_time<concat(cast(${hivevar:vi_month_last} as string),'235959')
-and coalesce(expire_time,from_unixtime(unix_timestamp(),'yyyyMMddHHmmss'))>concat(cast(${hivevar:vi_month_last} as string),'000000')
-group by set_id,apply_time,expire_time,trim(value)
-;
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_6
-( value_ext varchar(2)
-)row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table  hw_tmp.tm_ls_voc_m_mid_6 ;
-
-insert into hw_tmp.tm_ls_voc_m_mid_6
-select distinct *
-from (
-select 0 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 1 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 2 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 3 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 4 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 5 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 6 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 7 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 8 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1 union all
-select 9 from hw_tmp.tm_ls_voc_m_mid_5 where 1=1) aa ;
-
-
-create table if not exists hw_tmp.tm_ls_voc_m_mid_7
-( set_id int,
-apply_time string,
-expire_time string,
-value string
-)row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_7 ;
-
-insert into hw_tmp.tm_ls_voc_m_mid_7
-select max(ta.set_id)
-,max(ta.apply_time)
-,max(ta.expire_time)
-,substr(concat(ta.value, tb.value_ext),1,7) as value
-from hw_tmp.tm_ls_voc_m_mid_5 ta
-join hw_tmp.tm_ls_voc_m_mid_6 tb
-on 1=1
-where ta.set_id = 85
-group by substr(concat(ta.value,tb.value_ext),1,7);
-
-drop table if exists  hw_tmp.tm_ls_voc_m_mid_8;
-create table if not exists hw_tmp.tm_ls_voc_m_mid_8
-(
-subs_id string
-,phone_no string
-,region_code string
-,imei string
-,imei_8 string
-,cdr_type string
-,call_type string
-,opp_type string
-,toll_type string
-,roam_type string
-,ip_type_id string
-,cdr_serv_type string
-,v_call_type string
-,net_type string
-,opp_carrier string
-,opp_area_cd string
-,roam_area_id string
-,opp_visited_area_code string
-,call_cnt bigint
-,call_dur double
-,toll_dur double
-,chrg_dur double
-,fav_dur double
-,base_fee double
-,toll_fee double
-,toll_extra_fee double
-,roam_fee double
-,info_fee double
-,fav_base_fee double
-,fav_toll_fee double
-,fav_toll_extra_fee double
-,fav_info_fee double
-,chrg_dur_6 double
-,bef_fav_tot_fee double
-,fav_aft_tot_fee double
-,video_call_flg string
-,package_info string
-,tariff_track string
-,org_hregion string
-,org_otherhregion string
-,serv_type string
-,serv_code string
-,serv_scope string
-,is_311_fix string
-,opp_phone_no string
-,other_self_home_area string
-,is_wt_prov string
-,is_dx_311 string
-,is_call_10086  varchar(1)
-,is_three_second  varchar(1)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile;
-
-truncate table hw_tmp.tm_ls_voc_m_mid_8;
-
-
-insert into hw_tmp.tm_ls_voc_m_mid_8
-select b.subs_id
-,b.phone_no
-,b.region_code
-,b.imei
-,b.imei_8
-,b.cdr_type
-,b.call_type
-,b.opp_type
-,b.toll_type
-,b.roam_type
-,b.ip_type_id
-,b.cdr_serv_type
-,b.v_call_type
-,b.net_type
-,b.opp_carrier
-,b.opp_area_cd
-,b.roam_area_id
-,b.opp_visited_area_code
-,b.call_cnt
-,b.call_dur
-,b.toll_dur
-,b.chrg_dur
-,b.fav_dur
-,b.base_fee
-,b.toll_fee
-,b.toll_extra_fee
-,b.roam_fee
-,b.info_fee
-,b.fav_base_fee
-,b.fav_toll_fee
-,b.fav_toll_extra_fee
-,b.fav_info_fee
-,b.chrg_dur_6
-,b.bef_fav_tot_fee
-,b.fav_aft_tot_fee
-,b.video_call_flg
-,b.package_info
-,b.tariff_track
-,b.org_hregion
-,b.org_otherhregion
-,b.serv_type
-,b.serv_code
-,b.serv_scope
-,b.is_311_fix
-,b.opp_phone_no
-,b.other_self_home_area
-,b.is_wt_prov
-,b.is_dx_311
-,b.is_call_10086
-,b.is_three_second
- from (
-select
-/*+mapjoin*/
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.call_cnt
-,a.call_dur
-,a.toll_dur
-,a.chrg_dur
-,a.fav_dur
-,a.base_fee
-,a.toll_fee
-,a.toll_extra_fee
-,a.roam_fee
-,a.info_fee
-,a.fav_base_fee
-,a.fav_toll_fee
-,a.fav_toll_extra_fee
-,a.fav_info_fee
-,a.chrg_dur_6
-,a.bef_fav_tot_fee
-,a.fav_aft_tot_fee
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_311_fix
-,a.opp_phone_no
-,a.other_self_home_area
-,a.is_wt_prov
-,case when b.value is not null then '1' else '0' end as is_dx_311
-,is_call_10086
-,is_three_second
-from hw_tmp.tm_ls_voc_m_mid_7 b
-right join hw_tmp.tm_ls_voc_m_mid_4_4 a
-on substr(a.opp_phone_no,1,7)=b.value)
-b
-;
-
-
-alter table mk.tm_ls_voc_m drop partition(statis_month=${hivevar:vi_month});
-insert into mk.tm_ls_voc_m
-partition(statis_month=${hivevar:vi_month})
-select
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,case when opp_carrier like '2%' and (opp_phone_no like '10086%')  then '11'    ---10086
-when (opp_phone_no like '12590%') then '12'---12590
-when (opp_phone_no like '12580%') then '13'---12580
-when (opp_phone_no like '12586%') then '14'---12586
-when (opp_phone_no like '12520%') then '15'---12520
-when opp_carrier like '2%' and (opp_phone_no like '10000%')  then '22'---10000
-when opp_carrier like '2%' and (opp_phone_no like '10001%')  then '22'---10001
-when opp_carrier like '2%' and (opp_phone_no like '10010%')  then '21'---10010
-when opp_carrier like '2%' and (opp_phone_no like '10011%')  then '21'---10011
-when opp_carrier like '2%' and a.is_wt_prov='0' and coalesce(other_self_home_area ,'')
-not in('310','311','312','313','314','315','316','317','318','319','335','336') or ---不在网通省份集合里的
-opp_carrier like '2%' and a.is_dx_311 ='1'---河北电信本地
-then '22'--电信固定
-----再判联通固定
-when opp_carrier like 'D%' or opp_carrier like 'I%'
-or opp_carrier like '2%'----电信判断完后剩余的固网
-then '21'
-else substr(opp_carrier,1,1)
-end----对端归属运营商
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,sum(a.call_cnt)
-,sum(a.call_dur)
-,sum(a.toll_dur)
-,sum(a.chrg_dur)
-,sum(a.fav_dur)
-,sum(a.base_fee)
-,sum(a.toll_fee)
-,sum(a.toll_extra_fee)
-,sum(a.roam_fee)
-,sum(a.info_fee)
-,sum(a.fav_base_fee)
-,sum(a.fav_toll_fee)
-,sum(a.fav_toll_extra_fee)
-,sum(a.fav_info_fee)
-,sum(a.chrg_dur_6)
-,sum(a.bef_fav_tot_fee)
-,sum(a.fav_aft_tot_fee)
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_call_10086
-,a.is_three_second
-from hw_tmp.tm_ls_voc_m_mid_8 a
-group by
-a.subs_id
-,a.phone_no
-,a.region_code
-,a.imei
-,a.imei_8
-,a.cdr_type
-,a.call_type
-,a.opp_type
-,a.toll_type
-,a.roam_type
-,a.ip_type_id
-,a.cdr_serv_type
-,a.v_call_type
-,a.net_type
-,case when opp_carrier like '2%' and (opp_phone_no like '10086%')  then '11'    ---10086
-when (opp_phone_no like '12590%') then '12'---12590
-when (opp_phone_no like '12580%') then '13'---12580
-when (opp_phone_no like '12586%') then '14'---12586
-when (opp_phone_no like '12520%') then '15'---12520
-when opp_carrier like '2%' and (opp_phone_no like '10000%')  then '22'---10000
-when opp_carrier like '2%' and (opp_phone_no like '10001%')  then '22'---10001
-when opp_carrier like '2%' and (opp_phone_no like '10010%')  then '21'---10010
-when opp_carrier like '2%' and (opp_phone_no like '10011%')  then '21'---10011
-when opp_carrier like '2%' and a.is_wt_prov='0' and coalesce(other_self_home_area ,'')
-not in('310','311','312','313','314','315','316','317','318','319','335','336') or ---不在网通省份集合里的
-opp_carrier like '2%' and a.is_dx_311 ='1'---河北电信本地
-then '22'--电信固定
-----再判联通固定
-when opp_carrier like 'D%' or opp_carrier like 'I%'
-or opp_carrier like '2%'----电信判断完后剩余的固网
-then '21'
-else substr(opp_carrier,1,1)
-end----对端归属运营商
-,a.opp_carrier
-,a.opp_area_cd
-,a.roam_area_id
-,a.opp_visited_area_code
-,a.video_call_flg
-,a.package_info
-,a.tariff_track
-,a.org_hregion
-,a.org_otherhregion
-,a.serv_type
-,a.serv_code
-,a.serv_scope
-,a.is_call_10086
-,a.is_three_second
+ insert into hw_tmp.tm_ls_volte_d_mid6
+ select cdr_type
+ ,roam_type
+ ,call_type
+ ,self_phone_no
+ ,vregion
+ ,imei
+ ,self_home_area
+ ,self_carrier
+ ,case when substr(opp_phone_no,1,3) = other_self_home_area then substr(opp_phone_no,1,30)
+       else concat(other_self_home_area,substr(trim(cast(opp_phone_no as varchar(20))),1,30) )
+       end
+ ,opp_visited_area_code
+ ,other_self_home_area
+ ,opp_carrier
+ ,opp_net_type
+ ,trans_serv_vendor
+ ,imsi
+ ,active_roam_no
+ ,in_trunk_no
+ ,out_trunk_no
+ ,msc_no
+ ,lac_id
+ ,cell_id
+ ,call_start_time
+ ,call_dur
+ ,partial_cdr_flag
+ ,serv_type
+ ,service_code
+ ,rfpowercapability
+ ,opplac_no
+ ,other_cell_id
+ ,billing_cycle
+ ,src_file_name
+ ,subs_id
+ ,acct_id
+ ,dest_file_name
+ ,third_self_phone_no
+ ,tariff_id
+ ,err_num
+ ,spec_call_type
+ ,basic_serv_code
+ ,msc_type
+ ,settle_partner
+ ,deal_time
+ ,total_disct
+ ,tariff_trace
+ ,partial_reference_no
+ ,trance_latied_other_party
+ ,free_format_date
+ ,call_net_type
+ ,video_call_flg
+ ,grant_dur
+ ,initiative_cut_flg
+ ,local_fee
+ ,roam_fee
+ ,toll_fee
+ ,local_fee_s
+ ,roam_fee_s
+ ,toll_fee_s
+ ,ruraladd_fee_s
+ ,tolladd_fee_s
+ ,toll_fee_2_s
+ ,toll_fee_2
+ ,ruraladd_fee
+ ,tolladd_fee
+ ,opp_carrier_prov
+ ,''
+ ,''
+---- ,case when length(a.opp_carrier)>2 and d.value is not null then '1' else '0' end
+ ,case when length(a.opp_carrier)>2 and a.opp_carrier_prov in ('22','24','431','451','471','311','351','371','531','10') then '1' else '0' end
+ ,'0' is_dx_311
+ ,'0' is_xlt_311
+ ,is_311_fix
+ ,a.ip_type_id
+ ,package_info
+ ,tariff_track
+ ,org_hregion
+ ,org_otherhregion
+ ,is_video_call
+from hw_tmp.tm_ls_volte_d_mid5 a
+----left join hw_tmp.tm_ls_volte_d_mid1 d
+----on a.opp_carrier_prov = d.value
 ;
