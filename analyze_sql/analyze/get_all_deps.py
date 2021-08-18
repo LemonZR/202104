@@ -3,7 +3,6 @@
 import re
 import os
 import copy
-import pattern_conf
 from tools import excelOp
 
 
@@ -79,9 +78,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
     heads = r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'
-    # table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
-    pattern = pattern_conf.table_pattern
-    table_pattern = r'(?=%s)%s(?=|;|,|\s|_\$|\))' % (heads, pattern)
+    # 包含_${gbvar:vi_day}
+    table_pattern = r'(?=%s)[a-zA-Z0-9_\.\$\{:\}]*' % heads
     result = {}
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
@@ -194,7 +192,7 @@ def run(dir_name):
 if __name__ == '__main__':
     dirName = 'D:\\bd_hive\\dis'
     data1, data2 = run(dirName)
-    print(len(data1))
+    print(len(data2))
 
     result_xlsx = 'D:\\dis_直接依赖.xlsx'
     # 先写小的，避免第二次打开大数据表

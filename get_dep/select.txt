@@ -1,1119 +1,184 @@
 --<metadata>
---<model_name>:查询申请授权月累计加属性日表
---<keyword>:授权,累计,属性
---<description>:查询申请授权月累计加属性
---<author>:夏仕阳@华为
---<run_cycle>:D
---<tmp_table>:hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid1,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid6,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid7,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid8,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid9,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid10,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid11,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid12,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid13,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid15,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid16,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1_1,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_1,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_2,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_3,hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20
---<det_table>:
---<app_table>:mk.tm_sc_xz_tranquary_subs_atr_d
+--<model_name>: 用户语音流量超套月汇总
+--<keyword>:语音超套,流量超套,语音超套费用,流量超套费用
+--<description>:统计用户当月语音和流量的超套量和费用.
+--<author>: 李晓龙@华为
+--<run_cycle>: M
+--<tmp_table>: hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1,hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2
+--<tmp_table>: hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3,hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4
+--<det_table>: pub.tdet_unlimited_flow_d
+--<app_table>:mk.tm_sc_subs_over_gsm_gprs_m
 --<app_name>:
 --</metadata>
 
-
-----step1 是否一级融合/亲情网
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid1;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid1
+---- 1 先找到日租卡用户,打标是否日租卡使用
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1;
+create table if not exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1
 (
-   subs_id       varchar(20),
-   is_first_rh   int,
-   is_fam_vnet   int   --亲情网
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid1
-select
-    a.subs_id,
-    case when is_gyrh_home_act+is_terminal_contract+is_znrh_home+is_charge_contract >0 then 1 else 0 end,
-    is_fam_vnet
-from mk.tm_sc_user_fuse_d a
-where a.statis_date=${hivevar:vl_day}
-;
-
-----step20 签约和终端合约汇总
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1_1;
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1_1
-(
-    subs_id           varchar(32),
-    markt_solution_id varchar(320),
-    exp_date          varchar(20)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1_1
-select
-    a.subs_id,
-    a.markt_solution_id,
-    a.exp_date
-from mk.tm_sc_subs_privilege_d a
-where a.statis_date=${hivevar:vi_day}
-and a.is_using = 1
-and from_unixtime(unix_timestamp(a.eff_date,'yyyy-MM-dd HH:mm:ss'),'yyyyMMdd')<=${hivevar:vi_day}
-and (from_unixtime(unix_timestamp(a.exp_date,'yyyy-MM-dd HH:mm:ss'),'yyyyMMdd')>${hivevar:vi_day} or exp_date is null)
-group by
-a.subs_id,
-a.markt_solution_id,
-a.exp_date
-;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1;
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1
-(
-    subs_id           varchar(32),
-    markt_solution_id varchar(320),
-    exp_date          varchar(20),
-    markt_type        varchar(320)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1
-select
-    a.subs_id,
-    b.prod_priv_id,
-    a.exp_date,
-    b.biz_type
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1_1 a
-join
-(
-select
-     c.prod_priv_id,
-     c.biz_type
-from pub.tdet_fbdtrans_prod_priv_type_d c
-where c.statis_date=${hivevar:vi_day}
-and c.biz_type in ('终端合约','话费合约','话费/终端合约')
-group by c.prod_priv_id,c.biz_type
-) b
-on a.markt_solution_id = b.prod_priv_id
-join mk.tm_sc_user_base_d d
-on a.subs_id = d.subs_id
-and d.statis_date = ${hivevar:vi_day}
-group by
-a.subs_id,
-b.prod_priv_id,
-a.exp_date,
-b.biz_type
-;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_1;
-
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_1
-(
-    subs_id    varchar(32),
-    product_cd varchar(50),
-    start_time varchar(32),
-    end_time   varchar(32)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_1
-select
-    a.subs_id,
-    a.product_cd,
-    from_unixtime(unix_timestamp(a.start_time,'yyyy-MM-dd HH:mm:ss'),'yyyyMMdd'),
-    from_unixtime(unix_timestamp(a.end_time,'yyyy-MM-dd HH:mm:ss'),'yyyyMMdd')
-from dwh.td_pd_subs_product_d a
-where a.deal_date=${hivevar:vi_day}
-;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_2;
-
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_2
-(
-    prod_priv_id varchar(50),
-    biz_type     varchar(50)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_2
-select
-    concat(c.prod_priv_id,a.segment_no) prod_priv_id,
-    c.biz_type
-from pub.tdet_fbdtrans_prod_priv_type_d c,
-     pub.tdet_pub_segment_99 a
-where c.statis_date=${hivevar:vi_day}
-and c.biz_type in ('终端合约','话费合约','话费/终端合约')
-and 1=1
-;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2;
-
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2
-(
-    subs_id           varchar(32),
-    markt_solution_id varchar(320),
-    end_time          varchar(32),
-    markt_type        varchar(320)
-)
-row format delimited
+subs_id       varchar(50)
+)row format delimited
 fields terminated by '\t'
 stored as rcfile;
 
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2
+insert into hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1
+select a.subs_id
+  from
+     ( select concat(d.markt_solution_Id,e.segment_no) as markt_solution_id_join
+         from pub.tdet_unlimited_flow_d d ----不限量优惠码表
+         join pub.tdet_pub_segment_9999 e
+           on 1=1
+        where d.markt_solution_id_type in('日租卡')----只提取优惠类型是日租卡的
+     ) c
+  join
+     ( select b.subs_id,concat(b.markt_solution_id,substr(b.subs_id,-4)) as markt_solution_id_join
+         from mk.tm_sc_subs_privilege_m b
+        where b.statis_month = ${hivevar:vi_month}
+          and b.is_using=1
+          and b.is_on_net_user=1
+     ) a
+  on a.markt_solution_id_join=c.markt_solution_id_join
+ group by a.subs_id
+;
+---- 2 统计流量超套用户
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2;
+create table if not exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2
+(
+subs_id       varchar(64)    ---- 用户编码
+,chrg_flux    varchar(256)   ---- 流量超套量
+,ctc_fee      varchar(128)   ---- 流量超套费用
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+
+insert into hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2
 select
-    a.subs_id,
-    b.prod_priv_id,
-    a.end_time,
-    b.biz_type
+b.subs_id,b.chrg_flux,b.ctc_fee
 from
 (
-select
-c.subs_id,c.product_cd,c.end_time
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_1 c
-where c.start_time<=${hivevar:vi_day}
-and (c.end_time>${hivevar:vi_day} or c.end_time is null)
-group by c.subs_id,c.product_cd,c.end_time
-) a
-join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2_2 b
-on a.product_cd=b.prod_priv_id
-group by
-    a.subs_id,
-    b.prod_priv_id,
-    a.end_time,
-    b.biz_type
+select a.subs_id                      ---- 用户标识
+       ,sum(a.chrg_flux)*1.0/1024 as chrg_flux ---- 流量超套量
+       ,sum(a.fav_aft_base_fee)*0.01 as ctc_fee ---- 流量超套费用
+  from (select d.subs_id,d.chrg_flux,d.fav_aft_base_fee
+          from mk.tm_ls_gprs_d d
+         where d.statis_date between ${hivevar:vi_month_first} and ${hivevar:vi_month_last}
+           and d.is_bill_user=1
+       ) a
+ group by a.subs_id
+) b
+where b.ctc_fee>0
 ;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_3;
-
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_3
+---- 3 统计语音超套用户
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3;
+create table if not exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3
 (
-     subs_id           varchar(32),
-     markt_solution_id varchar(320),
-     markt_type        varchar(320),
-     prd_pri_name      varchar(200),
-     exp_date          varchar(20)
-)
-row format delimited
+subs_id                varchar(50)    ---- 用户编码
+,chrg_dur              varchar(256)   ---- 语音超套分钟数
+,chrg_fee              varchar(256)   ---- 语音超套费用
+,chrg_dur_not_9512     varchar(256)   ---- 语音超套分钟数,不包含亲情计划优化资费
+,chrg_fee_not_9512     varchar(256)   ---- 语音超套费用,不包含亲情计划优化资费
+)row format delimited
 fields terminated by '\t'
-stored as rcfile
-;
+stored as rcfile;
 
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_3
+insert into hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3
 select
-    a.subs_id,
-    a.markt_solution_id,
-    a.markt_type,
-    b.markt_solution_name,
-    a.exp_date
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_1 a
-left join pub.tdet_pd_privilege_d b
-on a.markt_solution_id=b.markt_solution_id
-and b.deal_date=${hivevar:vi_day}
-union all
-select
-    c.subs_id,
-    c.markt_solution_id,
-    c.markt_type,
-    d.prd_name as markt_solution_name,
-    c.end_time as exp_date
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_2 c
-left join pub.tdet_pd_product_d d
-on c.markt_solution_id=d.product_cd
-and d.deal_date=${hivevar:vi_day}
-;
-
-drop table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20;
-
-create table if not exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20
-(
-    subs_id           varchar(32),
-    markt_solution_id varchar(320),
-    markt_type        varchar(320),
-    prd_pri_name      varchar(320),
-    exp_date          varchar(20),
-    user_status       varchar(320),
-    region_code       varchar(32)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20
-select
-    a.subs_id,
-    a.markt_solution_id,
-    a.markt_type,
-    a.prd_pri_name,
-    a.exp_date,
-    b.user_status,
-    b.region_code
+    b.subs_id
+    ,b.chrg_dur_all ----语音超套分钟数,全量
+    ,b.chrg_fee_all ----语音超套费用,全量
+    ,b.chrg_dur_not_9512 ----语音超套分钟数,不包含亲情计划优化资费
+    ,b.chrg_fee_not_9512 ----语音超套费用,不包含亲情计划优化资费
 from
-hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2_3 a
-join mk.tm_sc_mob_phone_statis_d b               --手机客户在网
-on a.subs_id = b.subs_id
-and b.is_on_net_user='1'
-and b.is_mobile_phone_user='1'
-and b.statis_date = ${hivevar:vi_day}
-group by
-    a.subs_id,
-    a.markt_solution_id,
-    a.markt_type,
-    a.prd_pri_name,
-    a.exp_date,
-    b.user_status,
-    b.region_code
-;
-
-----step2 是否签约存赠活动
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2
 (
-    subs_id                   varchar(20),
-    charge_contract_name      varchar(320),
-    charge_contract_expdate   varchar(20)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
+  select a.subs_id  ---- 用户标识
+        ,sum(a.chrg_dur) as chrg_dur_all  ---- 语音超套分钟数,全量
+        ,sum(a.base_fee+a.toll_fee+a.toll_extra_fee+a.roam_fee) as chrg_fee_all ---- 语音超套费用,全量
+        ,sum(case when a.tariff_track not in ('9512') then a.chrg_dur else 0 end )
+            as chrg_dur_not_9512 ---- 语音超套分钟数,不包含亲情计划优化资费
+        ,sum(case when a.tariff_track not in ('9512') then a.base_fee+a.toll_fee+a.toll_extra_fee+a.roam_fee else 0 end)
+            as chrg_fee_not_9512 ---- 语音超套费用,不包含亲情计划优化资费
+    from mk.tm_ls_voc_d a
+    where a.statis_date between ${hivevar:vi_month_first} and ${hivevar:vi_month_last}
+    and is_chrg_user=1
+    and a.roam_type not like '3%'
+    and a.call_type not like '23%'
+    group by a.subs_id
+) b
+where b.chrg_fee_all>0
 ;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2
+---- 4 汇总流量和语音超套用户
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4;
+create table if not exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4
+(
+subs_id                varchar(50)    ---- 用户编码
+,chrg_flux             decimal(20,4)         ---- 流量超套量
+,ctc_fee               varchar(256)   ---- 流量超套费用
+,chrg_dur              varchar(256)   ---- 语音超套分钟数
+,chrg_fee              varchar(256)   ---- 语音超套费用
+,chrg_dur_not_9512     varchar(256)   ---- 语音超套分钟数,不包含亲情计划优化资费
+,chrg_fee_not_9512     varchar(256)   ---- 语音超套费用,不包含亲情计划优化资费
+)row format delimited
+fields terminated by '\t'
+stored as rcfile;
+insert into hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4
+select c.subs_id,        ----用户编码
+       sum(c.chrg_flux), ----流量超套量
+       sum(c.ctc_fee),   ----流量超套费用
+       sum(c.chrg_dur),  ----语音超套分钟数
+       sum(c.chrg_fee),   ----语音超套费用
+       sum(c.chrg_dur_not_9512),   ---- 语音超套分钟数,不包含亲情计划优化资费
+       sum(c.chrg_fee_not_9512)    ---- 语音超套费用,不包含亲情计划优化资费
+  from (select
+            a.subs_id
+            ,a.chrg_flux
+            ,a.ctc_fee
+            ,0 as chrg_dur
+            ,0 as chrg_fee
+            ,0 as chrg_dur_not_9512
+            ,0 as chrg_fee_not_9512
+          from hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2 a
+        union all
+        select
+            b.subs_id
+            ,0 as chrg_flux
+            ,0 as ctc_fee
+            ,b.chrg_dur
+            ,b.chrg_fee
+            ,b.chrg_dur_not_9512
+            ,b.chrg_fee_not_9512
+          from hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3 b
+       ) c
+ group by c.subs_id
+;
+---- 5 插入结果表
+alter table mk.tm_sc_subs_over_gsm_gprs_m drop partition(statis_month=${hivevar:vi_month});
+insert into mk.tm_sc_subs_over_gsm_gprs_m partition(statis_month=${hivevar:vi_month})
 select
-    a.subs_id,
-    concat_ws(',',sort_array(collect_list(prd_pri_name))) as prd_pri_name,
-    max(a.exp_date) as exp_date
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20 a
-where a.markt_type='话费合约'
-and a.markt_solution_id is not null
-group by a.subs_id
+       a.region_code            ----地市
+       ,c.region_id             ----县区
+       ,a.belng_chnl            ----营销部
+       ,b.subs_id               ----用户标识
+       ,b.chrg_dur              ----语音超套分钟数
+       ,b.chrg_fee*0.01         ----语音超套费用
+       ,b.chrg_flux             ----流量超套量
+       ,b.ctc_fee               ----流量超套费用
+       ,case when e.subs_id is null then '0' else '1' end
+       ,b.chrg_dur_not_9512     ---- 语音超套分钟数,不包含亲情计划优化资费
+       ,b.chrg_fee_not_9512*0.01     ---- 语音超套费用,不包含亲情计划优化资费
+  from (select d.region_code,d.belng_chnl,d.subs_id
+          from dwh.td_sc_subs_m d where d.statis_month=${hivevar:vi_month}
+       ) a
+  join hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4 b
+    on a.subs_id=b.subs_id
+  left join pub.tdet_chnl_belng_info c
+    on a.belng_chnl = c.chnl_id
+   and c.deal_date=${hivevar:vi_month_last}
+  left join hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1 e
+    on b.subs_id=e.subs_id
 ;
 
-
-----step3 是否办理宽带
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3
-(
-     subs_id     varchar(20),
-     brandwith   int,           --办理宽带
-     ceil_id     varchar(302),  --小区编码
-     ceil_name   varchar(302)   --小区名称
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3
-select
-    b.subs_id,
-    b.brandwith,
-    b.ceil_id,
-    b.ceil_name
-from mk.tm_sc_broaband_d b
-where b.is_used_m='1'
-and b.subs_type<>'3'
-and b.statis_date=${hivevar:vi_day}
-group by
-    b.subs_id,
-    b.brandwith,
-    b.ceil_id,
-    b.ceil_name
-;
-
-----step4 汇总终端合约
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4
-(
-    subs_id varchar(32),
-    terminal_contract_lvl   varchar(4000),  --终端活动档次
-    terminal_contract_expdate   varchar(20) --是否终端活动到期时间
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4
-select
-    a.subs_id,
-    concat_ws(',',sort_array(collect_list(prd_pri_name))) as prd_pri_name,
-    max(a.exp_date) as exp_date
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid20 a
-where a.markt_type='终端合约'
-and a.markt_solution_id is not null
-group by a.subs_id
-;
-
-
-
-
-
-
-----step5 身份证下是否有历史欠费
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5
-(
-     subs_id       varchar(100),
-     certid        varchar(120),
-     user_stat     varchar(100),
-     phone_no      varchar(100)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5
-select
-    a.subs_id,
-    b.cert_number,
-    a.user_stat,
-    a.phone_no
-from dwh.td_sc_subs_d a
-left join dwh.td_ci_cust_d b
-on a.cust_id=b.cust_id
-and b.deal_date=${hivevar:vi_day}
-where a.user_stat not like 'US2%'
-and a.deal_date=${hivevar:vi_day}
-;
-
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5_1;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5_1
-(
-     certid  varchar(120),
-     cert_us3_num  int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5_1
-select
-    certid,
-    count(distinct phone_no)
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5
-where user_stat like 'US3%'
-group by certid
-;
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid6;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid6
-(
-    subs_id       varchar(100),
-    certid        varchar(120),
-    user_stat     varchar(100),
-    phone_no      varchar(100),
-    cert_us3_num  int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid6
-select
-    a.subs_id,
-    b.certid,
-    a.user_stat,
-    a.phone_no,
-    b.cert_us3_num
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5 a
-join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid5_1 b
-on a.certid=b.certid
-and  b.cert_us3_num>0
-;
-
-
-----step6 是否办理和家庭计划
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid7;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid7
-(
-    subs_id        varchar(50)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid7
-select distinct a.member_id
-from dwh.td_sc_subs_group_product_d a
-where a.deal_date=${hivevar:vi_day_last_sec}
-and cast(substr(start_time,1,8) as int)=${hivevar:vi_day}
-and a.isprima='0'
-and a.product_cd in( 'pack_gl.g.4Ghjt.gxb_jcb2018','pack_gl.g.4Ghjt.gxb_2018','pack_gl.g.4Ghjt.gxb_2018cx','pack_gl.g.4Ghjt.gxb_2019','pack_gl.g.4Ghjt.gxb_new')
-and a.status='stcmNml'
-;
-
-----step7 是否双人
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid8;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid8
-(
-    subs_id        varchar(50)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid8
-select subs_id
-from mk.tm_gc_meb_d b
-where b.group_subs_status='stcmNml'                         --集团管理器状态正常
-and b.subs_status not like 'US2%'                           --成员状态正常
-and b.grp_subs_important in ('MemberSort02','MemberSort03') --集团双人成员
-and b.statis_date=${hivevar:vi_day}
-;
-
-----step8 三个月内投诉次数
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid9;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid9
-(
-    phone_no varchar(50),
-    call_cnt int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid9
-select
-    trim(phone_no) as phone_no,
-    count(*) as call_cnt
-from mk.tm_cs_cmos_serv_req_d
-where cast(substr(acpt_time,1,6) as int) between ${hivevar:last3month_char} and ${hivevar:vl_month}
-and statis_date=${hivevar:vi_day}
-group by phone_no
-;
-
-
-----step9 集团V网
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid10;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid10
-(
-    subs_id      varchar(50),
-    jtv_prd_name varchar(4000)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid10
-select
-    subs_id,
-    prod_name
-from mk.tm_gc_prod_info_new_m
-where statis_month=${hivevar:vl_month}
-and prod_type2_id in ('VNET','ZHVNET') --集团V网、综合V网
-and data_type='2'
-and prod_status='stcmNml'
-;
-
-----step10 最近一次投拆
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid11;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid11
-(
-    phone_no   varchar(50),
-    cmpt_conts varchar(100),
-    rn         int
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid11
-select
-    calling_num,
-    service_reqst_type_2,
-    row_number() over(partition by calling_num order by acpt_time desc)
-from dwh.td_cs_cmos_serv_req_d
-where deal_date>=20191014;
-
-
-----step11 校园用户
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid12;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid12
-(
-    subs_id  varchar(20)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid12
-select subs_id
-from mk.tm_lc_xy_subs_base_d
-where statis_date=${hivevar:vl_month_last}
-and is_on_net_user='1'
-and is_stud_user='1'
-and is_off_xy_user='0'
-;
-
-----step12 常驻小区
-
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid13;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid13
-(
-    subs_id     varchar(20),
-    cell_name   varchar(200)
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid13
-select
-    subs_id,
-    max(gis_cell_name)
-from mk.tm_lc_cell_user_stay_m
-where statis_month=${hivevar:vl_month}
-group by subs_id
-;
-
-----step13 小汇总1
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14
-(
-    statis_date               int,                         --统计日期
-    apply_staus               varchar(20),                 --申请状态
-    region_code               varchar(20),                 --地市
-    subs_id                   varchar(20),                 --SUBS_ID
-    phone_no                  varchar(20),                 --申请号码
-    apply_result              varchar(20),                 --申请结果
-    intime                    varchar(40),                 --申请时间
-    accesstype                varchar(50),                 --申请渠道
-    out_accept_unit           varchar(100),                --办理营业厅
-    out_operator              varchar(100),                --办理工号
-    incarrier                 varchar(30),                 --携入运营商
-    chnl_id                   varchar(100),                --渠道编码
-    region_id                 varchar(50),                 --县区编码
-    region_id_name            varchar(50),                 --县区名称
-    markt_area_id             varchar(50),                 --网格编码
-    markt_area_name           varchar(200),                --网格名称
-    starttime                 varchar(40),                 --携出时间
-    is_grp_mem                varchar(2),                  --是否是集团成员
-    cust_id                   varchar(30),                 --归属的集团客户编码
-    cust_name                 varchar(200),                --归属集团客户名称
-    start_date                varchar(40),                 --入网时间
-    create_chnl               varchar(50),                 --入网渠道
-    age                       int,                         --年龄
-    gender                    varchar(2),                  --性别
-    on_net_dur                int,                         --网龄
-    main_pri_id               varchar(50),                 --主资费编码
-    main_pri_name             varchar(50),                 --携出前主资费
-    fav_val                   int,                         --套餐价值
-    near_three_rexian_cnt     int,                         --近3个月拨打热线次数
-    avg_3month_arpu           double,               --近3月arpu(元)
-    avg_3month_o_mou          bigint,                      --近3月mou（秒）
-    avg_3month_dou            bigint,                      --近3月dou（M）
-    cust_manager              varchar(32),                 --归属客户经理工号
-    custmgrname               varchar(32),                 --归属客户经理名称
-    npdesc                    varchar(2048),               --np执行结果描述
-    is_first_rh               int,                         --是否一级融合
-    is_fam_vnet               int,                         --是否办理亲情网
-    is_charge                 int,                         --是否签约存赠活动
-    charge_contract_name      varchar(320),                --存赠活动优惠
-    charge_contract_expdate   varchar(20),                 --合约到期时间
-    brandwith                 int,                         --宽带带宽
-    ceil_id                   varchar(302),                --宽带小区
-    ceil_name                 varchar(100),                --宽带小区名称
-    is_terminal               int,                         --是否参加终端活动
-    terminal_contract_lvl     varchar(4000),               --终端活动档次
-    terminal_contract_expdate varchar(20),                 --终端活动档次到期时间
-    grp_country               varchar(20),                 --集团客户归属县区
-    group_type                varchar(30),                 --集团类型
-    is_unit_mon               varchar(1),                  --是否当月到厅
-    is_10086_cx               varchar(1)                   --是否客服查询携转
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14
-select distinct
-    a.statis_date,                                             --统计日期
-    a.apply_staus,                                             --申请状态
-    a.region_code,                                             --地市
-    a.subs_id,                                                 --SUBS-ID
-    a.phone_no,                                                --申请号码
-    a.apply_result,                                            --申请结果
-    a.intime,                                                  --申请时间
-    a.accesstype,                                              --申请渠道
-    a.out_accept_unit,                                         --办理营业厅
-    a.out_operator,                                            --办理工号
-    a.incarrier,                                               --携入运营商
-    a.chnl_id,                                                 --渠道编码
-    a.region_id,                                               --县区编码
-    a.region_id_name,                                          --县区名称
-    a.markt_area_id,                                           --网格编码
-    a.markt_area_name,                                         --网格名称
-    a.starttime,                                               --携出时间
-    a.is_grp_mem,                                              --是否是集团成员
-    a.cust_id,                                                 --归属的集团客户编码
-    a.cust_name,                                               --归属集团客户名称
-    a.start_date,                                              --入网时间
-    a.create_chnl,                                             --入网渠道
-    a.age,                                                     --年龄
-    a.gender,                                                  --性别
-    a.on_net_dur,                                              --网龄
-    a.main_pri_id,                                             --主资费编码
-    a.main_pri_name,                                           --携出前主资费
-    a.fav_val,                                                 --套餐价值
-    a.near_three_rexian_cnt,                                   --近3个月拨打热线次数
-    a.avg_3month_arpu,                                         --近3月arpu(元)
-    a.avg_3month_o_mou,                                        --近3月mou（秒）
-    a.avg_3month_dou,                                          --近3月dou（M）
-    a.cust_manager,                                            --归属客户经理工号
-    a.custmgrname,                                             --归属客户经理名称
-    a.npdesc,                                                  --np执行结果描述
-    a.is_first_rh,                                             --是否一级融合
-    a.is_fam_vnet,                                             --是否办理亲情网
-    case when c.subs_id is not null then  1 else 0 end,        --是否签约存赠活动
-    c.charge_contract_name,                                    --存赠活动优惠
-    c.charge_contract_expdate,                                 --合约到期时间
-    d.brandwith,                                               --宽带带宽
-    d.ceil_id,                                                 --宽带小区
-    d.ceil_name,                                               --宽带小区名称
-    case when t.subs_id is not null then  1 else 0 end,        --是否签约存赠活动
-    t.terminal_contract_lvl,                                   --存赠活动优惠
-    t.terminal_contract_expdate,                               --终端活动档次到期时间
-    a.grp_country,                                             --集团客户归属县区
-    a.group_type,                                              --集团类型
-    a.is_unit_mon,                                             --是否当月到厅
-    a.is_10086_cx                                              --是否客服查询携转
-from  mk.tm_sc_xz_tranquary_subs_atr_d a
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2 c
-on a.subs_id=c.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3 d
-on a.subs_id=d.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4 t
-on a.subs_id=t.subs_id
-where statis_date=${hivevar:vl_day}
-and cast(substr(regexp_replace(a.intime,'-| |:',''),1,8) as int) between ${hivevar:vi_month_first} and ${hivevar:vl_day}
-;
-
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14
-select distinct
-    a.statis_date,                                             --统计日期
-    a.apply_staus,                                             --申请状态
-    a.region_code,                                             --地市
-    a.subs_id,                                                 --SUBS-ID
-    a.phone_no,                                                --申请号码
-    a.apply_result,                                            --申请结果
-    a.intime,                                                  --申请时间
-    a.accesstype,                                              --申请渠道
-    a.out_accept_unit,                                         --办理营业厅
-    a.out_operator,                                            --办理工号
-    a.incarrier,                                               --携入运营商
-    a.chnl_id,                                                 --渠道编码
-    a.region_id,                                               --县区编码
-    a.region_id_name,                                          --县区名称
-    a.markt_area_id,                                           --网格编码
-    a.markt_area_name,                                         --网格名称
-    a.starttime,                                               --携出时间
-    a.is_grp_mem,                                              --是否是集团成员
-    a.cust_id,                                                 --归属的集团客户编码
-    a.cust_name,                                               --归属集团客户名称
-    a.start_date,                                              --入网时间
-    a.create_chnl,                                             --入网渠道
-    a.age,                                                     --年龄
-    a.gender,                                                  --性别
-    a.on_net_dur,                                              --网龄
-    a.main_pri_id,                                             --主资费编码
-    a.main_pri_name,                                           --携出前主资费
-    a.fav_val,                                                 --套餐价值
-    a.near_three_rexian_cnt,                                   --近3个月拨打热线次数
-    a.avg_3month_arpu_adt_dis,                                 --近3月arpu(元)
-    a.avg_3month_o_mou,                                        --近3月mou（秒）
-    a.avg_3month_dou,                                          --近3月dou（M）
-    a.cust_manager,                                            --归属客户经理工号
-    a.custmgrname,                                             --归属客户经理名称
-    a.npdesc,                                                  --np执行结果描述
-    b.is_first_rh,                                             --是否一级融合
-    b.is_fam_vnet,                                             --是否办理亲情网
-    case when c.subs_id is not null then  1 else 0 end,        --是否签约存赠活动
-    c.charge_contract_name,                                    --存赠活动优惠
-    c.charge_contract_expdate,                                 --合约到期时间
-    d.brandwith,                                               --宽带带宽
-    d.ceil_id,                                                 --宽带小区
-    d.ceil_name,                                               --宽带小区名称
-    case when t.subs_id is not null then  1 else 0 end,        --是否签约存赠活动
-    t.terminal_contract_lvl,                                   --存赠活动优惠
-    t.terminal_contract_expdate,                               --终端活动档次到期时间
-    a.grp_country,                                             --集团客户归属县区
-    a.group_type,                                              --集团类型
-    a.is_unit_mon,                                             --是否当月到厅
-    a.is_10086_cx                                              --是否客服查询携转
-from mk.tm_sc_xz_transquary_subs_d  a
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid1 b
-on  a.subs_id=b.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid2 c
-on a.subs_id=c.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid3 d
-on a.subs_id=d.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid4 t
-on a.subs_id=t.subs_id
-where statis_date=${hivevar:vi_day}
-and cast(substr(regexp_replace(a.intime,'-| |:',''),1,8) as int)=${hivevar:vi_day}
-;
-
-----step14 小汇总2
-
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid15;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid15
-(
-    statis_date               int,                         --统计日期
-    apply_staus               varchar(20),                 --申请状态
-    region_code               varchar(20),                 --地市
-    subs_id                   varchar(20),                 --SUBS_ID
-    phone_no                  varchar(20),                 --申请号码
-    apply_result              varchar(20),                 --申请结果
-    intime                    varchar(40),                 --申请时间
-    accesstype                varchar(50),                 --申请渠道
-    out_accept_unit           varchar(100),                --办理营业厅
-    out_operator              varchar(100),                --办理工号
-    incarrier                 varchar(30),                 --携入运营商
-    chnl_id                   varchar(100),                --渠道编码
-    region_id                 varchar(50),                 --县区编码
-    region_id_name            varchar(50),                 --县区名称
-    markt_area_id             varchar(50),                 --网格编码
-    markt_area_name           varchar(200),                --网格名称
-    starttime                 varchar(40),                 --携出时间
-    is_grp_mem                varchar(2),                  --是否是集团成员
-    cust_id                   varchar(30),                 --归属的集团客户编码
-    cust_name                 varchar(200),                --归属集团客户名称
-    start_date                varchar(40),                 --入网时间
-    create_chnl               varchar(50),                 --入网渠道
-    age                       int,                         --年龄
-    gender                    varchar(2),                  --性别
-    on_net_dur                int,                         --网龄
-    main_pri_id               varchar(50),                 --主资费编码
-    main_pri_name             varchar(50),                 --携出前主资费
-    fav_val                   int,                   --套餐价值
-    near_three_rexian_cnt     int,                         --近3个月拨打热线次数
-    avg_3month_arpu           double,               --近3月arpu(元)
-    avg_3month_o_mou          bigint,                      --近3月mou（秒）
-    avg_3month_dou            bigint,                      --近3月dou（M）
-    cust_manager              varchar(32),                 --归属客户经理工号
-    custmgrname               varchar(32),                 --归属客户经理名称
-    npdesc                    varchar(2048),               --np执行结果描述
-    is_first_rh               int,                         --是否一级融合
-    is_fam_vnet               int,                         --是否办理亲情网
-    is_charge                 int,                         --是否签约存赠活动
-    charge_contract_name      varchar(320),                --存赠活动优惠
-    charge_contract_expdate   varchar(20),                 --合约到期时间
-    brandwith                 int,                         --宽带带宽
-    ceil_id                   varchar(302),                --宽带小区
-    ceil_name                 varchar(100),                --宽带小区名称
-    is_terminal               int,                         --是否参加终端活动
-    terminal_contract_lvl     varchar(4000),               --终端活动档次
-    terminal_contract_expdate varchar(20),                 --终端活动档次到期时间
-    is_call_10086             int,                         -- 近3个月是否有过投诉
-    call_cnt                  int,                         --3个月内投诉次数
-    cert_us3_num              int,                         --身份证下是否有历史欠费
-    is_hjt                    int,                         --是否办理副卡
-    is_two_subs               varchar(2),                  --是否双人
-    grp_country               varchar(20),                 --集团客户归属县区
-    group_type                varchar(30),                 --集团类型
-    is_unit_mon               varchar(1),                  --是否当月到厅
-    is_10086_cx               varchar(1)                   --是否客服查询携转
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid15
-select distinct
-    a.statis_date,                                             --统计日期
-    a.apply_staus,                                             --申请状态
-    a.region_code,                                             --地市
-    a.subs_id,                                                 --SUBS-ID
-    a.phone_no,                                                --申请号码
-    a.apply_result,                                            --申请结果
-    a.intime,                                                  --申请时间
-    a.accesstype,                                              --申请渠道
-    a.out_accept_unit,                                         --办理营业厅
-    a.out_operator,                                            --办理工号
-    a.incarrier,                                               --携入运营商
-    a.chnl_id,                                                 --渠道编码
-    a.region_id,                                               --县区编码
-    a.region_id_name,                                          --县区名称
-    a.markt_area_id,                                           --网格编码
-    a.markt_area_name,                                         --网格名称
-    a.starttime,                                               --携出时间
-    a.is_grp_mem,                                              --是否是集团成员
-    a.cust_id,                                                 --归属的集团客户编码
-    a.cust_name,                                               --归属集团客户名称
-    a.start_date,                                              --入网时间
-    a.create_chnl,                                             --入网渠道
-    a.age,                                                     --年龄
-    a.gender,                                                  --性别
-    a.on_net_dur,                                              --网龄
-    a.main_pri_id,                                             --主资费编码
-    a.main_pri_name,                                           --携出前主资费
-    a.fav_val,                                                 --套餐价值
-    a.near_three_rexian_cnt,                                   --近3个月拨打热线次数
-    a.avg_3month_arpu,                                         --近3月arpu(元)
-    a.avg_3month_o_mou,                                        --近3月mou（秒）
-    a.avg_3month_dou,                                          --近3月dou（M）
-    a.cust_manager,                                            --归属客户经理工号
-    a.custmgrname,                                             --归属客户经理名称
-    a.npdesc,                                                  --np执行结果描述
-    a.is_first_rh,                                             --是否一级融合
-    a.is_fam_vnet,                                             --是否办理亲情网
-    a.is_charge,                                               --是否签约存赠活动
-    a.charge_contract_name,                                    --存赠活动优惠
-    a.charge_contract_expdate,                                 --合约到期时间
-    a.brandwith,                                               --宽带带宽
-    a.ceil_id,                                                 --宽带小区
-    a.ceil_name,                                               --宽带小区名称
-    a.is_terminal,                                             --是否签约存赠活动
-    a.terminal_contract_lvl,                                   --存赠活动优惠
-    a.terminal_contract_expdate,                               --终端活动档次到期时间
-    case when i.phone_no is not null then 1 else 0 end,        -- 近3个月是否有过投诉
-    i.call_cnt,                                                --3个月内投诉次数
-    case when f.subs_id is not null then 1 else 0 end,         --身份证下是否有历史欠费
-    case when g.subs_id is not null then 1 else 0 end,         --是否办理副卡
-    case when h.subs_id is not null then 1 else 0 end,         --是否双人
-    a.grp_country,                                             --集团客户归属县区
-    a.group_type,                                              --集团类型
-    a.is_unit_mon,                                             --是否当月到厅
-    a.is_10086_cx                                              --是否客服查询携转
-from  hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid14  a
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid6   f
-on a.subs_id=f.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid7   g
-on a.subs_id=g.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid8   h
-on a.subs_id=h.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid9   i
-on a.phone_no=i.phone_no
-;
-
-----step15 小汇总3
-drop table if exists hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid16;
-create table hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid16
-(
-    statis_date               int,                         --统计日期
-    apply_staus               varchar(20),                 --申请状态
-    region_code               varchar(20),                 --地市
-    subs_id                   varchar(20),                 --SUBS_ID
-    phone_no                  varchar(20),                 --申请号码
-    apply_result              varchar(20),                 --申请结果
-    intime                    varchar(40),                 --申请时间
-    accesstype                varchar(50),                 --申请渠道
-    out_accept_unit           varchar(100),                --办理营业厅
-    out_operator              varchar(100),                --办理工号
-    incarrier                 varchar(30),                 --携入运营商
-    chnl_id                   varchar(100),                --渠道编码
-    region_id                 varchar(50),                 --县区编码
-    region_id_name            varchar(50),                 --县区名称
-    markt_area_id             varchar(50),                 --网格编码
-    markt_area_name           varchar(200),                --网格名称
-    starttime                 varchar(40),                 --携出时间
-    is_grp_mem                varchar(2),                  --是否是集团成员
-    cust_id                   varchar(30),                 --归属的集团客户编码
-    cust_name                 varchar(200),                --归属集团客户名称
-    start_date                varchar(40),                 --入网时间
-    create_chnl               varchar(50),                 --入网渠道
-    age                       int,                         --年龄
-    gender                    varchar(2),                  --性别
-    on_net_dur                int,                         --网龄
-    main_pri_id               varchar(50),                 --主资费编码
-    main_pri_name             varchar(50),                 --携出前主资费
-    fav_val                   int,                         --套餐价值
-    near_three_rexian_cnt     int,                         --近3个月拨打热线次数
-    avg_3month_arpu           double,                      --近3月arpu(元)
-    avg_3month_o_mou          bigint,                      --近3月mou（秒）
-    avg_3month_dou            bigint,                      --近3月dou（M）
-    cust_manager              varchar(32),                 --归属客户经理工号
-    custmgrname               varchar(32),                 --归属客户经理名称
-    npdesc                    varchar(2048),               --np执行结果描述
-    is_first_rh               int,                         --是否一级融合
-    is_fam_vnet               int,                         --是否办理亲情网
-    is_charge                 int,                         --是否签约存赠活动
-    charge_contract_name      varchar(320),                --存赠活动优惠
-    charge_contract_expdate   varchar(20),                 --合约到期时间
-    brandwith                 int,                         --宽带带宽
-    ceil_id                   varchar(302),                --宽带小区
-    ceil_name                 varchar(100),                --宽带小区名称
-    is_terminal               int,                         --是否参加终端活动
-    terminal_contract_lvl     varchar(4000),               --终端活动档次
-    terminal_contract_expdate varchar(20),                 --终端活动档次到期时间
-    is_call_10086             int,                         -- 近3个月是否有过投诉
-    call_cnt                  int,                         --3个月内投诉次数
-    cert_us3_num              int,                         --身份证下是否有历史欠费
-    is_hjt                    int,                         --是否办理副卡
-    is_two_subs               varchar(2),                  --是否双人
-    grp_country               varchar(20),                 --集团客户归属县区
-    group_type                varchar(30),                 --集团类型
-    is_unit_mon               varchar(1),                  --是否当月到厅
-    is_10086_cx               varchar(1),                  --是否客服查询携转
-    is_jtv                    varchar(1),                  --是否订购集团V网产品
-    jtv_prd_name              varchar(1),                  --V网产品
-    is_10086_zx               varchar(1),                  --是否客服咨询携转
-    is_stu                    varchar(1),                  --是否校园用户
-    cmpt_conts                varchar(100),                --投拆内容
-    cell_name                 varchar(200)                 --常驻小区
-)
-row format delimited
-fields terminated by '\t'
-stored as rcfile
-;
-insert into hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid16
-select distinct
-    a.statis_date,                                             --统计日期
-    a.apply_staus,                                             --申请状态
-    a.region_code,                                             --地市
-    a.subs_id,                                                 --SUBS-ID
-    a.phone_no,                                                --申请号码
-    a.apply_result,                                            --申请结果
-    a.intime,                                                  --申请时间
-    a.accesstype,                                              --申请渠道
-    a.out_accept_unit,                                         --办理营业厅
-    a.out_operator,                                            --办理工号
-    a.incarrier,                                               --携入运营商
-    a.chnl_id,                                                 --渠道编码
-    a.region_id,                                               --县区编码
-    a.region_id_name,                                          --县区名称
-    a.markt_area_id,                                           --网格编码
-    a.markt_area_name,                                         --网格名称
-    a.starttime,                                               --携出时间
-    a.is_grp_mem,                                              --是否是集团成员
-    a.cust_id,                                                 --归属的集团客户编码
-    a.cust_name,                                               --归属集团客户名称
-    a.start_date,                                              --入网时间
-    a.create_chnl,                                             --入网渠道
-    a.age,                                                     --年龄
-    a.gender,                                                  --性别
-    a.on_net_dur,                                              --网龄
-    a.main_pri_id,                                             --主资费编码
-    a.main_pri_name,                                           --携出前主资费
-    a.fav_val,                                                 --套餐价值
-    a.near_three_rexian_cnt,                                   --近3个月拨打热线次数
-    a.avg_3month_arpu,                                         --近3月arpu(元)
-    a.avg_3month_o_mou,                                        --近3月mou（秒）
-    a.avg_3month_dou,                                          --近3月dou（M）
-    a.cust_manager,                                            --归属客户经理工号
-    a.custmgrname,                                             --归属客户经理名称
-    a.npdesc,                                                  --np执行结果描述
-    a.is_first_rh,                                             --是否一级融合
-    a.is_fam_vnet,                                             --是否办理亲情网
-    a.is_charge,                                               --是否签约存赠活动
-    a.charge_contract_name,                                    --存赠活动优惠
-    a.charge_contract_expdate,                                 --合约到期时间
-    a.brandwith,                                               --宽带带宽
-    a.ceil_id,                                                 --宽带小区
-    a.ceil_name,                                               --宽带小区名称
-    a.is_terminal,                                              --是否签约存赠活动
-    a.terminal_contract_lvl,                                   --存赠活动优惠
-    a.terminal_contract_expdate,                               --终端活动档次到期时间
-    a.is_call_10086,                                            -- 近3个月是否有过投诉
-    a.call_cnt,                                                --3个月内投诉次数
-    a.cert_us3_num,                                             --身份证下是否有历史欠费
-    a.is_hjt,                                                    --是否办理副卡
-    a.is_two_subs,                                              --是否双人
-    a.grp_country,                                             --集团客户归属县区
-    a.group_type,                                              --集团类型
-    a.is_unit_mon,                                                 --是否当月到厅
-    a.is_10086_cx,                                             --是否客服查询携转
-    case when b.subs_id is not null then '1' else '0' end,     --是否订购集团V网产品
-    b.jtv_prd_name,                                            --V网产品
-    case when d.phone_no is not null then '1' else '0' end,    --是否客服咨询携转
-    case when e.subs_id is not null then '1' else '0' end,     --是否校园用户
-    c.cmpt_conts,                                              --投拆内容
-    f.cell_name                                                --常驻小区
-from  hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid15    a
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid10     b
-on a.subs_id=b.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid11  c
-on a.phone_no=c.phone_no and c.rn=1
-left join mk.tm_cs_10086_consult_trans_d d
-on a.phone_no=d.phone_no
-and d.statis_date=${hivevar:vi_day}
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid12  e
-on a.subs_id=e.subs_id
-left join hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid13   f
-on a.subs_id=f.subs_id
-;
-----step16 插入目标表
-alter table mk.tm_sc_xz_tranquary_subs_atr_d drop partition(statis_date=${hivevar:vi_day});
-insert into mk.tm_sc_xz_tranquary_subs_atr_d partition(statis_date=${hivevar:vi_day})
-select
-    apply_staus,
-    region_code,
-    subs_id,
-    phone_no,
-    apply_result,
-    intime,
-    accesstype,
-    out_accept_unit,
-    out_operator,
-    incarrier,
-    chnl_id,
-    region_id,
-    region_id_name,
-    markt_area_id,
-    markt_area_name,
-    starttime,
-    NULL,
-    is_grp_mem,
-    cust_id,
-    cust_name,
-    start_date,
-    create_chnl,
-    age,
-    gender,
-    on_net_dur,
-    main_pri_id,
-    main_pri_name,
-    fav_val,
-    near_three_rexian_cnt,
-    avg_3month_arpu,
-    avg_3month_o_mou,
-    avg_3month_dou,
-    cust_manager,
-    custmgrname,
-    npdesc,
-    is_first_rh,
-    is_fam_vnet,
-    is_charge,
-    charge_contract_name,
-    charge_contract_expdate,
-    brandwith,
-    ceil_id,
-    ceil_name,
-    is_terminal,
-    terminal_contract_lvl,
-    terminal_contract_expdate,
-    is_call_10086,
-    call_cnt,
-    cert_us3_num,
-    is_hjt,
-    is_two_subs,
-    grp_country,
-    group_type,
-    is_unit_mon,
-    is_10086_cx,
-    is_jtv,
-    jtv_prd_name,
-    is_10086_zx,
-    is_stu,
-    cmpt_conts,
-    cell_name
-from hw_tmp.tm_sc_xz_tranquary_subs_atr_d_mid16
-;
-
-
-
-
-
-
-
-
-
-
+--alter table mk.tm_sc_subs_over_gsm_gprs_m_202009 change chrg_flux chrg_flux  double(20,4);
+---- 脚本最后删除用到的中间表
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid1;
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid2;
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid3;
+drop table if exists hw_tmp.tm_sc_subs_over_gsm_gprs_m_mid4;

@@ -84,15 +84,15 @@ def run(dir_name, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> list[tup
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\tmp\\'
+    dirName = 'D:\\bd_hive\\mk'
     # 获取union all
     # result_file = 'D:\\数据核对\\union_target.xlsx'
     # union_all_data = run(dirName)
     # excelOp.write_xlsx(result_file, union_all_data, sheet_name='脚本和目标表')
 
-    tmp_pattern = r'ded_dur[\s\S]*mk\.tm_cs_LG_OM_ORDER_D'
+    tmp_pattern = r'tot_cnt[\s\S]*mk\.tm_ls_sms_m'
     data = run(dirName, tmp_pattern,  pattern_mod=re.I)
-    result_file = 'D:\\数据核对\\analyze_mk_vl.xlsx'
+    result_file = 'D:\\数据核对\\tm_ls_sms_m.xlsx'
     excelOp.write_xlsx(result_file, data, edit=True, sheet_name='脚本和语句')
 
     # run(dirName, tmp_pattern, layer_num=0)

@@ -41,8 +41,8 @@ def print_fmt(data_list, start=0, end=0):
 
 if __name__ == '__main__':
     data = [
-        ['asda', 'asd', 'a'],
-        ['好好好好 ', 'd', 123],
-        ('asd', 'asd', '1')
+        ['阿萨德啊实打实', 'asdasdasdsd', 'a'],
+        ['好好好好阿萨德 ', 'd', 123],
+        ('爱迪生撒阿萨德', 'asd', '1')
     ]
     print_fmt(data)
