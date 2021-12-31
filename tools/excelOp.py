@@ -74,10 +74,10 @@ def write_xlsx(filename: str, data: list[Union[list, tuple]], edit=False, sheet_
     workbook.close()
 
 
-def read_xlsx(filename, sheet_name='newSheet') -> list[list]:
+def read_xlsx(filename, sheet_name='newSheet', data_only=False) -> list[list]:
     try:
-        workbook = openpyxl.load_workbook(filename)
-        sheet = workbook[workbook.sheetnames[2]]
+        workbook = openpyxl.load_workbook(filename, data_only=data_only)
+        sheet = workbook[sheet_name]
 
     except FileNotFoundError as fe:
 
@@ -107,7 +107,8 @@ def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit=Tru
         except Exception as e:
             sys.exit(e)
     elif os.path.exists(filename):
-        sys.exit(f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True] or delete it,then try again!')
+        sys.exit(
+            f'Workbook [{filename}] already exists,you can\'t write it.\nPlease set [edit=True] or delete it,then try again!')
     else:
         workbook = openpyxl.Workbook()
         print(f'Create a new workbook named[{filename}]')
@@ -143,6 +144,7 @@ def write_many_sheets_xlsx(filename, data_info: list[tuple[str, list]], edit=Tru
                 new_sheet.cell(row_id, col_id, cell_data)
     workbook.save(filename)
     workbook.close()
+
 
 
 if __name__ == '__main__':

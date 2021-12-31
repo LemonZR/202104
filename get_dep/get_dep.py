@@ -6,6 +6,7 @@ import os
 
 def get_dep(file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
     lis = []
+
     # pattern = r'(?=%s)[a-zA-Z0-9_\.]*(?=|;|,|\s|_\$|\))' % pattern
     pattern = r'(?=%s)[a-zA-Z]+\.[tT][a-zA-Z]+_[a-zA-Z0-9_]*(?=|;|,|\s|_\$|\))' % pattern
     try:

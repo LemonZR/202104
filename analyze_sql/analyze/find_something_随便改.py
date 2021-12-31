@@ -19,7 +19,7 @@ def ergodic_dirs(root_dir='D:\\sql_gen\\bd_hive') -> list[str]:
     return file_list
 
 
-def get_sql_blks(file) -> list[str]:
+def get_sql_blks(file):
     try:
         fl = open(file, 'r', encoding='gbk')
         ff = fl.read()
@@ -31,8 +31,9 @@ def get_sql_blks(file) -> list[str]:
             print(f'{file}' + str(e1) + '\n' + str(e2))
             ff = ''
 
-    '''以';'为分隔拆分,忽略最后一个空语句块'''
-    sql_blks = ff.split(';')
+    # '''以';'为分隔拆分,忽略最后一个空语句块'''
+    # sql_blks = ff.split(';')
+    sql_blks = [ff]
     return sql_blks
 
 
@@ -48,7 +49,14 @@ def alter_files_sql_blks(dir_name='D:\\tmp\\', find_pattern='', old_pattern='', 
             if re.findall(find_pattern, new_sql, flags=pattern_mod):
                 if re.findall(old_pattern, new_sql, flags=pattern_mod):
                     new_sql_blk = re.sub(old_pattern, new_str, sql_blk, flags=pattern_mod)
-                    alter_info.append((fil_name, sql_blks[sql_blk_id], new_sql_blk))
+
+                    # 增加找到的字段
+                    find_result = re.findall(find_pattern, new_sql, flags=pattern_mod)
+                    find_result =list( map(str.lower,find_result))
+                    print(find_result)
+                    result_str = '|'.join(set(find_result)).lower()
+                    alter_info.append((fil_name, result_str))
+                    # alter_info.append((fil_name, sql_blks[sql_blk_id], new_sql_blk))
                     sql_blks[sql_blk_id] = new_sql_blk
                     file_sql_blks_dict[fil_name] = sql_blks
 
@@ -79,21 +87,21 @@ def write_new_file(file_dict: dict[str, list], alter_info: list[tuple], dirname=
             # for sql_blk in sql_blks:
             #     f.write(sql_blk + ';')
             f.write(';'.join(sql_blks))
-    record_file = f'{dirname}\\alter_record.xlsx'
+    record_file = f'{dirname}\\record.xlsx'
     excelOp.write_xlsx(record_file, alter_info, edit=True)
 
 
 if __name__ == '__main__':
     time_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    dirName = 'D:\\bd_hive\\dis\\'
-    dirname_bak = f'D:\\tmp\\alter_temporary_bak_{time_str}'
+    dirName = 'D:\\tmp\\'
+    dirname_bak = f'D:\\tmp\\alter_temporary_bak'
     dirname_alter_files = f'D:\\tmp\\temporary_altered_{time_str}'
-    print(dirname_bak)
-    find_pattern = r'create\s*temporary'
-    old_p = r'tablespace\s*=\s*\'[a-zA-Z_]*\''
+
+    find_pattern = r'\shy\.'
+    old_p = ';'
     # p = re.compile(old_p, re.I)
-    new_string = ''
+    new_string = ';'
     alter_files_dict, alter_infos = alter_files_sql_blks(dir_name=dirName, find_pattern=find_pattern, old_pattern=old_p,
                                                          new_str=new_string)
-    backup_file(alter_files_dict, dirname_origion=dirName, dirname_bak=dirname_bak)
+    # backup_file(alter_files_dict, dirname_origion=dirName, dirname_bak=dirname_bak)
     write_new_file(alter_files_dict, alter_infos, dirname=dirname_alter_files)

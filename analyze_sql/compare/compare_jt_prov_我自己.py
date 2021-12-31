@@ -70,30 +70,33 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
     if jt_missed:
         jt_miss = [('集团没有的',)] + list(map(lambda x: (x,), jt_missed))
 
-    differences = [('脚本名', '操作方法', '集团sql(jt_script)', '省sql(E:\\git_clone\\bd_hive)')]
+    differences = [('脚本名', '操作方法', jt_dir_name, prov_dir_name)]
     same = [('脚本一致',)]
     diff_cnt = 0
     for file_name, sql_dict in jt_files_sql_dict.items():
         is_same = True
-        jt_file_path = f".\\jt_script\\dis\\{file_name}"
-        prov_file_path = f'D:\\bd_hive\\dis\\{file_name}'
+
         pro_file_sql_dict = prov_files_sql_dict.get(file_name, None)
         if not pro_file_sql_dict:
             prov_miss.append((file_name,))
             continue
         if len(sql_dict) != len(pro_file_sql_dict):
+            # C1 就是 jt_dir_name。D1就是prov_dir_name
+            jt_HYPERLINK = f'=HYPERLINK(CONCATENATE($C1,"\\{file_name}"),"sql段不同:集团脚本")'
+            prov_HYPERLINK = f'=HYPERLINK(CONCATENATE($D1,"\\{file_name}"),"sql段不同:省脚本")'
             is_same = False
-            differences.append((file_name, '', f'=HYPERLINK("{jt_file_path}","sql段不同:集团脚本")',
-                                f'=HYPERLINK("{prov_file_path}","省脚本")'))
+            differences.append((file_name, '', jt_HYPERLINK, prov_HYPERLINK))
 
         else:
+            # A1 就是 jt_dir_name。B1就是prov_dir_name
+            jt_HYPERLINK = f'=HYPERLINK(CONCATENATE($C1,"\\{file_name}"),"集团脚本")'
+            prov_HYPERLINK = f'=HYPERLINK(CONCATENATE($D1,"\\{file_name}"),"省脚本")'
             for sql_id, sql in sql_dict.items():
                 prov_sql = pro_file_sql_dict.get(sql_id)
                 if sql != prov_sql:
                     is_same = False
 
-                    differences.append((file_name, '', f'=HYPERLINK("{jt_file_path}","集团脚本")',
-                                        f'=HYPERLINK("{prov_file_path}","省脚本")'))
+                    differences.append((file_name, '', jt_HYPERLINK, prov_HYPERLINK))
                     break
         if is_same:
             same.append((file_name,))
@@ -105,9 +108,12 @@ def compare_file(jt_dir_name='', prov_dir_name=''):
 
 
 if __name__ == '__main__':
-    filename = 'D:\\compare_jt_prov_dis_new.xlsx'
-    jt_dir = r'D:\bigdata\集中化搬迁\开发区svn文件\集中化数据核对\常用脚本解析文件\\jt_script\dis'
-    prov_dir = 'D:\\bd_hive\\dis'
+    schema = 'pub'
+
+    # 输出的文件夹
+    filename = 'D:\\省和集团脚本比对20211203_%s.xlsx' % schema
+    jt_dir = r'D:\bigdata\集中化搬迁\开发区svn文件\集中化数据核对\常用脚本解析文件\jt_script_20211203\%s' % schema
+    prov_dir = 'D:\\bd_hive\\%s' % schema
     diff, sam, jt_mis, prov_mis = compare_file(jt_dir, prov_dir)
     data = [('脚本不同', diff), ('脚本一致', sam), ('集团没有的脚本', jt_mis), ('省没有的脚本', prov_mis)]
     excelOp.write_many_sheets_xlsx(filename, data, edit=True)

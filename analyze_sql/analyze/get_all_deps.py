@@ -73,7 +73,7 @@ def find_pattern(sql_list, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) ->
     return result_list
 
 
-def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, dict]:
+def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, list]:
     file_sqls_info = get_files_sql_dict(dir_name)
     insert_pattern = r"insert\s*into\s*table\s*\S*|insert\s*into\s*\S*|insert\s*overwrite\s*table\s*\S*"
     from_sql_pattern = r'select[\s\S]*from[\s\S]*'
@@ -190,11 +190,12 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    dirName = 'D:\\bd_hive\\dis'
-    data1, data2 = run(dirName)
-    print(len(data2))
+    jt_dirName = r'D:\bigdata\集中化搬迁\开发区svn文件\集中化数据核对\常用脚本解析文件\jt_script_20211203'
+    sheng_dirName = r'D:\tmp\sheng'
+    _, data1 = run(sheng_dirName)
+    _, data2 = run(jt_dirName)
 
-    result_xlsx = 'D:\\dis_直接依赖.xlsx'
+    result_xlsx = 'D:\\集团和省目标表比对.xlsx'
     # 先写小的，避免第二次打开大数据表
     # print('写入excel：直接依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
@@ -202,4 +203,4 @@ if __name__ == '__main__':
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
     # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('直接依赖', data2)], edit=True)
+    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('sheng', data1), ('jt', data2)], edit=True)

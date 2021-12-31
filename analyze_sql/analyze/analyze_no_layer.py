@@ -72,6 +72,7 @@ def run(dir_name, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> list[tup
     """
     file_layers_info = get_files_layer(dir_name)
     pattern = pattern
+    print(pattern)
     xlsx_data = [('脚本名', 'sql语句块')]
     for file_name, sql_info in file_layers_info.items():
         layer = has_pattern(sql_dict=sql_info, pattern=pattern, pattern_mod=pattern_mod)
@@ -85,14 +86,16 @@ def run(dir_name, pattern=r'union\s*all', pattern_mod=re.IGNORECASE) -> list[tup
 
 if __name__ == '__main__':
     dirName = 'D:\\bd_hive\\mk'
-    # 获取union all
-    # result_file = 'D:\\数据核对\\union_target.xlsx'
-    # union_all_data = run(dirName)
-    # excelOp.write_xlsx(result_file, union_all_data, sheet_name='脚本和目标表')
 
-    tmp_pattern = r'tot_cnt[\s\S]*mk\.tm_ls_sms_m'
-    data = run(dirName, tmp_pattern,  pattern_mod=re.I)
-    result_file = 'D:\\数据核对\\tm_ls_sms_m.xlsx'
+    from someconfig import pattern
+
+    patterns = pattern.pattern
+
+    # tmp_pattern = r'td_ac_acct_m_test'
+    data = []
+    for p in patterns:
+        data += run(dirName, p, pattern_mod=re.I)
+    result_file = 'D:\\数据核对\\dwh_test_check_2.xlsx'
     excelOp.write_xlsx(result_file, data, edit=True, sheet_name='脚本和语句')
 
     # run(dirName, tmp_pattern, layer_num=0)
