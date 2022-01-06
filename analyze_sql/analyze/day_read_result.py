@@ -1,6 +1,8 @@
 # -*- encoding:utf-8 -*-
 
 import time
+
+
 # mk表相关比对文件的目录
 
 def read_file_and_handle(in_file, out_file):
@@ -25,5 +27,5 @@ def read_file_and_handle(in_file, out_file):
 if __name__ == '__main__':
     # 处理未通过的mk日表
     inp = 'D:\\数据核对\\mk_month_qingdan.txt'
-    out ='D:\\数据核对\\mk_month_qingdan.result'
+    out = 'D:\\数据核对\\mk_month_qingdan.result'
     read_file_and_handle(inp, out)

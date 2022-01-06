@@ -86,7 +86,8 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict[str, list]:
         from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
         # 将pre脚本与主脚本合并,转小写
         # pre 或 per 。。。
-        file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
+        # file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
+        file_name = file_name.lower()
         # 部分脚本不合常识比如mk_pm_sc_user_lte_d，前置脚本有其他词语
         result.setdefault(file_name, {})
         if insert_sql_list:
@@ -190,12 +191,18 @@ def run(dir_name):
 
 
 if __name__ == '__main__':
-    jt_dirName = r'D:\bigdata\集中化搬迁\开发区svn文件\集中化数据核对\常用脚本解析文件\jt_script_20211203'
-    sheng_dirName = r'D:\tmp\sheng'
-    _, data1 = run(sheng_dirName)
-    _, data2 = run(jt_dirName)
-
-    result_xlsx = 'D:\\集团和省目标表比对.xlsx'
+    mk_dirName = r'D:\bd_hive\mk'
+    dis_dirName = r'D:\bd_hive\dis'
+    pub_dirName = r'D:\bd_hive\pub'
+    am_dirName = r'D:\bd_hive\am'
+    dwh_dirName = r'D:\bd_hive\dwh'
+    _, data1 = run(mk_dirName)
+    _, data2 = run(dis_dirName)
+    _, data3 = run(pub_dirName)
+    _, data4 = run(am_dirName)
+    _, data5 = run(dwh_dirName)
+    data_info = [('mk', data1), ('dis', data2), ('pub', data3), ('am', data4), ('dwh', data5)]
+    result_xlsx = 'D:\\脚本中插入的表.xlsx'
     # 先写小的，避免第二次打开大数据表
     # print('写入excel：直接依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data2, edit=True, sheet_name='直接依赖')
@@ -203,4 +210,4 @@ if __name__ == '__main__':
     # print('写入excel：所有依赖 start' + '*' * 100)
     # excelOp.write_xlsx(result_xlsx, data1, edit=True, sheet_name='所有依赖')
     # print('写入excel：所有依赖 end' + '*' * 100)
-    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=[('sheng', data1), ('jt', data2)], edit=True)
+    excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=data_info, edit=True)

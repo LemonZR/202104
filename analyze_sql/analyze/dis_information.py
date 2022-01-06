@@ -89,6 +89,7 @@ class DisAnalyze:
         result_dict = {}
         partition_pattern = r'%s' % ('|'.join(list(self.all_partitions.keys())))
         type_pattern = r'%s' % ('|'.join(self.data_types))
+        has_is_pattern = r'^is_\S*'
 
         for row in gbase_rows:
             table_schema, table_name, column_name, data_type = map(str, row)
@@ -98,10 +99,13 @@ class DisAnalyze:
 
             is_partition_field = re.findall(partition_pattern, column_name, re.I)
             is_need_type = re.findall(type_pattern, data_type, re.I)
+            is_has_is = re.findall(has_is_pattern, column_name, re.I)
             if is_partition_field:
                 partition_field = is_partition_field[0]
                 result_dict[whole_name].setdefault('partition_fields', []).append(partition_field)
             elif is_need_type:
+                result_dict[whole_name]['column_name'].append(column_name)
+            elif is_has_is:
                 result_dict[whole_name]['column_name'].append(column_name)
 
         return result_dict  # dict[str,dict[]]
@@ -140,7 +144,7 @@ class DisAnalyze:
         for table, info in result_dict.items():
             is_yyyymm = re.findall(r'20\d{4}$', table)
             if is_yyyymm:  # 判断是否月分表,并取202103之后的表
-                if int(is_yyyymm[0]) < 202103:
+                if int(is_yyyymm[0]) < 202112:
                     self.__logger.info(table + ' 是202103之前的表,不列入配置项')
                     continue
             partition_field = min(info.get('partition_fields', ['S']),
