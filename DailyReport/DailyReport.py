@@ -45,7 +45,7 @@ class MkDayReporter(Reporter):
             sheet['J4'] = self.report['am']['已完成']
 
             sheet['D3'] = self.report['mk']['总量']
-            sheet['F3'] = self.report['mk'][0] + self.report['am'][5]
+            sheet['F3'] = self.report['mk'][0] + self.report['mk'][5]
             sheet['E3'] = self.report['mk'][1]
             sheet['G3'] = self.report['mk'][2]
             sheet['H3'] = self.report['mk'][3]
@@ -87,7 +87,7 @@ class MkMonReporter(Reporter):
 
             sheet['C5'] = self.check_date
             sheet['D5'] = self.report['mk']['总量']
-            sheet['F5'] = self.report['mk'][0] + self.report['am'][5]
+            sheet['F5'] = self.report['mk'][0] + self.report['mk'][5]
             sheet['E5'] = self.report['mk'][1]
             sheet['G5'] = self.report['mk'][2]
             sheet['H5'] = self.report['mk'][3]
