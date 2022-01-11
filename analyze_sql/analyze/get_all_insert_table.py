@@ -84,7 +84,7 @@ def analyze(dir_name, pattern_mod=re.IGNORECASE) -> dict:
     for file_name, sql_info in file_sqls_info.items():
         insert_sql_list = find_pattern(sql_info, pattern=insert_pattern, pattern_mod=pattern_mod)
         from_sql_list = find_pattern(sql_info, pattern=from_sql_pattern, pattern_mod=pattern_mod)
-        # 将pre脚本与主脚本合并,转小写
+        #将pre脚本与主脚本合并,转小写
         # pre 或 per 。。。
         # file_name = re.sub(r'_pre_*\d+[_\d]*\.sql|_per_*\d+[_\d]*\.sql', '.sql', file_name, flags=re.I).lower()
         file_name = file_name.lower()
@@ -138,5 +138,5 @@ if __name__ == '__main__':
     data4 = run(am_dirName)
     data5 = run(dwh_dirName)
     data_info = [('mk', data1), ('dis', data2), ('pub', data3), ('am', data4), ('dwh', data5)]
-    result_xlsx = 'D:\\脚本中插入的表_new.xlsx'
+    result_xlsx = 'D:\\脚本中插入的表_n.xlsx'
     excelOp.write_many_sheets_xlsx(filename=result_xlsx, data_info=data_info, edit=True)

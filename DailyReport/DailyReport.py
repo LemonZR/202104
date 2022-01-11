@@ -176,7 +176,7 @@ if __name__ == '__main__':
     #
     #
     # mk(am)月模型
-    mm = MkMonReporter('202111')
+    mm = MkMonReporter('202112')
     mm.analyze()
     mm.export_excel(reportpath)
 
@@ -184,3 +184,4 @@ if __name__ == '__main__':
     # dd = DisDayReporter('20211217')
     # dd.analyze()
     # dd.export_excel(reportpath)
+    set()

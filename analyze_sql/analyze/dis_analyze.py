@@ -145,7 +145,8 @@ class DisAnalyze:
             elif partition_field.lower() in self.m_partition_columns:
                 p = 'M'
             else:
-                p = 'N'
+                # p = 'N'
+                p = 'D'
 
             r_file = getattr(self, 'r_f_' + p)
             if fields:
