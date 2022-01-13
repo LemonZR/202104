@@ -33,6 +33,7 @@ class DisAnalyze:
         except Exception as e:
             self.__err_logger.info('连接数据库失败,退出')
             sys.exit(e)
+        self.__init_file_stream()
 
     def __get_logger(self, ):
         logger = logging.getLogger('info')
@@ -70,13 +71,14 @@ class DisAnalyze:
             if len(table_name) == 0:
                 self.__err_logger.info('这有一个空行')
                 continue
-            sql = 'desc %s ;' % table_name
+            sql = 'desc %s ' % table_name
             try:
                 cursor_gbase.execute(sql)
                 gbase_rows = cursor_gbase.fetchall()  # list[tuple]
                 self.__logger.info('%s 读取成功' % table_name)
             except Exception as e:
                 self.__err_logger.info('%s 读取失败：%s \n%s' % (table_name, sql, e))
+                self.r_f_nf.write(table_name + "\n")
                 continue
             tmp_result.setdefault(table_name, gbase_rows)
         return tmp_result  # dict[str,list[tuple]]
@@ -87,7 +89,8 @@ class DisAnalyze:
         result_file = os.path.join(result_file_dir, result_file_name + "_result")
         self.r_f_D = open(result_file + '_d.txt', 'w')
         self.r_f_M = open(result_file + '_m.txt', 'w')
-        self.r_f_N = open(result_file + '_n.txt', 'w')
+        self.r_f_nf = open(result_file + '_not_found.txt', 'w')
+        # self.r_f_N = open(result_file + '_n.txt', 'w')
 
     def __close(self):
         try:
@@ -98,10 +101,7 @@ class DisAnalyze:
             self.r_f_M.close()
         except Exception:
             self.__err_logger.info('file_M 未关闭')
-        try:
-            self.r_f_N.close()
-        except Exception:
-            self.__err_logger.info('file_N 未关闭')
+
         try:
             self.__gbase_db.close()
             self.__logger.info('数据库连接已关闭')
@@ -109,11 +109,12 @@ class DisAnalyze:
             self.__err_logger.info(e)
             self.__err_logger.info('数据库连接关闭失败')
 
-    def __write_result(self, tmp_result, file):
+    def __write_result(self, tmp_result):
 
         result_dict = {}
         partition_pattern = r'%s' % ('|'.join(list(self.all_partitions.keys())))
         type_pattern = r'%s' % ('|'.join(self.data_types))
+        has_is_pattern = r'^is_\S*'
 
         for t_name, info in tmp_result.items():
             result_dict.setdefault(t_name, {}).setdefault('field', [])
@@ -122,17 +123,20 @@ class DisAnalyze:
                     field, typ = map(str, field_info[:2])
                 except Exception:
                     self.__err_logger.info('%s 解释失败' % t_name + ':' + field_info)
-                    field, typ = '', ''
+                    sys.exit()
 
                 is_partition_field = re.findall(partition_pattern, field, re.I)
                 is_need_type = re.findall(type_pattern, typ, re.I)
+                is_has_is = re.findall(has_is_pattern, field, re.I)
                 if is_partition_field:
                     partition_field = is_partition_field[0]
                     result_dict[t_name].setdefault('partition_fields', []).append(partition_field)
 
                 elif is_need_type:
                     result_dict[t_name]['field'].append(field)
-        self.__init_file_stream()
+                elif is_has_is:
+                    result_dict[t_name]['field'].append(field)
+
         for table, info in result_dict.items():
             partition_field = min(info.get('partition_fields', ['S']),
                                   key=lambda partition: self.all_partitions.get(partition, 9))
@@ -160,7 +164,7 @@ class DisAnalyze:
 
     def run(self, ):
         tmp_result = self.__get_colum_info(self.__file)
-        self.__write_result(tmp_result, self.__file)
+        self.__write_result(tmp_result)
         self.__close()
 
 

@@ -116,7 +116,7 @@ class DisAnalyze:
         result_file = os.path.join(result_file_dir, result_file_name + "_result")
         self.r_f_D = open(result_file + '_d.txt', 'w')
         self.r_f_M = open(result_file + '_m.txt', 'w')
-        self.r_f_N = open(result_file + '_n.txt', 'w')
+        # self.r_f_N = open(result_file + '_n.txt', 'w')
 
     def __close(self):
         try:
@@ -127,10 +127,10 @@ class DisAnalyze:
             self.r_f_M.close()
         except Exception:
             self.__err_logger.info('file_M 未关闭')
-        try:
-            self.r_f_N.close()
-        except Exception:
-            self.__err_logger.info('file_N 未关闭')
+        # try:
+        #     self.r_f_N.close()
+        # except Exception:
+        #     self.__err_logger.info('file_N 未关闭')
         try:
             self.__gbase_db.close()
             self.__logger.info('数据库连接已关闭')
@@ -158,7 +158,8 @@ class DisAnalyze:
             elif partition_field.lower() in self.m_partition_columns:
                 p = 'M'
             else:
-                p = 'N'
+                # p = 'N'
+                p = 'D'
 
             r_file = getattr(self, 'r_f_' + p)
             if columns:
