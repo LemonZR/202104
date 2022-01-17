@@ -42,11 +42,11 @@ class dataAnalyze:
                 self.__logger.info('脚本存在，将查询所有依赖')
             else:
                 self.__logger.info('正式脚本%s不存在,使用当前目录文件内容' % script)
-                local_script =  self.table
+                local_script = self.table
                 if os.path.isfile(local_script):
                     script = local_script
                 else:
-                    self.__logger.info('当前目录也不存在%s，请检查参数' %local_script)
+                    self.__logger.info('当前目录也不存在%s，请检查参数' % local_script)
                     sys.exit()
         else:
             script = False
@@ -101,7 +101,8 @@ class dataAnalyze:
 
         if p_date == '1=1':
             p_date = ''
-        hdfs_cmd = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (hdfs_path, table_str1, p_date)
+        hdfs_cmd = """"hdfs dfs -ls %s/%s|grep '%s'|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort -r|head -1""" % (
+        hdfs_path, table_str1, p_date)
         self.__logger.info(hdfs_cmd)
         try:
             rs = os.popen(hdfs_cmd)
@@ -113,7 +114,7 @@ class dataAnalyze:
         # 当获取不到hdfs文件时间时，可能是因为路径是大写，再尝试一下
         if time == '':
             table_str2 = table_name.split('.')[0] + '/' + table_name.split('.')[1].upper()
-            hdfs_cmd2 = "hdfs dfs -ls %s/%s|grep '%s'|awk '{print $6,$7}'|sort -r|head -1" % (
+            hdfs_cmd2 = """"hdfs dfs -ls %s/%s|grep '%s'|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort -r|head -1""" % (
                 hdfs_path, table_str2, p_date)
             self.__logger.debug(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
             try:
