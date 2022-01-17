@@ -101,6 +101,10 @@ class DisAnalyze:
             self.r_f_M.close()
         except Exception:
             self.__err_logger.info('file_M 未关闭')
+        try:
+            self.r_f_nf.close()
+        except Exception:
+            self.__err_logger.info('r_f_nf 未关闭')
 
         try:
             self.__gbase_db.close()

@@ -76,7 +76,6 @@ class DisAnalyze:
             select TABLE_SCHEMA,TABLE_NAME,COLUMN_NAME,DATA_TYPE 
             from 
             information_schema.COLUMNS 
-            where TABLE_SCHEMA='dis'
             """
         try:
             cursor_gbase.execute(sql)
