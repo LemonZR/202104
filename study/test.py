@@ -156,3 +156,4 @@ def modelRecordCheck(args):
 
 if __name__ == '__main__':
     modelRecordCheck(sys.argv[1:])
+    from multiprocessing import Pool

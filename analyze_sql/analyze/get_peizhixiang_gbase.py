@@ -1,3 +1,4 @@
+#!/usr/local/bin/python2.7
 # -*- encoding:utf-8 -*-
 
 from GbaseSQLEngine import GbaseSQLEngine
@@ -71,7 +72,7 @@ class DisAnalyze:
             if len(table_name) == 0:
                 self.__err_logger.info('这有一个空行')
                 continue
-            sql = 'desc %s ' % table_name
+            sql = 'desc %s ;' % table_name
             try:
                 cursor_gbase.execute(sql)
                 gbase_rows = cursor_gbase.fetchall()  # list[tuple]
@@ -86,7 +87,7 @@ class DisAnalyze:
     def __init_file_stream(self):
         result_file_name = os.path.basename(self.__file).split(".")[0]
         result_file_dir = os.path.dirname(self.__file)
-        result_file = os.path.join(result_file_dir, result_file_name + "_result")
+        result_file = os.path.join(result_file_dir, result_file_name + "_gb_result")
         self.r_f_D = open(result_file + '_d.txt', 'w')
         self.r_f_M = open(result_file + '_m.txt', 'w')
         self.r_f_nf = open(result_file + '_not_found.txt', 'w')
@@ -101,10 +102,6 @@ class DisAnalyze:
             self.r_f_M.close()
         except Exception:
             self.__err_logger.info('file_M 未关闭')
-        try:
-            self.r_f_nf.close()
-        except Exception:
-            self.__err_logger.info('r_f_nf 未关闭')
 
         try:
             self.__gbase_db.close()

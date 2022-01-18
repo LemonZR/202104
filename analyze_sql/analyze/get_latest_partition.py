@@ -91,7 +91,7 @@ class dataAnalyze:
         err_logger.addHandler(_console_handler)
         return logger, err_logger
 
-    def get_hdfs_time(self, table_name='', p_date=''):
+    def get_hdfs_time(self, table_name=''):
         ip = os.popen('hostname -i').read().strip()
         if ip == '133.95.9.92' or ip == '133.95.9.93':
             hdfs_path = '/user/bdoc/7/services/hive'
@@ -99,11 +99,9 @@ class dataAnalyze:
             hdfs_path = '/user/bdoc/6289/hive'
         table_str1 = '/'.join(table_name.split('.'))
 
-        if p_date == '1=1':
-            p_date = ''
-        hdfs_cmd = """"hdfs dfs -ls %s/%s|grep '%s'|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort -r|head -1""" % (
-        hdfs_path, table_str1, p_date)
-        self.__logger.info(hdfs_cmd)
+        hdfs_cmd = """hdfs dfs -ls %s/%s|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
+            hdfs_path, table_str1)
+
         try:
             rs = os.popen(hdfs_cmd)
             time = rs.read().strip()
@@ -114,8 +112,8 @@ class dataAnalyze:
         # 当获取不到hdfs文件时间时，可能是因为路径是大写，再尝试一下
         if time == '':
             table_str2 = table_name.split('.')[0] + '/' + table_name.split('.')[1].upper()
-            hdfs_cmd2 = """"hdfs dfs -ls %s/%s|grep '%s'|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort -r|head -1""" % (
-                hdfs_path, table_str2, p_date)
+            hdfs_cmd2 = """hdfs dfs -ls %s/%s|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
+                hdfs_path, table_str2)
             self.__logger.debug(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
             try:
                 rs = os.popen(hdfs_cmd2)
@@ -159,7 +157,7 @@ class dataAnalyze:
             self.__logger.info(data[index])
         print('*' * 33 + '\n')
 
-    def get_count(self, table_name=''):
+    def get_hdfs_latest_time(self, table_name=''):
 
         time = self.get_hdfs_time(table_name)
 
@@ -195,7 +193,7 @@ class dataAnalyze:
             for dep in deps:
                 self.__logger.info('table:' + dep)
                 # 如果使用union all，需要增加表名字段， 会降低select count(*)效率，
-                process = threading.Thread(target=self.get_count, args=(dep,))
+                process = threading.Thread(target=self.get_hdfs_latest_time, args=(dep,))
                 process_pool.append(process)
             for p in process_pool:
                 p.start()
@@ -204,7 +202,7 @@ class dataAnalyze:
             for i in range(len(process_pool)):
                 result.append(self.queue.get())
         else:
-            self.get_count(self.table)
+            self.get_hdfs_latest_time(self.table)
             result.append(self.queue.get())
 
         result.sort()
@@ -226,7 +224,7 @@ if __name__ == '__main__':
         # 简单判断,触发异常
         str1, str2 = table.rsplit('.', 1)
     except Exception as e:
-        sys.exit('参数不正确,文件名需要以".sql"结尾')
+        sys.exit('参数不正确,文件名需要以".sql"结尾;或者直接输入一个表名称')
 
     d = dataAnalyze(table)
     r = d.run()
