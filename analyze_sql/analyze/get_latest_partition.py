@@ -93,7 +93,7 @@ class dataAnalyze:
         err_logger.addHandler(_console_handler)
         return logger, err_logger
 
-    def get_hdfs_time(self, table_name=''):
+    def get_hdfs_time(self, table_name='', date_str=''):
         ip = os.popen('hostname -i').read().strip()
         if ip == '133.95.9.92' or ip == '133.95.9.93':
             hdfs_path = '/user/bdoc/7/services/hive'
@@ -102,7 +102,7 @@ class dataAnalyze:
         table_str1 = '/'.join(table_name.split('.'))
 
         hdfs_cmd = """hdfs dfs -ls %s/%s|grep "%s"|awk '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
-            hdfs_path, table_str1, self.date_str)
+            hdfs_path, table_str1, date_str)
 
         try:
             rs = os.popen(hdfs_cmd)
@@ -123,6 +123,7 @@ class dataAnalyze:
             except Exception as e:
                 self.__err_logger.error('获取 %s 数据时间失败:%s' % (table_name, e))
                 time = ''
+        self.__logger.info("读取[%s]hdfs文件时间完成" % table_name)
         return time
 
     def print_fmt(self, data_list, start=0, end=0):
@@ -159,12 +160,11 @@ class dataAnalyze:
             self.__logger.info(data[index])
         print('*' * 33 + '\n')
 
-    def get_hdfs_latest_time(self, table_name=''):
+    def get_hdfs_latest_time(self, table_name='', date_str=''):
 
-        time = self.get_hdfs_time(table_name)
-
+        time = self.get_hdfs_time(table_name, date_str)
         self.queue.put([table_name, time])
-
+        return True
     def get_dep(self, file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
         self.__logger.info('开始分析依赖表们')
         lis = []
@@ -192,10 +192,10 @@ class dataAnalyze:
         if self.script:
             task = []
             deps = self.get_dep(self.script)
-            process_pool = ThreadPoolExecutor(max_workers=None)
+            process_pool = ThreadPoolExecutor(max_workers=48)
             for dep in deps:
-                self.__logger.info('table:' + dep)
-                task.append(process_pool.submit(self.get_hdfs_latest_time, dep))
+                self.__logger.info('%s 加入执行队列成功' % dep)
+                task.append(process_pool.submit(self.get_hdfs_latest_time, dep, self.date_str))
             # 等待所有线程执行完成
             wait(task, return_when=ALL_COMPLETED)
 

@@ -13,23 +13,24 @@ def action(max):
     return my_sum
 
 
-# 创建一个包含2条线程的线程池
-pool = ThreadPoolExecutor(max_workers=2)
-# 向线程池提交一个task, 50会作为action()函数的参数
-future1 = pool.submit(action, 50)
-# 向线程池再提交一个task, 100会作为action()函数的参数
-future2 = pool.submit(action, 100)
-# 判断future1代表的任务是否结束
-print(future1.done())
-time.sleep(3)
-# 判断future2代表的任务是否结束
-print(future2.done())
-# 查看future1代表的任务返回的结果
-print(future1.result())
-# 查看future2代表的任务返回的结果
-print(future2.result())
-# 关闭线程池
-pool.shutdown()
+# # 创建一个包含2条线程的线程池
+# pool = ThreadPoolExecutor(max_workers=2)
+# # 向线程池提交一个task, 50会作为action()函数的参数
+# future1 = pool.submit(action, 50)
+# # 向线程池再提交一个task, 100会作为action()函数的参数
+# future2 = pool.submit(action, 100)
+# # 判断future1代表的任务是否结束
+# print(future1.done())
+# time.sleep(3)
+# # 判断future2代表的任务是否结束
+# print(future2.done())
+# # 查看future1代表的任务返回的结果
+# print(future1.result())
+# # 查看future2代表的任务返回的结果
+# print(future2.result())
+# # 关闭线程池
+# pool.shutdown()
+
 
 # 2222222222222222222
 # https://www.jianshu.com/p/b9b3d66aa0be
@@ -38,7 +39,8 @@ import time
 
 
 # 参数times用来模拟网络请求的时间
-def get_html(times):
+
+def get_html(times,a):
     time.sleep(times)
     print("get page {}s finished".format(times))
     return times
@@ -46,8 +48,9 @@ def get_html(times):
 
 executor = ThreadPoolExecutor(max_workers=2)
 urls = [3, 2, 4]  # 并不是真的url
-all_task = [executor.submit(get_html, (url,)) for url in urls]
-wait(all_task, return_when=ALL_COMPLETED)
+all_task = [executor.submit(get_html, url,'a') for url in urls]
+print(type(all_task))
+print(wait(all_task, return_when=ALL_COMPLETED))
 print("main")
 # 执行结果
 # get page 2s finished
