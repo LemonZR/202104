@@ -165,6 +165,7 @@ class dataAnalyze:
         time = self.get_hdfs_time(table_name, date_str)
         self.queue.put([table_name, time])
         return True
+
     def get_dep(self, file_name, pattern=r'mk\.|pub\.|dis\.|dw\.|dwh\.|am\.|det\.'):
         self.__logger.info('开始分析依赖表们')
         lis = []
@@ -202,7 +203,7 @@ class dataAnalyze:
             for i in range(len(deps)):
                 result.append(self.queue.get())
         else:
-            self.get_hdfs_latest_time(self.table)
+            self.get_hdfs_latest_time(self.table, self.date_str)
             result.append(self.queue.get())
 
         result.sort()
@@ -211,7 +212,7 @@ class dataAnalyze:
         self.print_fmt(result)
 
         for i in result:
-            with open(self.result_file, 'a') as f:
+            with open(self.result_file, 'w') as f:
                 f.write(i + '\n')
 
         return result
