@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- encoding:utf-8 -*-
 
 """
@@ -16,16 +17,17 @@ sys.path.append('/data/script/hbdb/py')
 import re
 import logging
 import os
-import threading
-import calendar
+
 import datetime
 import queue
+from concurrent.futures import ThreadPoolExecutor, wait, ALL_COMPLETED, FIRST_COMPLETED
 
 
 class dataAnalyze:
-    def __init__(self, table=None):
+    def __init__(self, table=None, date_str=''):
 
         self.table = table
+        self.date_str = date_str
         self.script_root_dir = '/data/script/hbdb/'
         self.queue = queue.Queue()
         self.result_file = './hdfs_%s.txt' % datetime.date.today().strftime('%Y%m%d')
@@ -99,8 +101,8 @@ class dataAnalyze:
             hdfs_path = '/user/bdoc/6289/hive'
         table_str1 = '/'.join(table_name.split('.'))
 
-        hdfs_cmd = """hdfs dfs -ls %s/%s|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
-            hdfs_path, table_str1)
+        hdfs_cmd = """hdfs dfs -ls %s/%s|grep "%s"|awk '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
+            hdfs_path, table_str1, self.date_str)
 
         try:
             rs = os.popen(hdfs_cmd)
@@ -112,9 +114,9 @@ class dataAnalyze:
         # 当获取不到hdfs文件时间时，可能是因为路径是大写，再尝试一下
         if time == '':
             table_str2 = table_name.split('.')[0] + '/' + table_name.split('.')[1].upper()
-            hdfs_cmd2 = """hdfs dfs -ls %s/%s|awk  '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
-                hdfs_path, table_str2)
-            self.__logger.debug(' %s 执行失败，改为执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
+            hdfs_cmd2 = """hdfs dfs -ls %s/%s|grep "%s"|awk '{print $6,$7,$8}'|awk -F '/' '{print $1"|"$NF}'|sort |tail -1 """ % (
+                hdfs_path, table_str2, self.date_str)
+            self.__logger.debug(' %s 未获取到分区时间，尝试执行:\n%s' % (hdfs_cmd, hdfs_cmd2))
             try:
                 rs = os.popen(hdfs_cmd2)
                 time = rs.read().strip()
@@ -188,18 +190,16 @@ class dataAnalyze:
     def run(self, ):
         result = []
         if self.script:
+            task = []
             deps = self.get_dep(self.script)
-            process_pool = []
+            process_pool = ThreadPoolExecutor(max_workers=None)
             for dep in deps:
                 self.__logger.info('table:' + dep)
-                # 如果使用union all，需要增加表名字段， 会降低select count(*)效率，
-                process = threading.Thread(target=self.get_hdfs_latest_time, args=(dep,))
-                process_pool.append(process)
-            for p in process_pool:
-                p.start()
-            for p in process_pool:
-                p.join()
-            for i in range(len(process_pool)):
+                task.append(process_pool.submit(self.get_hdfs_latest_time, dep))
+            # 等待所有线程执行完成
+            wait(task, return_when=ALL_COMPLETED)
+
+            for i in range(len(deps)):
                 result.append(self.queue.get())
         else:
             self.get_hdfs_latest_time(self.table)
@@ -220,11 +220,15 @@ class dataAnalyze:
 if __name__ == '__main__':
     try:
         table = sys.argv[1]
-
         # 简单判断,触发异常
         str1, str2 = table.rsplit('.', 1)
     except Exception as e:
         sys.exit('参数不正确,文件名需要以".sql"结尾;或者直接输入一个表名称')
 
-    d = dataAnalyze(table)
+    try:
+        date_str = sys.argv[2]
+    except:
+        date_str = ''
+
+    d = dataAnalyze(table, date_str)
     r = d.run()
