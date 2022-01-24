@@ -193,7 +193,7 @@ class dataAnalyze:
         if self.script:
             task = []
             deps = self.get_dep(self.script)
-            process_pool = ThreadPoolExecutor(max_workers=48)
+            process_pool = ThreadPoolExecutor(max_workers=100)
             for dep in deps:
                 self.__logger.info('%s 加入执行队列成功' % dep)
                 task.append(process_pool.submit(self.get_hdfs_latest_time, dep, self.date_str))
@@ -211,9 +211,8 @@ class dataAnalyze:
         # 格式化数据
         self.print_fmt(result)
 
-        for i in result:
-            with open(self.result_file, 'w') as f:
-                f.write(i + '\n')
+        with open(self.result_file, 'w') as f:
+            f.write('\n'.join(result))
 
         return result
 

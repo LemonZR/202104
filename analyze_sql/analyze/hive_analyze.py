@@ -1,5 +1,6 @@
 # -*- encoding:utf-8 -*-
-
+# print(string,end='') 是python3之后才可用
+# from __future__ import print_function
 from HiveSQLEngine import HiveSQLEngine
 from GbaseSQLEngine import GbaseSQLEngine
 import re
@@ -90,8 +91,9 @@ class HiveAnalyze:
         desc_dict = {}
         self.__logger.info("获取所有表字段信息开始...")
         for table in tables:
+
             sql = 'desc %s' % table
-            self.__logger.info("sql")
+
             desc_result = self.run_sql(self.__cursor_hive, sql)
             __columns = []
             is_partition_filed = 0
@@ -114,6 +116,16 @@ class HiveAnalyze:
                     __columns.append((field, type_str, '0'))
 
             desc_dict.setdefault(table, __columns)
+
+            amount = len(tables)
+            done_count = len(desc_dict)
+            done_line = int(done_count * 100 / amount)
+            self.__logger.info("%s--%%%d" % (done_line, sql))
+            # 进度条
+            # undone_line = 100 - done_line
+            # 打印内容吧，不打印动态进度条了
+            # print('\r%{0}:{1}{2}'.format(done_line, '●' * done_line, '⊙' * undone_line), end='')
+
         self.__logger.info("获取获取所有表字段信息结束,共计%s个表" % len(desc_dict))
         return desc_dict
 
